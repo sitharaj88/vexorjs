@@ -6,7 +6,7 @@ const step1Code = `mkdir my-vexor-app
 cd my-vexor-app
 npm init -y`;
 
-const step2Code = `npm install vexor vexor-orm
+const step2Code = `npm install @vexorjs/core @vexorjs/orm
 npm install -D typescript tsx @types/node`;
 
 const step3Code = `{
@@ -22,7 +22,7 @@ const step3Code = `{
   "include": ["src/**/*"]
 }`;
 
-const step4Code = `import { Vexor, Type } from 'vexor';
+const step4Code = `import { Vexor, Type } from '@vexorjs/core';
 
 // Create the application
 const app = new Vexor({

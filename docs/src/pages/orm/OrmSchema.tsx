@@ -1,6 +1,6 @@
 import CodeBlock from '../../components/CodeBlock';
 
-const tableDefinitionCode = `import { table, column } from 'vexor-orm';
+const tableDefinitionCode = `import { table, column } from '@vexorjs/orm';
 
 // Define a table
 const users = table('users', {
@@ -94,7 +94,7 @@ const indexesCode = `const posts = table('posts', {
   authorFk: t.foreignKey('authorId').references(() => users.id),
 }));`;
 
-const typeInferenceCode = `import { table, column, InferSelect, InferInsert } from 'vexor-orm';
+const typeInferenceCode = `import { table, column, InferSelect, InferInsert } from '@vexorjs/orm';
 
 const users = table('users', {
   id: column.serial().primaryKey(),

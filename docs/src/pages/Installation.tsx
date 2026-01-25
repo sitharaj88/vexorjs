@@ -3,37 +3,37 @@ import { ArrowRight, CheckCircle, AlertCircle } from 'lucide-react';
 import CodeBlock from '../components/CodeBlock';
 
 const npmInstall = `# Core framework
-npm install vexor
+npm install @vexorjs/core
 
 # With ORM (recommended)
-npm install vexor vexor-orm
+npm install @vexorjs/core @vexorjs/orm
 
 # With CLI (optional)
 npm install -g vexor-cli`;
 
 const yarnInstall = `# Core framework
-yarn add vexor
+yarn add @vexorjs/core
 
 # With ORM (recommended)
-yarn add vexor vexor-orm
+yarn add @vexorjs/core @vexorjs/orm
 
 # With CLI (optional)
 yarn global add vexor-cli`;
 
 const pnpmInstall = `# Core framework
-pnpm add vexor
+pnpm add @vexorjs/core
 
 # With ORM (recommended)
-pnpm add vexor vexor-orm
+pnpm add @vexorjs/core @vexorjs/orm
 
 # With CLI (optional)
 pnpm add -g vexor-cli`;
 
 const bunInstall = `# Core framework
-bun add vexor
+bun add @vexorjs/core
 
 # With ORM (recommended)
-bun add vexor vexor-orm
+bun add @vexorjs/core @vexorjs/orm
 
 # With CLI (optional)
 bun add -g vexor-cli`;
@@ -65,8 +65,8 @@ const packageJsonExample = `{
     "start": "node dist/index.js"
   },
   "dependencies": {
-    "vexor": "^1.0.0",
-    "vexor-orm": "^1.0.0"
+    "@vexorjs/core": "^1.0.0",
+    "@vexorjs/orm": "^1.0.0"
   },
   "devDependencies": {
     "typescript": "^5.7.0",

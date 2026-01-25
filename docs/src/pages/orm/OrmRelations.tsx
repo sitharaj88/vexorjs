@@ -1,6 +1,6 @@
 import CodeBlock from '../../components/CodeBlock';
 
-const relationsCode = `import { table, column, relations, one, many } from 'vexor-orm';
+const relationsCode = `import { table, column, relations, one, many } from '@vexorjs/orm';
 
 // Users table
 const users = table('users', {

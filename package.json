@@ -1,6 +1,6 @@
 {
-  "name": "vexor-monorepo",
-  "version": "0.0.1",
+  "name": "@vexorjs/monorepo",
+  "version": "1.0.0",
   "private": true,
   "workspaces": [
     "packages/*",

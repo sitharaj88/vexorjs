@@ -6,7 +6,7 @@ vexor db:migration:generate add_users_table
 # This creates a file like:
 # migrations/20240115120000_add_users_table.ts`;
 
-const migrationFileCode = `import { Migration } from 'vexor-orm';
+const migrationFileCode = `import { Migration } from '@vexorjs/orm';
 
 export const migration: Migration = {
   name: '20240115120000_add_users_table',

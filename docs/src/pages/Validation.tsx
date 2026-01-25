@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, CheckCircle } from 'lucide-react';
 import CodeBlock from '../components/CodeBlock';
 
-const basicSchemaCode = `import { Type } from 'vexor';
+const basicSchemaCode = `import { Type } from '@vexorjs/core';
 
 // String types
 const name = Type.String();
@@ -29,7 +29,7 @@ const user = Type.Object({
   age: Type.Optional(Type.Number()),
 });`;
 
-const typeInferenceCode = `import { Type, type Static } from 'vexor';
+const typeInferenceCode = `import { Type, type Static } from '@vexorjs/core';
 
 // Define schema
 const UserSchema = Type.Object({

@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Info } from 'lucide-react';
 import CodeBlock from '../components/CodeBlock';
 
-const basicRoutingCode = `import { Vexor } from 'vexor';
+const basicRoutingCode = `import { Vexor } from '@vexorjs/core';
 
 const app = new Vexor();
 

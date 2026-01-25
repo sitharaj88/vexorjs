@@ -89,7 +89,7 @@ export const config = loadConfig();
 export type Config = z.infer<typeof configSchema>;`;
 
 const appConfigCode = `// src/app.ts
-import { Vexor } from 'vexor';
+import { Vexor } from '@vexorjs/core';
 import { config } from './config';
 
 const app = new Vexor({

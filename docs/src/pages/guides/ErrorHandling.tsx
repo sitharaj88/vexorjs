@@ -1,6 +1,6 @@
 import CodeBlock from '../../components/CodeBlock';
 
-const globalErrorCode = `import { Vexor } from 'vexor';
+const globalErrorCode = `import { Vexor } from '@vexorjs/core';
 
 const app = new Vexor();
 

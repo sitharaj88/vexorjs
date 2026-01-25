@@ -2,9 +2,9 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, CheckCircle, Zap, Shield, Globe } from 'lucide-react';
 import CodeBlock from '../components/CodeBlock';
 
-const installCode = `npm install vexor vexor-orm`;
+const installCode = `npm install @vexorjs/core @vexorjs/orm`;
 
-const basicExample = `import { Vexor } from 'vexor';
+const basicExample = `import { Vexor } from '@vexorjs/core';
 
 const app = new Vexor();
 

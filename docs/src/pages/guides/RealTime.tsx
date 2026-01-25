@@ -1,6 +1,6 @@
 import CodeBlock from '../../components/CodeBlock';
 
-const sseCode = `import { Vexor, SSEStream } from 'vexor';
+const sseCode = `import { Vexor, SSEStream } from '@vexorjs/core';
 
 const app = new Vexor();
 
@@ -47,7 +47,7 @@ events.onerror = (error) => {
 // Close connection when done
 // events.close();`;
 
-const pubSubCode = `import { Vexor, SSEStream, MemoryPubSubAdapter } from 'vexor';
+const pubSubCode = `import { Vexor, SSEStream, MemoryPubSubAdapter } from '@vexorjs/core';
 
 const app = new Vexor();
 const pubsub = new MemoryPubSubAdapter();
@@ -91,7 +91,7 @@ app.post('/chat/:room/send', {
   return ctx.json({ sent: true });
 });`;
 
-const redisPubSubCode = `import { RedisPubSubAdapter } from 'vexor';
+const redisPubSubCode = `import { RedisPubSubAdapter } from '@vexorjs/core';
 import Redis from 'ioredis';
 
 // Use Redis for horizontal scaling

@@ -1,7 +1,7 @@
 import CodeBlock from '../../components/CodeBlock';
 
-const jwtSetupCode = `import { Vexor, Type } from 'vexor';
-import { JWT } from 'vexor/auth';
+const jwtSetupCode = `import { Vexor, Type } from '@vexorjs/core';
+import { JWT } from '@vexorjs/core/auth';
 
 const app = new Vexor();
 
@@ -72,7 +72,7 @@ app.get('/admin/users', {
   return ctx.json({ users });
 });`;
 
-const sessionCode = `import { SessionManager } from 'vexor/auth';
+const sessionCode = `import { SessionManager } from '@vexorjs/core/auth';
 
 // Create session manager
 const sessions = new SessionManager({

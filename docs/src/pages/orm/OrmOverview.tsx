@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Database, Zap, Shield, GitBranch } from 'lucide-react';
 import CodeBlock from '../../components/CodeBlock';
 
-const quickStartCode = `import { table, column, createConnection, eq } from 'vexor-orm';
+const quickStartCode = `import { table, column, createConnection, eq } from '@vexorjs/orm';
 
 // Define your schema
 const users = table('users', {

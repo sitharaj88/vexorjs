@@ -1,6 +1,6 @@
 {
-  "name": "vexor",
-  "version": "0.0.1",
+  "name": "@vexorjs/core",
+  "version": "1.0.0",
   "description": "A blazing-fast, batteries-included, multi-runtime Node.js backend framework",
   "type": "module",
   "main": "./dist/index.js",
@@ -53,8 +53,17 @@
     "deno",
     "edge"
   ],
-  "author": "",
+  "author": "Vexor Team",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sitharaj88/vexorjs.git",
+    "directory": "packages/vexor"
+  },
+  "homepage": "https://github.com/sitharaj88/vexorjs",
+  "bugs": {
+    "url": "https://github.com/sitharaj88/vexorjs/issues"
+  },
   "devDependencies": {
     "typescript": "^5.7.0",
     "tsup": "^8.3.0",

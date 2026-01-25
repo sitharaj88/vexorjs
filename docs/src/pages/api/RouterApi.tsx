@@ -1,6 +1,6 @@
 import CodeBlock from '../../components/CodeBlock';
 
-const routerCode = `import { RadixRouter } from 'vexor';
+const routerCode = `import { RadixRouter } from '@vexorjs/core';
 
 const router = new RadixRouter();
 

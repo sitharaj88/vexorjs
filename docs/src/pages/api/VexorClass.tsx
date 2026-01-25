@@ -1,6 +1,6 @@
 import CodeBlock from '../../components/CodeBlock';
 
-const constructorCode = `import { Vexor } from 'vexor';
+const constructorCode = `import { Vexor } from '@vexorjs/core';
 
 // Basic usage
 const app = new Vexor();

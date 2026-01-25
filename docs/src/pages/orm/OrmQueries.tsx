@@ -14,7 +14,7 @@ const user = await db.select().from(usersTable).first();
 // Get one or throw
 const user = await db.select().from(usersTable).firstOrThrow();`;
 
-const whereCode = `import { eq, ne, gt, gte, lt, lte, like, ilike, isNull, isNotNull, inArray, between, and, or, not } from 'vexor-orm';
+const whereCode = `import { eq, ne, gt, gte, lt, lte, like, ilike, isNull, isNotNull, inArray, between, and, or, not } from '@vexorjs/orm';
 
 // Equality
 db.select().from(users).where(eq(users.id, 1));

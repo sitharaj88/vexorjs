@@ -53,7 +53,7 @@ volumes:
 
 const cloudflareCode = `// For Cloudflare Workers
 // vexor.config.ts
-import { defineConfig } from 'vexor';
+import { defineConfig } from '@vexorjs/core';
 
 export default defineConfig({
   adapter: 'cloudflare',
@@ -61,7 +61,7 @@ export default defineConfig({
 });
 
 // src/index.ts
-import { Vexor } from 'vexor';
+import { Vexor } from '@vexorjs/core';
 
 const app = new Vexor();
 
@@ -89,7 +89,7 @@ const vercelCode = `// vercel.json
 
 // Or use Edge Functions
 // api/index.ts
-import { Vexor } from 'vexor';
+import { Vexor } from '@vexorjs/core';
 
 const app = new Vexor();
 

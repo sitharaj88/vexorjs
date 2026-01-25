@@ -1,6 +1,6 @@
 import CodeBlock from '../../components/CodeBlock';
 
-const schemaCode = `import { Type, Static } from 'vexor';
+const schemaCode = `import { Type, Static } from '@vexorjs/core';
 
 // Primitive types
 Type.String(options?)     // string

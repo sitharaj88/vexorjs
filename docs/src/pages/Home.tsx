@@ -35,7 +35,7 @@ const features = [
   },
 ];
 
-const quickStartCode = `import { Vexor, Type } from 'vexor';
+const quickStartCode = `import { Vexor, Type } from '@vexorjs/core';
 
 const app = new Vexor();
 

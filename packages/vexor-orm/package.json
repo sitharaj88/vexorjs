@@ -1,6 +1,6 @@
 {
-  "name": "vexor-orm",
-  "version": "0.0.1",
+  "name": "@vexorjs/orm",
+  "version": "1.0.0",
   "description": "Blazing-fast, type-safe ORM for Vexor framework",
   "type": "module",
   "main": "./dist/index.js",
@@ -42,8 +42,17 @@
     "query-builder",
     "vexor"
   ],
-  "author": "",
+  "author": "Vexor Team",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sitharaj88/vexorjs.git",
+    "directory": "packages/vexor-orm"
+  },
+  "homepage": "https://github.com/sitharaj88/vexorjs",
+  "bugs": {
+    "url": "https://github.com/sitharaj88/vexorjs/issues"
+  },
   "devDependencies": {
     "@types/node": "^20.0.0",
     "tsup": "^8.0.0",
