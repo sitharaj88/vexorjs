@@ -180,8 +180,8 @@ vexorjs/
 │   └── vexor-cli/      # @vexorjs/cli - CLI tool
 ├── examples/           # Example applications
 ├── benchmarks/         # Performance benchmarks
-├── docs/               # Documentation source
-├── site/               # Built documentation (GitHub Pages)
+├── site/               # Documentation source
+├── docs/               # Built documentation (GitHub Pages)
 └── tests/              # Integration tests
 ```
 
