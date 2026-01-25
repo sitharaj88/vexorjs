@@ -1,0 +1,147 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100;
+  }
+
+  ::selection {
+    @apply bg-primary-500/20;
+  }
+}
+
+@layer components {
+  .sidebar-link {
+    @apply block px-3 py-2 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors;
+  }
+
+  .sidebar-link.active {
+    @apply text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20;
+  }
+
+  .sidebar-section {
+    @apply text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2 px-3;
+  }
+
+  .prose-code {
+    @apply font-mono text-sm bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium text-white bg-gradient-to-r from-primary-500 to-accent-500 hover:from-primary-600 hover:to-accent-600 transition-all shadow-lg shadow-primary-500/25 hover:shadow-primary-500/40;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors;
+  }
+
+  .card {
+    @apply bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm;
+  }
+
+  .feature-card {
+    @apply card hover:border-primary-300 dark:hover:border-primary-700 hover:shadow-md transition-all;
+  }
+}
+
+/* Code block styling */
+.code-block {
+  @apply relative;
+}
+
+.code-block pre {
+  @apply !bg-slate-900 !rounded-lg !p-4 !text-sm overflow-x-auto;
+}
+
+.code-block .copy-button {
+  @apply absolute top-3 right-3 p-2 rounded-md bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-colors opacity-0 group-hover:opacity-100;
+}
+
+/* Table of contents */
+.toc-link {
+  @apply block py-1 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border-l-2 border-transparent hover:border-slate-300 dark:hover:border-slate-600 pl-3 -ml-px transition-colors;
+}
+
+.toc-link.active {
+  @apply text-primary-600 dark:text-primary-400 border-primary-500;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-300 dark:bg-slate-700 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-slate-400 dark:bg-slate-600;
+}
+
+/* Syntax highlighting customization */
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  @apply text-slate-500;
+}
+
+.token.punctuation {
+  @apply text-slate-400;
+}
+
+.token.property,
+.token.tag,
+.token.boolean,
+.token.number,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  @apply text-pink-400;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  @apply text-green-400;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string {
+  @apply text-yellow-400;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.keyword {
+  @apply text-blue-400;
+}
+
+.token.function,
+.token.class-name {
+  @apply text-purple-400;
+}
+
+.token.regex,
+.token.important,
+.token.variable {
+  @apply text-orange-400;
+}
