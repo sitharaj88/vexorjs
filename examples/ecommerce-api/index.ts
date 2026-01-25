@@ -9,8 +9,7 @@
  * Run with: npx tsx examples/ecommerce-api/index.ts
  */
 
-import { Vexor, VexorContext } from '../../packages/vexor/src/index.js';
-import { JWT } from '../../packages/vexor/src/auth/jwt.js';
+import { Vexor, VexorContext, JWT } from '@vexorjs/core';
 
 // ============================================================================
 // Simple Validation Helpers

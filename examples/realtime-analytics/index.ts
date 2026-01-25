@@ -10,9 +10,7 @@
  * Run with: npx tsx examples/realtime-analytics/index.ts
  */
 
-import { Vexor } from '../../packages/vexor/src/index.js';
-import { SSEStream } from '../../packages/vexor/src/realtime/sse.js';
-import { MemoryPubSubAdapter } from '../../packages/vexor/src/realtime/pubsub.js';
+import { Vexor, SSEStream, MemoryPubSubAdapter } from '@vexorjs/core';
 
 // ============================================================================
 // App Setup

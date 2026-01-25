@@ -7,7 +7,7 @@
  * Or with Bun: bun run examples/basic-api/index.ts
  */
 
-import { Vexor, VexorContext } from '../../packages/vexor/src/index.js';
+import { Vexor, VexorContext } from '@vexorjs/core';
 
 // Create Vexor app
 const app = new Vexor({

@@ -12,10 +12,7 @@
  * Run with: npx tsx examples/microservices/gateway.ts
  */
 
-import { Vexor, VexorContext } from '../../packages/vexor/src/index.js';
-import { createCircuitBreaker } from '../../packages/vexor/src/resilience/circuit-breaker.js';
-import { Tracer } from '../../packages/vexor/src/observability/tracer.js';
-import { MetricsRegistry } from '../../packages/vexor/src/observability/metrics.js';
+import { Vexor, VexorContext, createCircuitBreaker, Tracer, MetricsRegistry } from '@vexorjs/core';
 
 // ============================================================================
 // Configuration

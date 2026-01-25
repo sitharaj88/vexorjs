@@ -6,8 +6,7 @@
  * Run with: npx tsx examples/microservices/product-service.ts
  */
 
-import { Vexor, VexorContext } from '../../packages/vexor/src/index.js';
-import { Tracer } from '../../packages/vexor/src/observability/tracer.js';
+import { Vexor, VexorContext, Tracer } from '@vexorjs/core';
 
 // Simple validation helpers
 function isString(val: unknown): val is string {

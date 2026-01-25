@@ -9,10 +9,8 @@
  * Run with: npx tsx examples/realtime-chat/index.ts
  */
 
-import { Vexor, VexorContext } from '../../packages/vexor/src/index.js';
-import { JWT } from '../../packages/vexor/src/auth/jwt.js';
-import { MemoryPubSubAdapter, Subscription } from '../../packages/vexor/src/realtime/pubsub.js';
-import { SSEStream } from '../../packages/vexor/src/realtime/sse.js';
+import { Vexor, VexorContext, JWT, MemoryPubSubAdapter, SSEStream } from '@vexorjs/core';
+import type { Subscription } from '@vexorjs/core';
 
 // Simple validation helpers
 function isString(val: unknown): val is string {
