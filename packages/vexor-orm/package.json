@@ -1,0 +1,65 @@
+{
+  "name": "vexor-orm",
+  "version": "0.0.1",
+  "description": "Blazing-fast, type-safe ORM for Vexor framework",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./postgres": {
+      "types": "./dist/drivers/postgres.d.ts",
+      "import": "./dist/drivers/postgres.js"
+    },
+    "./sqlite": {
+      "types": "./dist/drivers/sqlite.d.ts",
+      "import": "./dist/drivers/sqlite.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "orm",
+    "database",
+    "typescript",
+    "postgresql",
+    "sqlite",
+    "query-builder",
+    "vexor"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.3.0",
+    "vitest": "^2.0.0"
+  },
+  "peerDependencies": {
+    "pg": "^8.0.0",
+    "better-sqlite3": "^11.0.0"
+  },
+  "peerDependenciesMeta": {
+    "pg": {
+      "optional": true
+    },
+    "better-sqlite3": {
+      "optional": true
+    }
+  }
+}

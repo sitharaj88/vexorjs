@@ -1,0 +1,33 @@
+{
+  "name": "vexor-monorepo",
+  "version": "0.0.1",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "benchmarks"
+  ],
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "bench": "npm run bench:quick --workspace=vexor-benchmarks",
+    "bench:quick": "npm run bench:quick --workspace=vexor-benchmarks",
+    "bench:compare": "npm run bench:compare --workspace=vexor-benchmarks",
+    "bench:http": "npm run bench:http --workspace=vexor-benchmarks",
+    "bench:orm": "npm run bench:orm --workspace=vexor-benchmarks",
+    "example:api": "node examples/basic-api/index.js"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.0",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.0",
+    "@types/node": "^22.0.0",
+    "tsup": "^8.3.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "packageManager": "npm@10.0.0"
+}

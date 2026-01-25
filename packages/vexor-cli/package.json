@@ -1,0 +1,44 @@
+{
+  "name": "vexor-cli",
+  "version": "0.0.1",
+  "description": "CLI tool for Vexor framework - project scaffolding and code generation",
+  "type": "module",
+  "bin": {
+    "vexor": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "templates"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "eslint src/",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "vexor",
+    "cli",
+    "framework",
+    "scaffolding",
+    "generator"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.8.0"
+  },
+  "dependencies": {
+    "cac": "^6.7.14",
+    "chalk": "^5.3.0",
+    "ora": "^8.0.1",
+    "prompts": "^2.4.2"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
