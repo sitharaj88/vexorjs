@@ -2,476 +2,270 @@
  * New Project Command
  *
  * Scaffolds a new Vexor project with configurable templates.
+ * Supports interactive mode with prompts.
  */
 
-import { mkdir, writeFile, readdir } from 'fs/promises';
+import { mkdir, writeFile, readdir, access } from 'fs/promises';
 import { join, resolve } from 'path';
 import { execSync } from 'child_process';
+import prompts from 'prompts';
+import ora from 'ora';
+import { logger } from '../utils/logger.js';
+import { templates, getTemplateChoices } from '../utils/templates.js';
 
 interface NewCommandOptions {
-  template: 'api' | 'fullstack' | 'minimal';
-  packageManager: 'npm' | 'yarn' | 'pnpm' | 'bun';
-  git: boolean;
-  install: boolean;
+  template?: string;
+  packageManager?: 'npm' | 'yarn' | 'pnpm' | 'bun';
+  git?: boolean;
+  install?: boolean;
+  yes?: boolean;
 }
 
 /**
- * Project templates
+ * Detect available package manager
  */
-const templates = {
-  api: {
-    description: 'REST API with authentication and database',
-    files: getApiTemplate,
-  },
-  fullstack: {
-    description: 'Full-stack with frontend integration',
-    files: getFullstackTemplate,
-  },
-  minimal: {
-    description: 'Minimal setup with just the essentials',
-    files: getMinimalTemplate,
-  },
-};
+function detectPackageManager(): 'npm' | 'yarn' | 'pnpm' | 'bun' {
+  try {
+    execSync('bun --version', { stdio: 'ignore' });
+    return 'bun';
+  } catch {
+    try {
+      execSync('pnpm --version', { stdio: 'ignore' });
+      return 'pnpm';
+    } catch {
+      try {
+        execSync('yarn --version', { stdio: 'ignore' });
+        return 'yarn';
+      } catch {
+        return 'npm';
+      }
+    }
+  }
+}
+
+/**
+ * Validate project name
+ */
+function validateProjectName(name: string): boolean | string {
+  if (!name) return 'Project name is required';
+  if (!/^[a-z0-9-_]+$/i.test(name)) {
+    return 'Project name can only contain letters, numbers, hyphens, and underscores';
+  }
+  if (name.length > 214) return 'Project name is too long';
+  return true;
+}
+
+/**
+ * Check if directory exists and is empty
+ */
+async function isDirEmpty(path: string): Promise<boolean> {
+  try {
+    const files = await readdir(path);
+    return files.length === 0;
+  } catch {
+    return true; // Directory doesn't exist
+  }
+}
 
 /**
  * New project command handler
  */
-export async function newCommand(name: string, options: NewCommandOptions): Promise<void> {
-  const projectPath = resolve(process.cwd(), name);
+export async function newCommand(name?: string, options: NewCommandOptions = {}): Promise<void> {
+  logger.banner('Create Vexor Project');
 
-  console.log(`\n🚀 Creating new Vexor project: ${name}\n`);
+  let projectName = name;
+  let templateKey = options.template;
+  let packageManager = options.packageManager;
+  const skipGit = options.git === false;
+  const skipInstall = options.install === false;
+  const useDefaults = options.yes === true;
 
-  // Check if directory exists
-  try {
-    const files = await readdir(projectPath);
-    if (files.length > 0) {
-      console.error(`❌ Directory "${name}" already exists and is not empty`);
-      process.exit(1);
+  // Interactive mode if no project name provided or not using defaults
+  if (!projectName || (!useDefaults && !templateKey)) {
+    const templateChoices = getTemplateChoices();
+
+    const response = await prompts([
+      {
+        type: projectName ? null : 'text',
+        name: 'projectName',
+        message: 'What is your project name?',
+        initial: 'my-vexor-app',
+        validate: validateProjectName,
+      },
+      {
+        type: templateKey ? null : 'select',
+        name: 'template',
+        message: 'Which template would you like to use?',
+        choices: templateChoices,
+        initial: 0,
+      },
+      {
+        type: packageManager ? null : 'select',
+        name: 'packageManager',
+        message: 'Which package manager do you prefer?',
+        choices: [
+          { title: 'npm', value: 'npm' },
+          { title: 'yarn', value: 'yarn' },
+          { title: 'pnpm', value: 'pnpm' },
+          { title: 'bun', value: 'bun' },
+        ],
+        initial: 0,
+      },
+      {
+        type: 'confirm',
+        name: 'initGit',
+        message: 'Initialize a git repository?',
+        initial: true,
+      },
+      {
+        type: 'confirm',
+        name: 'installDeps',
+        message: 'Install dependencies now?',
+        initial: true,
+      },
+    ]);
+
+    if (!response.projectName && !projectName) {
+      logger.info('Project creation cancelled');
+      return;
     }
-  } catch {
-    // Directory doesn't exist, create it
-    await mkdir(projectPath, { recursive: true });
+
+    projectName = projectName || response.projectName;
+    templateKey = templateKey || response.template;
+    packageManager = packageManager || response.packageManager;
+
+    if (response.initGit === false) {
+      options.git = false;
+    }
+    if (response.installDeps === false) {
+      options.install = false;
+    }
   }
 
-  // Get template files
-  const templateFn = templates[options.template]?.files ?? templates.api.files;
-  const files = templateFn(name);
+  // Use defaults if --yes flag
+  if (useDefaults) {
+    templateKey = templateKey || 'api';
+    packageManager = packageManager || detectPackageManager();
+  }
+
+  const projectPath = resolve(process.cwd(), projectName!);
+  const template = templates[templateKey || 'api'];
+
+  if (!template) {
+    logger.error(`Unknown template: ${templateKey}`);
+    logger.info('Available templates: ' + Object.keys(templates).join(', '));
+    process.exit(1);
+  }
+
+  // Check if directory exists and is not empty
+  if (!(await isDirEmpty(projectPath))) {
+    logger.error(`Directory "${projectName}" already exists and is not empty`);
+    process.exit(1);
+  }
+
+  logger.blank();
+  logger.title(`Creating ${projectName}`);
+  logger.subtitle(`Template: ${template.name}`);
+  logger.blank();
+
+  // Create project directory
+  await mkdir(projectPath, { recursive: true });
+
+  // Generate package.json
+  const packageJson = {
+    name: projectName,
+    version: '0.0.1',
+    type: 'module',
+    scripts: template.scripts,
+    dependencies: template.dependencies,
+    devDependencies: template.devDependencies,
+  };
 
   // Create files
-  console.log(`📁 Creating project structure...`);
-  for (const [filePath, content] of Object.entries(files)) {
-    const fullPath = join(projectPath, filePath);
-    const dir = join(fullPath, '..');
-    await mkdir(dir, { recursive: true });
-    await writeFile(fullPath, content);
-    console.log(`   ✓ ${filePath}`);
+  const spinner = ora('Creating project files...').start();
+
+  try {
+    // Write package.json
+    await writeFile(
+      join(projectPath, 'package.json'),
+      JSON.stringify(packageJson, null, 2) + '\n'
+    );
+
+    // Write template files
+    for (const [filePath, content] of Object.entries(template.files)) {
+      const fullPath = join(projectPath, filePath);
+      const dir = join(fullPath, '..');
+      await mkdir(dir, { recursive: true });
+
+      // Replace template variables
+      const processedContent = content
+        .replace(/\{\{name\}\}/g, projectName!)
+        .replace(/\{\{year\}\}/g, new Date().getFullYear().toString());
+
+      await writeFile(fullPath, processedContent);
+    }
+
+    spinner.succeed('Project files created');
+  } catch (error) {
+    spinner.fail('Failed to create project files');
+    throw error;
   }
 
   // Initialize git
-  if (options.git !== false) {
-    console.log(`\n📦 Initializing git repository...`);
+  if (!skipGit && options.git !== false) {
+    const gitSpinner = ora('Initializing git repository...').start();
     try {
       execSync('git init', { cwd: projectPath, stdio: 'ignore' });
-      console.log(`   ✓ Git initialized`);
+      execSync('git add -A', { cwd: projectPath, stdio: 'ignore' });
+      gitSpinner.succeed('Git repository initialized');
     } catch {
-      console.log(`   ⚠ Git initialization failed`);
+      gitSpinner.warn('Git initialization failed (git may not be installed)');
     }
   }
 
   // Install dependencies
-  if (options.install !== false) {
-    console.log(`\n📥 Installing dependencies...`);
+  if (!skipInstall && options.install !== false) {
+    const pm = packageManager || 'npm';
     const installCmd = {
       npm: 'npm install',
       yarn: 'yarn',
       pnpm: 'pnpm install',
       bun: 'bun install',
-    }[options.packageManager];
+    }[pm];
+
+    const installSpinner = ora(`Installing dependencies with ${pm}...`).start();
 
     try {
-      execSync(installCmd, { cwd: projectPath, stdio: 'inherit' });
+      execSync(installCmd, { cwd: projectPath, stdio: 'pipe' });
+      installSpinner.succeed('Dependencies installed');
     } catch {
-      console.log(`   ⚠ Dependency installation failed. Run "${installCmd}" manually.`);
+      installSpinner.warn(`Failed to install dependencies. Run "${installCmd}" manually.`);
     }
   }
 
   // Success message
-  console.log(`\n✅ Project created successfully!\n`);
-  console.log(`   cd ${name}`);
-  if (options.install === false) {
-    console.log(`   ${options.packageManager} install`);
-  }
-  console.log(`   ${options.packageManager === 'npm' ? 'npm run' : options.packageManager} dev\n`);
+  logger.blank();
+  logger.success('Project created successfully!');
+  logger.blank();
+
+  const pm = packageManager || 'npm';
+  const runCmd = pm === 'npm' ? 'npm run' : pm;
+
+  logger.box(
+    [
+      `cd ${projectName}`,
+      skipInstall || options.install === false ? `${pm} install` : '',
+      `${runCmd} dev`,
+    ]
+      .filter(Boolean)
+      .join('\n'),
+    { title: 'Next Steps' }
+  );
+
+  logger.blank();
+  logger.info(`Template: ${template.name}`);
+  logger.info(`Package Manager: ${pm}`);
+  logger.blank();
 }
 
-/**
- * API template files
- */
-function getApiTemplate(name: string): Record<string, string> {
-  return {
-    'package.json': JSON.stringify({
-      name,
-      version: '0.0.1',
-      type: 'module',
-      scripts: {
-        dev: 'tsx watch src/index.ts',
-        build: 'tsup src/index.ts --format esm --dts',
-        start: 'node dist/index.js',
-        'db:migrate': 'vexor db:migrate',
-        'db:rollback': 'vexor db:rollback',
-      },
-      dependencies: {
-        vexor: '^0.0.1',
-        'vexor-orm': '^0.0.1',
-      },
-      devDependencies: {
-        '@types/node': '^22.0.0',
-        tsup: '^8.5.0',
-        tsx: '^4.0.0',
-        typescript: '^5.8.0',
-        'vexor-cli': '^0.0.1',
-      },
-    }, null, 2),
-
-    'tsconfig.json': JSON.stringify({
-      compilerOptions: {
-        target: 'ES2022',
-        module: 'ESNext',
-        moduleResolution: 'bundler',
-        strict: true,
-        esModuleInterop: true,
-        skipLibCheck: true,
-        forceConsistentCasingInFileNames: true,
-        outDir: './dist',
-        rootDir: './src',
-        declaration: true,
-      },
-      include: ['src/**/*'],
-      exclude: ['node_modules', 'dist'],
-    }, null, 2),
-
-    'src/index.ts': `/**
- * ${name} - Vexor Application
- */
-
-import { Vexor, Type } from 'vexor';
-import { db } from './db/index.js';
-import { userRoutes } from './routes/users.js';
-
-const app = new Vexor();
-
-// Health check
-app.get('/health', {
-  response: {
-    200: Type.Object({
-      status: Type.String(),
-      timestamp: Type.String(),
-    }),
-  },
-}, async (ctx) => {
-  return ctx.json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-  });
-});
-
-// Register routes
-userRoutes(app);
-
-// Start server
-const port = process.env.PORT ? parseInt(process.env.PORT) : 3000;
-
-app.listen(port, () => {
-  console.log(\`🚀 Server running at http://localhost:\${port}\`);
-});
-
-// Graceful shutdown
-process.on('SIGINT', async () => {
-  console.log('\\nShutting down...');
-  await db.close();
-  process.exit(0);
-});
-`,
-
-    'src/db/index.ts': `/**
- * Database Configuration
- */
-
-import { connect, type Database } from 'vexor-orm';
-
-export let db: Database;
-
-export async function initDatabase(): Promise<Database> {
-  db = await connect({
-    driver: 'sqlite',
-    filename: './data/app.db',
-  });
-
-  // Run migrations
-  await db.migrate();
-
-  return db;
-}
-
-// Initialize on import
-initDatabase().catch(console.error);
-
-export { db as default };
-`,
-
-    'src/db/schema.ts': `/**
- * Database Schema
- */
-
-import { table, column } from 'vexor-orm';
-
-export const users = table('users', {
-  id: column.serial().primaryKey(),
-  name: column.varchar(255).notNull(),
-  email: column.varchar(255).unique().notNull(),
-  password: column.varchar(255).notNull(),
-  createdAt: column.timestamp().defaultNow(),
-  updatedAt: column.timestamp().defaultNow(),
-});
-
-export type User = typeof users.$inferSelect;
-export type NewUser = typeof users.$inferInsert;
-`,
-
-    'src/routes/users.ts': `/**
- * User Routes
- */
-
-import { Vexor, Type } from 'vexor';
-import { db } from '../db/index.js';
-import { users } from '../db/schema.js';
-
-const UserSchema = Type.Object({
-  id: Type.Number(),
-  name: Type.String(),
-  email: Type.String({ format: 'email' }),
-  createdAt: Type.String(),
-});
-
-const CreateUserSchema = Type.Object({
-  name: Type.String({ minLength: 1, maxLength: 255 }),
-  email: Type.String({ format: 'email' }),
-  password: Type.String({ minLength: 8 }),
-});
-
-export function userRoutes(app: Vexor): void {
-  // List users
-  app.get('/users', {
-    response: {
-      200: Type.Array(UserSchema),
-    },
-  }, async (ctx) => {
-    const userList = await db.findMany(users);
-    return ctx.json(userList.map(u => ({
-      id: u.id,
-      name: u.name,
-      email: u.email,
-      createdAt: u.createdAt?.toISOString() ?? '',
-    })));
-  });
-
-  // Get user by ID
-  app.get('/users/:id', {
-    params: Type.Object({ id: Type.String() }),
-    response: {
-      200: UserSchema,
-      404: Type.Object({ error: Type.String() }),
-    },
-  }, async (ctx) => {
-    const { id } = ctx.params;
-    const user = await db.findOne(users, { id: parseInt(id) });
-
-    if (!user) {
-      return ctx.json({ error: 'User not found' }, 404);
-    }
-
-    return ctx.json({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      createdAt: user.createdAt?.toISOString() ?? '',
-    });
-  });
-
-  // Create user
-  app.post('/users', {
-    body: CreateUserSchema,
-    response: {
-      201: UserSchema,
-      400: Type.Object({ error: Type.String() }),
-    },
-  }, async (ctx) => {
-    const { name, email, password } = ctx.body;
-
-    // Check if email exists
-    const existing = await db.findOne(users, { email });
-    if (existing) {
-      return ctx.json({ error: 'Email already exists' }, 400);
-    }
-
-    // Create user (password should be hashed in production)
-    const user = await db.insertInto(users, {
-      name,
-      email,
-      password, // Hash this in production!
-    });
-
-    return ctx.json({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      createdAt: user.createdAt?.toISOString() ?? '',
-    }, 201);
-  });
-}
-`,
-
-    '.gitignore': `node_modules/
-dist/
-data/
-.env
-.env.local
-*.log
-.DS_Store
-`,
-
-    '.env.example': `# Server
-PORT=3000
-NODE_ENV=development
-
-# Database
-DATABASE_URL=./data/app.db
-`,
-
-    'README.md': `# ${name}
-
-A Vexor application.
-
-## Getting Started
-
-\`\`\`bash
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-
-# Build for production
-npm run build
-
-# Start production server
-npm start
-\`\`\`
-
-## Database
-
-\`\`\`bash
-# Run migrations
-npm run db:migrate
-
-# Rollback migrations
-npm run db:rollback
-\`\`\`
-`,
-  };
-}
-
-/**
- * Fullstack template files
- */
-function getFullstackTemplate(name: string): Record<string, string> {
-  const apiFiles = getApiTemplate(name);
-
-  return {
-    ...apiFiles,
-    'src/index.ts': apiFiles['src/index.ts'].replace(
-      'const port',
-      `// Serve static files
-app.get('/*', async (ctx) => {
-  // In production, serve from dist/public
-  return ctx.text('Frontend not built', 404);
-});
-
-const port`
-    ),
-    'public/index.html': `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${name}</title>
-</head>
-<body>
-  <div id="app">
-    <h1>Welcome to ${name}</h1>
-    <p>Edit public/index.html to get started.</p>
-  </div>
-</body>
-</html>
-`,
-  };
-}
-
-/**
- * Minimal template files
- */
-function getMinimalTemplate(name: string): Record<string, string> {
-  return {
-    'package.json': JSON.stringify({
-      name,
-      version: '0.0.1',
-      type: 'module',
-      scripts: {
-        dev: 'tsx watch src/index.ts',
-        build: 'tsup src/index.ts --format esm',
-        start: 'node dist/index.js',
-      },
-      dependencies: {
-        vexor: '^0.0.1',
-      },
-      devDependencies: {
-        '@types/node': '^22.0.0',
-        tsup: '^8.5.0',
-        tsx: '^4.0.0',
-        typescript: '^5.8.0',
-      },
-    }, null, 2),
-
-    'tsconfig.json': JSON.stringify({
-      compilerOptions: {
-        target: 'ES2022',
-        module: 'ESNext',
-        moduleResolution: 'bundler',
-        strict: true,
-        esModuleInterop: true,
-        skipLibCheck: true,
-        outDir: './dist',
-        rootDir: './src',
-      },
-      include: ['src/**/*'],
-    }, null, 2),
-
-    'src/index.ts': `import { Vexor } from 'vexor';
-
-const app = new Vexor();
-
-app.get('/', async (ctx) => {
-  return ctx.json({ message: 'Hello from Vexor!' });
-});
-
-app.listen(3000, () => {
-  console.log('Server running at http://localhost:3000');
-});
-`,
-
-    '.gitignore': `node_modules/
-dist/
-.env
-`,
-  };
-}
+export default newCommand;

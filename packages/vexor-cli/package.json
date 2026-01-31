@@ -1,7 +1,7 @@
 {
   "name": "@vexorjs/cli",
   "version": "1.0.0",
-  "description": "CLI tool for Vexor framework - project scaffolding and code generation",
+  "description": "CLI tool for Vexor framework - project scaffolding, code generation, and development utilities",
   "type": "module",
   "bin": {
     "vexor": "./dist/index.js"
@@ -31,9 +31,12 @@
     "cli",
     "framework",
     "scaffolding",
-    "generator"
+    "generator",
+    "nodejs",
+    "typescript",
+    "backend"
   ],
-  "author": "Vexor Team",
+  "author": "Sitharaj Seenivasan",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -46,6 +49,8 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "@types/prompts": "^2.4.9",
+    "@types/semver": "^7.5.8",
     "tsup": "^8.5.0",
     "typescript": "^5.8.0"
   },
@@ -53,7 +58,8 @@
     "cac": "^6.7.14",
     "chalk": "^5.3.0",
     "ora": "^8.0.1",
-    "prompts": "^2.4.2"
+    "prompts": "^2.4.2",
+    "semver": "^7.6.0"
   },
   "engines": {
     "node": ">=20.0.0"
