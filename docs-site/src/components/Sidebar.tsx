@@ -82,7 +82,7 @@ export default function Sidebar() {
   const location = useLocation();
 
   return (
-    <aside className="fixed left-0 top-16 bottom-0 w-64 bg-slate-900/50 border-r border-slate-800/50 overflow-y-auto scrollbar-hide">
+    <aside className="hidden md:block fixed left-0 top-16 bottom-0 w-64 bg-slate-50/50 dark:bg-slate-900/50 border-r border-slate-200 dark:border-slate-800/50 overflow-y-auto scrollbar-hide">
       <nav className="p-4 space-y-6">
         {sidebarSections.map((section) => (
           <div key={section.title}>

@@ -8,12 +8,12 @@ export default function Layout() {
   const isDocsPage = location.pathname.startsWith('/docs');
 
   return (
-    <div className="min-h-screen bg-slate-950">
+    <div className="min-h-screen bg-white dark:bg-slate-950 transition-colors">
       <Navbar />
       {isDocsPage ? (
         <div className="flex pt-16">
           <Sidebar />
-          <main className="flex-1 ml-64 p-8">
+          <main className="flex-1 md:ml-64 p-4 md:p-8">
             <div className="max-w-4xl mx-auto">
               <Outlet />
             </div>

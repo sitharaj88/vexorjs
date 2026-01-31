@@ -103,21 +103,21 @@ export default function HomePage() {
       <section className="relative py-20 hero-gradient overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-4xl mx-auto">
-            <div className="inline-flex items-center gap-2 bg-slate-800/50 border border-slate-700/50 rounded-full px-4 py-2 mb-8">
+            <div className="inline-flex items-center gap-2 bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-full px-4 py-2 mb-8">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
               </span>
-              <span className="text-sm text-slate-300">Now with AWS Lambda & Edge Runtime Support</span>
+              <span className="text-sm text-slate-600 dark:text-slate-300">Now with AWS Lambda & Edge Runtime Support</span>
             </div>
 
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight mb-6">
               <span className="gradient-text">Build APIs</span>
               <br />
-              <span className="text-white">at Lightning Speed</span>
+              <span className="text-slate-900 dark:text-white">at Lightning Speed</span>
             </h1>
 
-            <p className="text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
+            <p className="text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
               A blazing-fast, batteries-included, multi-runtime Node.js backend framework with its own ORM.
               Type-safe from database to API response.
             </p>
@@ -147,7 +147,7 @@ export default function HomePage() {
       </section>
 
       {/* Stats Section */}
-      <section className="py-12 border-y border-slate-800/50 bg-slate-900/30">
+      <section className="py-12 border-y border-slate-200 dark:border-slate-800/50 bg-slate-50 dark:bg-slate-900/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {stats.map((stat) => (
@@ -165,7 +165,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold mb-4">Everything You Need</h2>
-            <p className="text-lg text-slate-400 max-w-2xl mx-auto">
+            <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
               A complete toolkit for building production-ready APIs without the boilerplate
             </p>
           </div>
@@ -177,7 +177,7 @@ export default function HomePage() {
                   {feature.icon}
                 </div>
                 <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
-                <p className="text-slate-400 text-sm">{feature.description}</p>
+                <p className="text-slate-600 dark:text-slate-400 text-sm">{feature.description}</p>
               </div>
             ))}
           </div>
@@ -185,16 +185,16 @@ export default function HomePage() {
       </section>
 
       {/* Middleware Section */}
-      <section className="py-24 bg-slate-900/30">
+      <section className="py-24 bg-slate-50 dark:bg-slate-900/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold mb-4">Built-in Middleware</h2>
-            <p className="text-lg text-slate-400">Production-ready middleware out of the box</p>
+            <p className="text-lg text-slate-600 dark:text-slate-400">Production-ready middleware out of the box</p>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
             {middlewareList.map((item) => (
-              <div key={item} className="flex items-center gap-2 bg-slate-800/50 rounded-lg px-4 py-3">
+              <div key={item} className="flex items-center gap-2 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-transparent rounded-lg px-4 py-3">
                 <CheckCircle className="w-4 h-4 text-vexor-400" />
                 <span className="text-sm">{item}</span>
               </div>
@@ -207,7 +207,7 @@ export default function HomePage() {
       <section className="py-24">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl sm:text-4xl font-bold mb-6">Ready to Build?</h2>
-          <p className="text-xl text-slate-400 mb-10">
+          <p className="text-xl text-slate-600 dark:text-slate-400 mb-10">
             Start building production-ready APIs in minutes with Vexor
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -222,7 +222,7 @@ export default function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 border-t border-slate-800/50">
+      <footer className="py-12 border-t border-slate-200 dark:border-slate-800/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-8">
             <div className="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -234,23 +234,23 @@ export default function HomePage() {
                 <span className="text-slate-500 text-sm">© 2024</span>
               </div>
               <div className="flex items-center gap-6">
-                <a href="https://github.com/sitharaj88/vexorjs" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-white transition-colors">
+                <a href="https://github.com/sitharaj88/vexorjs" target="_blank" rel="noopener noreferrer" className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors">
                   <Github className="w-5 h-5" />
                 </a>
-                <a href="https://www.linkedin.com/in/sitharaj88" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-white transition-colors">
+                <a href="https://www.linkedin.com/in/sitharaj88" target="_blank" rel="noopener noreferrer" className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors">
                   <Linkedin className="w-5 h-5" />
                 </a>
-                <a href="https://sitharaj.in" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-white transition-colors">
+                <a href="https://sitharaj.in" target="_blank" rel="noopener noreferrer" className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors">
                   <ExternalLink className="w-5 h-5" />
                 </a>
               </div>
             </div>
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-6 border-t border-slate-800/50">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-6 border-t border-slate-200 dark:border-slate-800/50">
               <div className="flex items-center gap-6 text-sm">
-                <Link to="/docs/getting-started" className="text-slate-400 hover:text-white transition-colors">
+                <Link to="/docs/getting-started" className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors">
                   Documentation
                 </Link>
-                <a href="https://github.com/sitharaj88/vexorjs" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-white transition-colors">
+                <a href="https://github.com/sitharaj88/vexorjs" target="_blank" rel="noopener noreferrer" className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors">
                   GitHub
                 </a>
               </div>
