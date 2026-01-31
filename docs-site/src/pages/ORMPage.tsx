@@ -344,35 +344,35 @@ export default function ORMPage() {
   return (
     <div className="space-y-12">
       <div>
-        <h1 className="text-4xl font-bold mb-4">Vexor ORM</h1>
-        <p className="text-lg text-slate-400">
+        <h1 className="text-4xl font-bold mb-4 text-slate-900 dark:text-white">Vexor ORM</h1>
+        <p className="text-lg text-slate-600 dark:text-slate-400">
           A blazing-fast, type-safe ORM designed for modern TypeScript applications.
         </p>
       </div>
 
       {/* Features */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="p-4 bg-slate-900/50 border border-slate-800 rounded-xl">
+        <div className="p-4 bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl">
           <div className="text-2xl mb-2">&#x26A1;</div>
-          <h3 className="font-semibold mb-1">High Performance</h3>
-          <p className="text-sm text-slate-400">Prepared statements, connection pooling, and query optimization</p>
+          <h3 className="font-semibold mb-1 text-slate-900 dark:text-white">High Performance</h3>
+          <p className="text-sm text-slate-600 dark:text-slate-400">Prepared statements, connection pooling, and query optimization</p>
         </div>
-        <div className="p-4 bg-slate-900/50 border border-slate-800 rounded-xl">
+        <div className="p-4 bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl">
           <div className="text-2xl mb-2">&#x1F512;</div>
-          <h3 className="font-semibold mb-1">Type Safe</h3>
-          <p className="text-sm text-slate-400">Full TypeScript inference from schema to query results</p>
+          <h3 className="font-semibold mb-1 text-slate-900 dark:text-white">Type Safe</h3>
+          <p className="text-sm text-slate-600 dark:text-slate-400">Full TypeScript inference from schema to query results</p>
         </div>
-        <div className="p-4 bg-slate-900/50 border border-slate-800 rounded-xl">
+        <div className="p-4 bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl">
           <div className="text-2xl mb-2">&#x1F4BE;</div>
-          <h3 className="font-semibold mb-1">Multi-Database</h3>
-          <p className="text-sm text-slate-400">PostgreSQL, MySQL, and SQLite support</p>
+          <h3 className="font-semibold mb-1 text-slate-900 dark:text-white">Multi-Database</h3>
+          <p className="text-sm text-slate-600 dark:text-slate-400">PostgreSQL, MySQL, and SQLite support</p>
         </div>
       </div>
 
       {/* Connection */}
       <section id="connection">
-        <h2 className="text-2xl font-bold mb-4">Database Connection</h2>
-        <p className="text-slate-400 mb-4">
+        <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">Database Connection</h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
           Connect to your database with built-in connection pooling and health checks.
         </p>
         <CodeBlock code={connectionCode} filename="db.ts" showLineNumbers />
@@ -380,14 +380,14 @@ export default function ORMPage() {
 
       {/* Schema */}
       <section id="schema">
-        <h2 className="text-2xl font-bold mb-4">Schema Definition</h2>
-        <p className="text-slate-400 mb-4">
+        <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">Schema Definition</h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
           Define your tables with full type inference. Column types are automatically inferred.
         </p>
         <CodeBlock code={schemaCode} filename="schema.ts" showLineNumbers />
 
         <div className="mt-6 overflow-x-auto">
-          <h3 className="text-lg font-semibold mb-3">Column Types</h3>
+          <h3 className="text-lg font-semibold mb-3 text-slate-900 dark:text-white">Column Types</h3>
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-800">
@@ -449,8 +449,8 @@ export default function ORMPage() {
 
       {/* SELECT */}
       <section id="select">
-        <h2 className="text-2xl font-bold mb-4">SELECT Queries</h2>
-        <p className="text-slate-400 mb-4">
+        <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">SELECT Queries</h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
           Build type-safe SELECT queries with filtering, sorting, and pagination.
         </p>
         <CodeBlock code={selectCode} filename="queries.ts" showLineNumbers />
@@ -458,8 +458,8 @@ export default function ORMPage() {
 
       {/* JOINs */}
       <section id="joins">
-        <h2 className="text-2xl font-bold mb-4">JOIN Queries</h2>
-        <p className="text-slate-400 mb-4">
+        <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">JOIN Queries</h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
           Combine data from multiple tables with type-safe joins.
         </p>
         <CodeBlock code={joinCode} filename="joins.ts" showLineNumbers />
@@ -467,8 +467,8 @@ export default function ORMPage() {
 
       {/* INSERT */}
       <section id="insert">
-        <h2 className="text-2xl font-bold mb-4">INSERT Operations</h2>
-        <p className="text-slate-400 mb-4">
+        <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">INSERT Operations</h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
           Insert single or multiple records with conflict handling.
         </p>
         <CodeBlock code={insertCode} filename="insert.ts" showLineNumbers />
@@ -476,8 +476,8 @@ export default function ORMPage() {
 
       {/* UPDATE */}
       <section id="update">
-        <h2 className="text-2xl font-bold mb-4">UPDATE Operations</h2>
-        <p className="text-slate-400 mb-4">
+        <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">UPDATE Operations</h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
           Update records with type-safe conditions and expressions.
         </p>
         <CodeBlock code={updateCode} filename="update.ts" showLineNumbers />
@@ -485,8 +485,8 @@ export default function ORMPage() {
 
       {/* DELETE */}
       <section id="delete">
-        <h2 className="text-2xl font-bold mb-4">DELETE Operations</h2>
-        <p className="text-slate-400 mb-4">
+        <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">DELETE Operations</h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
           Delete records with safe conditions.
         </p>
         <CodeBlock code={deleteCode} filename="delete.ts" showLineNumbers />
@@ -494,14 +494,14 @@ export default function ORMPage() {
 
       {/* Transactions */}
       <section id="transactions">
-        <h2 className="text-2xl font-bold mb-4">Transactions</h2>
-        <p className="text-slate-400 mb-4">
+        <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">Transactions</h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
           Execute multiple operations atomically with full ACID compliance.
         </p>
         <CodeBlock code={transactionCode} filename="transactions.ts" showLineNumbers />
 
         <div className="mt-6 p-4 bg-vexor-500/10 border border-vexor-500/20 rounded-xl">
-          <p className="text-sm text-slate-300">
+          <p className="text-sm text-slate-600 dark:text-slate-300">
             <strong className="text-vexor-400">Automatic Rollback:</strong> If any operation throws an error,
             the entire transaction is automatically rolled back. No manual cleanup required.
           </p>
@@ -510,29 +510,29 @@ export default function ORMPage() {
 
       {/* Migrations */}
       <section id="migrations">
-        <h2 className="text-2xl font-bold mb-4">Migrations</h2>
-        <p className="text-slate-400 mb-4">
+        <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">Migrations</h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
           Version-controlled database schema changes with up/down migrations.
         </p>
         <CodeBlock code={migrationCode} filename="migrations/001_create_users.ts" showLineNumbers />
 
         <div className="mt-6">
-          <h3 className="text-lg font-semibold mb-3">Migration CLI</h3>
+          <h3 className="text-lg font-semibold mb-3 text-slate-900 dark:text-white">Migration CLI</h3>
           <CodeBlock code={migrationCliCode} language="bash" />
         </div>
       </section>
 
       {/* Next Steps */}
-      <section className="p-6 bg-slate-900/50 border border-slate-800 rounded-2xl">
-        <h2 className="text-xl font-bold mb-4">Next Steps</h2>
+      <section className="p-6 bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl">
+        <h2 className="text-xl font-bold mb-4 text-slate-900 dark:text-white">Next Steps</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <a href="/vexorjs/docs/middleware" className="block p-4 bg-slate-800/50 hover:bg-slate-800 rounded-xl transition-colors">
-            <h3 className="font-semibold mb-1">Middleware &rarr;</h3>
-            <p className="text-sm text-slate-400">Add authentication, caching, and more with built-in middleware</p>
+          <a href="/vexorjs/docs/middleware" className="block p-4 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/50 dark:hover:bg-slate-800 rounded-xl transition-colors">
+            <h3 className="font-semibold mb-1 text-slate-900 dark:text-white">Middleware &rarr;</h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400">Add authentication, caching, and more with built-in middleware</p>
           </a>
-          <a href="/vexorjs/docs/realtime" className="block p-4 bg-slate-800/50 hover:bg-slate-800 rounded-xl transition-colors">
-            <h3 className="font-semibold mb-1">Real-time &rarr;</h3>
-            <p className="text-sm text-slate-400">Build WebSocket and SSE applications</p>
+          <a href="/vexorjs/docs/realtime" className="block p-4 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/50 dark:hover:bg-slate-800 rounded-xl transition-colors">
+            <h3 className="font-semibold mb-1 text-slate-900 dark:text-white">Real-time &rarr;</h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400">Build WebSocket and SSE applications</p>
           </a>
         </div>
       </section>

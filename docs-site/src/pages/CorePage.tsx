@@ -236,17 +236,17 @@ export default function CorePage() {
   return (
     <div className="space-y-12">
       <div>
-        <h1 className="text-4xl font-bold mb-4">Core Concepts</h1>
-        <p className="text-lg text-slate-400">
+        <h1 className="text-4xl font-bold mb-4 text-slate-900 dark:text-white">Core Concepts</h1>
+        <p className="text-lg text-slate-600 dark:text-slate-400">
           Learn the fundamental concepts of building applications with Vexor.
         </p>
       </div>
 
       {/* Application */}
       <section id="application">
-        <h2 className="text-2xl font-bold mb-4">Application</h2>
-        <p className="text-slate-400 mb-4">
-          The <code className="bg-slate-800 px-2 py-0.5 rounded text-sm">Vexor</code> class is the core of your application.
+        <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">Application</h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
+          The <code className="bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded text-sm">Vexor</code> class is the core of your application.
           It handles routing, middleware, and server lifecycle.
         </p>
         <CodeBlock code={vexorAppCode} filename="app.ts" showLineNumbers />
@@ -254,16 +254,16 @@ export default function CorePage() {
 
       {/* Context */}
       <section id="context">
-        <h2 className="text-2xl font-bold mb-4">Request Context</h2>
-        <p className="text-slate-400 mb-4">
-          Every route handler receives a context object (<code className="bg-slate-800 px-2 py-0.5 rounded text-sm">ctx</code>)
+        <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">Request Context</h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
+          Every route handler receives a context object (<code className="bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded text-sm">ctx</code>)
           that provides access to request data and response methods.
         </p>
         <CodeBlock code={contextCode} filename="context.ts" showLineNumbers />
 
         <div className="mt-8">
-          <h3 className="text-xl font-semibold mb-4">Response Methods</h3>
-          <p className="text-slate-400 mb-4">
+          <h3 className="text-xl font-semibold mb-4 text-slate-900 dark:text-white">Response Methods</h3>
+          <p className="text-slate-600 dark:text-slate-400 mb-4">
             Vexor provides fluent response methods for common response types:
           </p>
           <CodeBlock code={responseMethodsCode} showLineNumbers />
@@ -272,25 +272,25 @@ export default function CorePage() {
 
       {/* Routing */}
       <section id="routing">
-        <h2 className="text-2xl font-bold mb-4">Routing</h2>
-        <p className="text-slate-400 mb-4">
+        <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">Routing</h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
           Vexor uses a high-performance radix tree router for lightning-fast route matching.
         </p>
         <CodeBlock code={routingCode} filename="routes.ts" showLineNumbers />
 
         <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="p-4 bg-slate-900/50 border border-slate-800 rounded-xl">
-            <h4 className="font-semibold mb-2">Route Parameters</h4>
-            <p className="text-sm text-slate-400">
-              Use <code className="bg-slate-800 px-1 rounded">:param</code> for named parameters.
-              Access via <code className="bg-slate-800 px-1 rounded">ctx.params.param</code>.
+          <div className="p-4 bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl">
+            <h4 className="font-semibold mb-2 text-slate-900 dark:text-white">Route Parameters</h4>
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              Use <code className="bg-slate-200 dark:bg-slate-800 px-1 rounded">:param</code> for named parameters.
+              Access via <code className="bg-slate-200 dark:bg-slate-800 px-1 rounded">ctx.params.param</code>.
             </p>
           </div>
-          <div className="p-4 bg-slate-900/50 border border-slate-800 rounded-xl">
-            <h4 className="font-semibold mb-2">Wildcards</h4>
-            <p className="text-sm text-slate-400">
-              Use <code className="bg-slate-800 px-1 rounded">*</code> to match everything.
-              Access via <code className="bg-slate-800 px-1 rounded">ctx.params['*']</code>.
+          <div className="p-4 bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl">
+            <h4 className="font-semibold mb-2 text-slate-900 dark:text-white">Wildcards</h4>
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              Use <code className="bg-slate-200 dark:bg-slate-800 px-1 rounded">*</code> to match everything.
+              Access via <code className="bg-slate-200 dark:bg-slate-800 px-1 rounded">ctx.params['*']</code>.
             </p>
           </div>
         </div>
@@ -298,66 +298,66 @@ export default function CorePage() {
 
       {/* Schema Validation */}
       <section id="validation">
-        <h2 className="text-2xl font-bold mb-4">Schema Validation</h2>
-        <p className="text-slate-400 mb-4">
+        <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">Schema Validation</h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
           Vexor includes a TypeBox-compatible schema system for runtime validation with full TypeScript inference.
         </p>
         <CodeBlock code={schemaValidationCode} filename="schemas.ts" showLineNumbers />
 
         <div className="mt-6 p-4 bg-vexor-500/10 border border-vexor-500/20 rounded-xl">
-          <p className="text-sm text-slate-300">
+          <p className="text-sm text-slate-600 dark:text-slate-300">
             <strong className="text-vexor-400">Type Inference:</strong> All schemas automatically infer TypeScript types.
-            When you define a body schema, <code className="bg-slate-800 px-1 rounded">ctx.body</code> is fully typed!
+            When you define a body schema, <code className="bg-slate-200 dark:bg-slate-800 px-1 rounded">ctx.body</code> is fully typed!
           </p>
         </div>
       </section>
 
       {/* Hooks */}
       <section id="hooks">
-        <h2 className="text-2xl font-bold mb-4">Lifecycle Hooks</h2>
-        <p className="text-slate-400 mb-4">
+        <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">Lifecycle Hooks</h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
           Hooks allow you to intercept requests at different stages of the request lifecycle.
         </p>
         <CodeBlock code={hooksCode} filename="hooks.ts" showLineNumbers />
 
         <div className="mt-6">
-          <h3 className="text-lg font-semibold mb-3">Hook Execution Order</h3>
+          <h3 className="text-lg font-semibold mb-3 text-slate-900 dark:text-white">Hook Execution Order</h3>
           <div className="flex flex-wrap items-center gap-2 text-sm">
-            <span className="px-3 py-1 bg-slate-800 rounded-full">onRequest</span>
+            <span className="px-3 py-1 bg-slate-200 dark:bg-slate-800 rounded-full text-slate-700 dark:text-slate-300">onRequest</span>
             <span className="text-slate-500">&rarr;</span>
-            <span className="px-3 py-1 bg-slate-800 rounded-full">preValidation</span>
+            <span className="px-3 py-1 bg-slate-200 dark:bg-slate-800 rounded-full text-slate-700 dark:text-slate-300">preValidation</span>
             <span className="text-slate-500">&rarr;</span>
-            <span className="px-3 py-1 bg-slate-800 rounded-full">preHandler</span>
+            <span className="px-3 py-1 bg-slate-200 dark:bg-slate-800 rounded-full text-slate-700 dark:text-slate-300">preHandler</span>
             <span className="text-slate-500">&rarr;</span>
             <span className="px-3 py-1 bg-vexor-500/20 text-vexor-400 rounded-full">Handler</span>
             <span className="text-slate-500">&rarr;</span>
-            <span className="px-3 py-1 bg-slate-800 rounded-full">onSend</span>
+            <span className="px-3 py-1 bg-slate-200 dark:bg-slate-800 rounded-full text-slate-700 dark:text-slate-300">onSend</span>
             <span className="text-slate-500">&rarr;</span>
-            <span className="px-3 py-1 bg-slate-800 rounded-full">onResponse</span>
+            <span className="px-3 py-1 bg-slate-200 dark:bg-slate-800 rounded-full text-slate-700 dark:text-slate-300">onResponse</span>
           </div>
         </div>
       </section>
 
       {/* Error Handling */}
       <section id="error-handling">
-        <h2 className="text-2xl font-bold mb-4">Error Handling</h2>
-        <p className="text-slate-400 mb-4">
+        <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">Error Handling</h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
           Vexor provides centralized error handling with custom error handlers.
         </p>
         <CodeBlock code={errorHandlingCode} filename="errors.ts" showLineNumbers />
       </section>
 
       {/* Next Steps */}
-      <section className="p-6 bg-slate-900/50 border border-slate-800 rounded-2xl">
-        <h2 className="text-xl font-bold mb-4">Next Steps</h2>
+      <section className="p-6 bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl">
+        <h2 className="text-xl font-bold mb-4 text-slate-900 dark:text-white">Next Steps</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <a href="/vexorjs/docs/orm" className="block p-4 bg-slate-800/50 hover:bg-slate-800 rounded-xl transition-colors">
-            <h3 className="font-semibold mb-1">Vexor ORM &rarr;</h3>
-            <p className="text-sm text-slate-400">Learn about database operations with the built-in ORM</p>
+          <a href="/vexorjs/docs/orm" className="block p-4 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/50 dark:hover:bg-slate-800 rounded-xl transition-colors">
+            <h3 className="font-semibold mb-1 text-slate-900 dark:text-white">Vexor ORM &rarr;</h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400">Learn about database operations with the built-in ORM</p>
           </a>
-          <a href="/vexorjs/docs/middleware" className="block p-4 bg-slate-800/50 hover:bg-slate-800 rounded-xl transition-colors">
-            <h3 className="font-semibold mb-1">Middleware &rarr;</h3>
-            <p className="text-sm text-slate-400">Explore built-in middleware for CORS, rate limiting, and more</p>
+          <a href="/vexorjs/docs/middleware" className="block p-4 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/50 dark:hover:bg-slate-800 rounded-xl transition-colors">
+            <h3 className="font-semibold mb-1 text-slate-900 dark:text-white">Middleware &rarr;</h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400">Explore built-in middleware for CORS, rate limiting, and more</p>
           </a>
         </div>
       </section>

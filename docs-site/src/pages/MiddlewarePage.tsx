@@ -406,8 +406,8 @@ export default function MiddlewarePage() {
   return (
     <div className="space-y-12">
       <div>
-        <h1 className="text-4xl font-bold mb-4">Middleware</h1>
-        <p className="text-lg text-slate-400">
+        <h1 className="text-4xl font-bold mb-4 text-slate-900 dark:text-white">Middleware</h1>
+        <p className="text-lg text-slate-600 dark:text-slate-400">
           Vexor includes a comprehensive set of production-ready middleware for common use cases.
         </p>
       </div>
@@ -438,8 +438,8 @@ export default function MiddlewarePage() {
 
       {/* CORS */}
       <section id="cors">
-        <h2 className="text-2xl font-bold mb-4">CORS</h2>
-        <p className="text-slate-400 mb-4">
+        <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">CORS</h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
           Cross-Origin Resource Sharing middleware for handling browser security policies.
         </p>
         <CodeBlock code={corsCode} filename="cors.ts" showLineNumbers />
@@ -447,8 +447,8 @@ export default function MiddlewarePage() {
 
       {/* Rate Limiting */}
       <section id="rate-limit">
-        <h2 className="text-2xl font-bold mb-4">Rate Limiting</h2>
-        <p className="text-slate-400 mb-4">
+        <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">Rate Limiting</h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
           Protect your API from abuse with flexible rate limiting strategies.
         </p>
         <CodeBlock code={rateLimitCode} filename="rate-limit.ts" showLineNumbers />
@@ -456,8 +456,8 @@ export default function MiddlewarePage() {
 
       {/* JWT */}
       <section id="jwt">
-        <h2 className="text-2xl font-bold mb-4">JWT Authentication</h2>
-        <p className="text-slate-400 mb-4">
+        <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">JWT Authentication</h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
           JSON Web Token authentication with support for access and refresh tokens.
         </p>
         <CodeBlock code={jwtCode} filename="jwt-auth.ts" showLineNumbers />
@@ -465,8 +465,8 @@ export default function MiddlewarePage() {
 
       {/* Sessions */}
       <section id="sessions">
-        <h2 className="text-2xl font-bold mb-4">Session Management</h2>
-        <p className="text-slate-400 mb-4">
+        <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">Session Management</h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
           Server-side session management with multiple storage backends.
         </p>
         <CodeBlock code={sessionCode} filename="sessions.ts" showLineNumbers />
@@ -474,8 +474,8 @@ export default function MiddlewarePage() {
 
       {/* Compression */}
       <section id="compression">
-        <h2 className="text-2xl font-bold mb-4">Compression</h2>
-        <p className="text-slate-400 mb-4">
+        <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">Compression</h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
           Automatic response compression with gzip, deflate, and Brotli support.
         </p>
         <CodeBlock code={compressionCode} filename="compression.ts" showLineNumbers />
@@ -483,8 +483,8 @@ export default function MiddlewarePage() {
 
       {/* Caching */}
       <section id="caching">
-        <h2 className="text-2xl font-bold mb-4">Caching</h2>
-        <p className="text-slate-400 mb-4">
+        <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">Caching</h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
           Response caching with in-memory and Redis backends.
         </p>
         <CodeBlock code={cacheCode} filename="caching.ts" showLineNumbers />
@@ -492,8 +492,8 @@ export default function MiddlewarePage() {
 
       {/* Upload */}
       <section id="upload">
-        <h2 className="text-2xl font-bold mb-4">File Upload</h2>
-        <p className="text-slate-400 mb-4">
+        <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">File Upload</h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
           Handle file uploads with validation, size limits, and storage options.
         </p>
         <CodeBlock code={uploadCode} filename="upload.ts" showLineNumbers />
@@ -501,8 +501,8 @@ export default function MiddlewarePage() {
 
       {/* Health */}
       <section id="health">
-        <h2 className="text-2xl font-bold mb-4">Health Checks</h2>
-        <p className="text-slate-400 mb-4">
+        <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">Health Checks</h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
           Expose health endpoints for load balancers and monitoring systems.
         </p>
         <CodeBlock code={healthCode} filename="health.ts" showLineNumbers />
@@ -510,8 +510,8 @@ export default function MiddlewarePage() {
 
       {/* Logging */}
       <section id="logging">
-        <h2 className="text-2xl font-bold mb-4">Logging</h2>
-        <p className="text-slate-400 mb-4">
+        <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">Logging</h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
           Structured logging with request tracing and custom formatters.
         </p>
         <CodeBlock code={loggingCode} filename="logging.ts" showLineNumbers />
@@ -519,24 +519,24 @@ export default function MiddlewarePage() {
 
       {/* Versioning */}
       <section id="versioning">
-        <h2 className="text-2xl font-bold mb-4">API Versioning</h2>
-        <p className="text-slate-400 mb-4">
+        <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">API Versioning</h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
           Version your API with path, header, or query parameter strategies.
         </p>
         <CodeBlock code={versioningCode} filename="versioning.ts" showLineNumbers />
       </section>
 
       {/* Next Steps */}
-      <section className="p-6 bg-slate-900/50 border border-slate-800 rounded-2xl">
-        <h2 className="text-xl font-bold mb-4">Next Steps</h2>
+      <section className="p-6 bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl">
+        <h2 className="text-xl font-bold mb-4 text-slate-900 dark:text-white">Next Steps</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <a href="/vexorjs/docs/realtime" className="block p-4 bg-slate-800/50 hover:bg-slate-800 rounded-xl transition-colors">
-            <h3 className="font-semibold mb-1">Real-time &rarr;</h3>
-            <p className="text-sm text-slate-400">Build WebSocket and SSE applications</p>
+          <a href="/vexorjs/docs/realtime" className="block p-4 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/50 dark:hover:bg-slate-800 rounded-xl transition-colors">
+            <h3 className="font-semibold mb-1 text-slate-900 dark:text-white">Real-time &rarr;</h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400">Build WebSocket and SSE applications</p>
           </a>
-          <a href="/vexorjs/docs/deployment" className="block p-4 bg-slate-800/50 hover:bg-slate-800 rounded-xl transition-colors">
-            <h3 className="font-semibold mb-1">Deployment &rarr;</h3>
-            <p className="text-sm text-slate-400">Deploy to Node.js, Bun, Lambda, and Edge</p>
+          <a href="/vexorjs/docs/deployment" className="block p-4 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/50 dark:hover:bg-slate-800 rounded-xl transition-colors">
+            <h3 className="font-semibold mb-1 text-slate-900 dark:text-white">Deployment &rarr;</h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400">Deploy to Node.js, Bun, Lambda, and Edge</p>
           </a>
         </div>
       </section>

@@ -361,76 +361,76 @@ export default function RealtimePage() {
   return (
     <div className="space-y-12">
       <div>
-        <h1 className="text-4xl font-bold mb-4">Real-time Features</h1>
-        <p className="text-lg text-slate-400">
+        <h1 className="text-4xl font-bold mb-4 text-slate-900 dark:text-white">Real-time Features</h1>
+        <p className="text-lg text-slate-600 dark:text-slate-400">
           Build real-time applications with WebSockets, Server-Sent Events, and Pub/Sub.
         </p>
       </div>
 
       {/* Feature Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="p-4 bg-slate-900/50 border border-slate-800 rounded-xl">
+        <div className="p-4 bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl">
           <div className="text-2xl mb-2">&#x1F50C;</div>
-          <h3 className="font-semibold mb-1">WebSocket</h3>
-          <p className="text-sm text-slate-400">Bidirectional real-time communication with rooms and channels</p>
+          <h3 className="font-semibold mb-1 text-slate-900 dark:text-white">WebSocket</h3>
+          <p className="text-sm text-slate-600 dark:text-slate-400">Bidirectional real-time communication with rooms and channels</p>
         </div>
-        <div className="p-4 bg-slate-900/50 border border-slate-800 rounded-xl">
+        <div className="p-4 bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl">
           <div className="text-2xl mb-2">&#x1F4E1;</div>
-          <h3 className="font-semibold mb-1">Server-Sent Events</h3>
-          <p className="text-sm text-slate-400">One-way streaming from server to client</p>
+          <h3 className="font-semibold mb-1 text-slate-900 dark:text-white">Server-Sent Events</h3>
+          <p className="text-sm text-slate-600 dark:text-slate-400">One-way streaming from server to client</p>
         </div>
-        <div className="p-4 bg-slate-900/50 border border-slate-800 rounded-xl">
+        <div className="p-4 bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl">
           <div className="text-2xl mb-2">&#x1F4E8;</div>
-          <h3 className="font-semibold mb-1">Pub/Sub</h3>
-          <p className="text-sm text-slate-400">Event-driven architecture with memory or Redis backend</p>
+          <h3 className="font-semibold mb-1 text-slate-900 dark:text-white">Pub/Sub</h3>
+          <p className="text-sm text-slate-600 dark:text-slate-400">Event-driven architecture with memory or Redis backend</p>
         </div>
       </div>
 
       {/* WebSocket */}
       <section id="websocket">
-        <h2 className="text-2xl font-bold mb-4">WebSocket</h2>
-        <p className="text-slate-400 mb-4">
+        <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">WebSocket</h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
           Create WebSocket endpoints with type-safe message validation and lifecycle hooks.
         </p>
         <CodeBlock code={websocketCode} filename="websocket.ts" showLineNumbers />
 
         <div className="mt-8">
-          <h3 className="text-xl font-semibold mb-4">Rooms & Channels</h3>
-          <p className="text-slate-400 mb-4">
+          <h3 className="text-xl font-semibold mb-4 text-slate-900 dark:text-white">Rooms & Channels</h3>
+          <p className="text-slate-600 dark:text-slate-400 mb-4">
             Organize connections into rooms for targeted broadcasting.
           </p>
           <CodeBlock code={wsRoomsCode} filename="rooms.ts" showLineNumbers />
         </div>
 
         <div className="mt-8">
-          <h3 className="text-xl font-semibold mb-4">Authentication</h3>
-          <p className="text-slate-400 mb-4">
+          <h3 className="text-xl font-semibold mb-4 text-slate-900 dark:text-white">Authentication</h3>
+          <p className="text-slate-600 dark:text-slate-400 mb-4">
             Authenticate WebSocket connections before they're established.
           </p>
           <CodeBlock code={wsAuthCode} filename="ws-auth.ts" showLineNumbers />
         </div>
 
         <div className="mt-8">
-          <h3 className="text-xl font-semibold mb-4">Client Example</h3>
+          <h3 className="text-xl font-semibold mb-4 text-slate-900 dark:text-white">Client Example</h3>
           <CodeBlock code={wsClientCode} filename="client.js" language="javascript" showLineNumbers />
         </div>
       </section>
 
       {/* SSE */}
       <section id="sse">
-        <h2 className="text-2xl font-bold mb-4">Server-Sent Events (SSE)</h2>
-        <p className="text-slate-400 mb-4">
+        <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">Server-Sent Events (SSE)</h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
           Stream events to clients for progress updates, notifications, and live data.
         </p>
         <CodeBlock code={sseCode} filename="sse.ts" showLineNumbers />
 
         <div className="mt-8">
-          <h3 className="text-xl font-semibold mb-4">Client Example</h3>
+          <h3 className="text-xl font-semibold mb-4 text-slate-900 dark:text-white">Client Example</h3>
           <CodeBlock code={sseClientCode} filename="sse-client.js" language="javascript" showLineNumbers />
         </div>
 
         <div className="mt-6 p-4 bg-vexor-500/10 border border-vexor-500/20 rounded-xl">
-          <p className="text-sm text-slate-300">
+          <p className="text-sm text-slate-600 dark:text-slate-300">
             <strong className="text-vexor-400">When to use SSE vs WebSocket:</strong> Use SSE for one-way server-to-client
             streaming (notifications, live updates). Use WebSocket for bidirectional communication (chat, gaming, collaboration).
           </p>
@@ -439,15 +439,15 @@ export default function RealtimePage() {
 
       {/* Pub/Sub */}
       <section id="pubsub">
-        <h2 className="text-2xl font-bold mb-4">Pub/Sub & Event Bus</h2>
-        <p className="text-slate-400 mb-4">
+        <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">Pub/Sub & Event Bus</h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
           Decouple your application with event-driven architecture.
         </p>
         <CodeBlock code={pubsubCode} filename="pubsub.ts" showLineNumbers />
 
         <div className="mt-8">
-          <h3 className="text-xl font-semibold mb-4">Redis Pub/Sub (Distributed)</h3>
-          <p className="text-slate-400 mb-4">
+          <h3 className="text-xl font-semibold mb-4 text-slate-900 dark:text-white">Redis Pub/Sub (Distributed)</h3>
+          <p className="text-slate-600 dark:text-slate-400 mb-4">
             Scale horizontally with Redis-backed pub/sub for multi-instance deployments.
           </p>
           <CodeBlock code={redisPubsubCode} filename="redis-pubsub.ts" showLineNumbers />
@@ -456,24 +456,24 @@ export default function RealtimePage() {
 
       {/* Circuit Breaker */}
       <section id="resilience">
-        <h2 className="text-2xl font-bold mb-4">Resilience Patterns</h2>
-        <p className="text-slate-400 mb-4">
+        <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">Resilience Patterns</h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
           Protect your application from cascading failures with circuit breakers and retries.
         </p>
         <CodeBlock code={circuitBreakerCode} filename="resilience.ts" showLineNumbers />
 
         <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="p-4 bg-slate-900/50 border border-slate-800 rounded-xl">
-            <h4 className="font-semibold mb-2">Circuit Breaker States</h4>
-            <ul className="text-sm text-slate-400 space-y-1">
+          <div className="p-4 bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl">
+            <h4 className="font-semibold mb-2 text-slate-900 dark:text-white">Circuit Breaker States</h4>
+            <ul className="text-sm text-slate-600 dark:text-slate-400 space-y-1">
               <li><strong className="text-green-400">Closed:</strong> Normal operation, requests pass through</li>
               <li><strong className="text-yellow-400">Open:</strong> Failing, requests blocked, fallback used</li>
               <li><strong className="text-blue-400">Half-Open:</strong> Testing if service recovered</li>
             </ul>
           </div>
-          <div className="p-4 bg-slate-900/50 border border-slate-800 rounded-xl">
-            <h4 className="font-semibold mb-2">Retry Strategies</h4>
-            <ul className="text-sm text-slate-400 space-y-1">
+          <div className="p-4 bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl">
+            <h4 className="font-semibold mb-2 text-slate-900 dark:text-white">Retry Strategies</h4>
+            <ul className="text-sm text-slate-600 dark:text-slate-400 space-y-1">
               <li><strong>Exponential:</strong> 1s, 2s, 4s, 8s...</li>
               <li><strong>Linear:</strong> 1s, 2s, 3s, 4s...</li>
               <li><strong>Fixed:</strong> 1s, 1s, 1s, 1s...</li>
@@ -483,16 +483,16 @@ export default function RealtimePage() {
       </section>
 
       {/* Next Steps */}
-      <section className="p-6 bg-slate-900/50 border border-slate-800 rounded-2xl">
-        <h2 className="text-xl font-bold mb-4">Next Steps</h2>
+      <section className="p-6 bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl">
+        <h2 className="text-xl font-bold mb-4 text-slate-900 dark:text-white">Next Steps</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <a href="/vexorjs/docs/deployment" className="block p-4 bg-slate-800/50 hover:bg-slate-800 rounded-xl transition-colors">
-            <h3 className="font-semibold mb-1">Deployment &rarr;</h3>
-            <p className="text-sm text-slate-400">Deploy to Node.js, Bun, Lambda, and Edge</p>
+          <a href="/vexorjs/docs/deployment" className="block p-4 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/50 dark:hover:bg-slate-800 rounded-xl transition-colors">
+            <h3 className="font-semibold mb-1 text-slate-900 dark:text-white">Deployment &rarr;</h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400">Deploy to Node.js, Bun, Lambda, and Edge</p>
           </a>
-          <a href="/vexorjs/docs/core" className="block p-4 bg-slate-800/50 hover:bg-slate-800 rounded-xl transition-colors">
-            <h3 className="font-semibold mb-1">Core Concepts &rarr;</h3>
-            <p className="text-sm text-slate-400">Review routing, context, and lifecycle hooks</p>
+          <a href="/vexorjs/docs/core" className="block p-4 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/50 dark:hover:bg-slate-800 rounded-xl transition-colors">
+            <h3 className="font-semibold mb-1 text-slate-900 dark:text-white">Core Concepts &rarr;</h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400">Review routing, context, and lifecycle hooks</p>
           </a>
         </div>
       </section>

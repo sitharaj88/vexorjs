@@ -386,8 +386,8 @@ export default function DeploymentPage() {
   return (
     <div className="space-y-12">
       <div>
-        <h1 className="text-4xl font-bold mb-4">Deployment</h1>
-        <p className="text-lg text-slate-400">
+        <h1 className="text-4xl font-bold mb-4 text-slate-900 dark:text-white">Deployment</h1>
+        <p className="text-lg text-slate-600 dark:text-slate-400">
           Deploy Vexor applications to Node.js, Bun, AWS Lambda, Cloudflare Workers, and more.
         </p>
       </div>
@@ -416,8 +416,8 @@ export default function DeploymentPage() {
 
       {/* Environment Variables */}
       <section id="env">
-        <h2 className="text-2xl font-bold mb-4">Environment Variables</h2>
-        <p className="text-slate-400 mb-4">
+        <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">Environment Variables</h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
           Always use environment variables for configuration. Never commit secrets to version control.
         </p>
         <CodeBlock code={envExampleCode} filename=".env.example" showLineNumbers />
@@ -425,8 +425,8 @@ export default function DeploymentPage() {
 
       {/* Node.js */}
       <section id="nodejs">
-        <h2 className="text-2xl font-bold mb-4">Node.js Deployment</h2>
-        <p className="text-slate-400 mb-4">
+        <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">Node.js Deployment</h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
           Standard Node.js deployment with graceful shutdown handling.
         </p>
         <CodeBlock code={nodeDeployCode} filename="server.ts" showLineNumbers />
@@ -434,15 +434,15 @@ export default function DeploymentPage() {
 
       {/* Docker */}
       <section id="docker">
-        <h2 className="text-2xl font-bold mb-4">Docker</h2>
-        <p className="text-slate-400 mb-4">
+        <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">Docker</h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
           Multi-stage Docker build for optimized production images.
         </p>
         <CodeBlock code={dockerfileCode} filename="Dockerfile" showLineNumbers />
 
         <div className="mt-8">
-          <h3 className="text-xl font-semibold mb-4">Docker Compose</h3>
-          <p className="text-slate-400 mb-4">
+          <h3 className="text-xl font-semibold mb-4 text-slate-900 dark:text-white">Docker Compose</h3>
+          <p className="text-slate-600 dark:text-slate-400 mb-4">
             Full stack deployment with PostgreSQL and Redis.
           </p>
           <CodeBlock code={dockerComposeCode} filename="docker-compose.yml" showLineNumbers />
@@ -451,19 +451,19 @@ export default function DeploymentPage() {
 
       {/* Bun */}
       <section id="bun">
-        <h2 className="text-2xl font-bold mb-4">Bun Deployment</h2>
-        <p className="text-slate-400 mb-4">
+        <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">Bun Deployment</h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
           Vexor automatically uses Bun's native HTTP server for maximum performance.
         </p>
         <CodeBlock code={bunDeployCode} filename="server.ts" showLineNumbers />
 
         <div className="mt-8">
-          <h3 className="text-xl font-semibold mb-4">Bun Dockerfile</h3>
+          <h3 className="text-xl font-semibold mb-4 text-slate-900 dark:text-white">Bun Dockerfile</h3>
           <CodeBlock code={bunDockerCode} filename="Dockerfile.bun" showLineNumbers />
         </div>
 
         <div className="mt-6 p-4 bg-vexor-500/10 border border-vexor-500/20 rounded-xl">
-          <p className="text-sm text-slate-300">
+          <p className="text-sm text-slate-600 dark:text-slate-300">
             <strong className="text-vexor-400">Performance Tip:</strong> Bun's native HTTP server is significantly
             faster than Node.js. Expect 2-3x higher throughput for compute-bound workloads.
           </p>
@@ -472,58 +472,58 @@ export default function DeploymentPage() {
 
       {/* AWS Lambda */}
       <section id="lambda">
-        <h2 className="text-2xl font-bold mb-4">AWS Lambda</h2>
-        <p className="text-slate-400 mb-4">
+        <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">AWS Lambda</h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
           Deploy as a serverless function with API Gateway.
         </p>
         <CodeBlock code={lambdaCode} filename="lambda.ts" showLineNumbers />
 
         <div className="mt-8">
-          <h3 className="text-xl font-semibold mb-4">Lambda Streaming</h3>
-          <p className="text-slate-400 mb-4">
+          <h3 className="text-xl font-semibold mb-4 text-slate-900 dark:text-white">Lambda Streaming</h3>
+          <p className="text-slate-600 dark:text-slate-400 mb-4">
             Use response streaming for large responses or real-time data.
           </p>
           <CodeBlock code={lambdaStreamingCode} filename="lambda-streaming.ts" showLineNumbers />
         </div>
 
         <div className="mt-8">
-          <h3 className="text-xl font-semibold mb-4">SAM Template</h3>
+          <h3 className="text-xl font-semibold mb-4 text-slate-900 dark:text-white">SAM Template</h3>
           <CodeBlock code={samTemplateCode} filename="template.yaml" showLineNumbers />
         </div>
       </section>
 
       {/* Cloudflare Workers */}
       <section id="cloudflare">
-        <h2 className="text-2xl font-bold mb-4">Cloudflare Workers</h2>
-        <p className="text-slate-400 mb-4">
+        <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">Cloudflare Workers</h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
           Deploy to the edge for ultra-low latency worldwide.
         </p>
         <CodeBlock code={cloudflareCode} filename="worker.ts" showLineNumbers />
 
         <div className="mt-8">
-          <h3 className="text-xl font-semibold mb-4">Wrangler Configuration</h3>
+          <h3 className="text-xl font-semibold mb-4 text-slate-900 dark:text-white">Wrangler Configuration</h3>
           <CodeBlock code={wranglerCode} filename="wrangler.toml" showLineNumbers />
         </div>
       </section>
 
       {/* Vercel Edge */}
       <section id="vercel">
-        <h2 className="text-2xl font-bold mb-4">Vercel Edge</h2>
-        <p className="text-slate-400 mb-4">
+        <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">Vercel Edge</h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
           Deploy to Vercel's edge network with zero configuration.
         </p>
         <CodeBlock code={vercelCode} filename="api/index.ts" showLineNumbers />
 
         <div className="mt-8">
-          <h3 className="text-xl font-semibold mb-4">Vercel Configuration</h3>
+          <h3 className="text-xl font-semibold mb-4 text-slate-900 dark:text-white">Vercel Configuration</h3>
           <CodeBlock code={vercelConfigCode} filename="vercel.json" showLineNumbers />
         </div>
       </section>
 
       {/* PM2 */}
       <section id="pm2">
-        <h2 className="text-2xl font-bold mb-4">PM2 Cluster Mode</h2>
-        <p className="text-slate-400 mb-4">
+        <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">PM2 Cluster Mode</h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
           Run multiple instances with automatic load balancing and zero-downtime reloads.
         </p>
         <CodeBlock code={pmCode} filename="ecosystem.config.js" showLineNumbers />
@@ -531,20 +531,20 @@ export default function DeploymentPage() {
 
       {/* Nginx */}
       <section id="nginx">
-        <h2 className="text-2xl font-bold mb-4">Nginx Reverse Proxy</h2>
-        <p className="text-slate-400 mb-4">
+        <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">Nginx Reverse Proxy</h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
           Production-ready Nginx configuration with SSL and load balancing.
         </p>
         <CodeBlock code={nginxCode} filename="nginx.conf" showLineNumbers />
       </section>
 
       {/* Best Practices */}
-      <section className="p-6 bg-slate-900/50 border border-slate-800 rounded-2xl">
-        <h2 className="text-xl font-bold mb-4">Production Checklist</h2>
+      <section className="p-6 bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl">
+        <h2 className="text-xl font-bold mb-4 text-slate-900 dark:text-white">Production Checklist</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <h3 className="font-semibold mb-3 text-vexor-400">Security</h3>
-            <ul className="space-y-2 text-sm text-slate-400">
+            <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
               <li className="flex items-start gap-2">
                 <span className="text-green-400 mt-0.5">&#x2713;</span>
                 <span>Use HTTPS everywhere</span>
@@ -569,7 +569,7 @@ export default function DeploymentPage() {
           </div>
           <div>
             <h3 className="font-semibold mb-3 text-vexor-400">Performance</h3>
-            <ul className="space-y-2 text-sm text-slate-400">
+            <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
               <li className="flex items-start gap-2">
                 <span className="text-green-400 mt-0.5">&#x2713;</span>
                 <span>Enable compression</span>
@@ -594,7 +594,7 @@ export default function DeploymentPage() {
           </div>
           <div>
             <h3 className="font-semibold mb-3 text-vexor-400">Reliability</h3>
-            <ul className="space-y-2 text-sm text-slate-400">
+            <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
               <li className="flex items-start gap-2">
                 <span className="text-green-400 mt-0.5">&#x2713;</span>
                 <span>Handle graceful shutdown</span>
@@ -615,7 +615,7 @@ export default function DeploymentPage() {
           </div>
           <div>
             <h3 className="font-semibold mb-3 text-vexor-400">Operations</h3>
-            <ul className="space-y-2 text-sm text-slate-400">
+            <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
               <li className="flex items-start gap-2">
                 <span className="text-green-400 mt-0.5">&#x2713;</span>
                 <span>Set up CI/CD pipelines</span>
