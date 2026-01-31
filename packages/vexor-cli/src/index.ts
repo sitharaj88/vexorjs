@@ -13,6 +13,13 @@ import { devCommand } from './commands/dev.js';
 import { buildCommand } from './commands/build.js';
 import { configCommand } from './commands/config.js';
 import { infoCommand, doctorCommand } from './commands/info.js';
+import {
+  helpCommand,
+  upgradeCommand,
+  docsCommand,
+  feedbackCommand,
+  changelogCommand,
+} from './commands/support.js';
 import { addCommand, listIntegrationsCommand } from './commands/add.js';
 import { openapiCommand, validateCommand } from './commands/openapi.js';
 import {
@@ -218,6 +225,33 @@ cli
 cli
   .command('doctor', 'Check for common issues')
   .action(doctorCommand);
+
+// ============================================
+// Support Commands
+// ============================================
+
+cli
+  .command('help [topic]', 'Get detailed help on a topic')
+  .action(helpCommand);
+
+cli
+  .command('upgrade', 'Check for and install CLI updates')
+  .option('-c, --check', 'Only check for updates, do not install')
+  .action(upgradeCommand);
+
+cli
+  .command('docs [topic]', 'Open documentation in browser')
+  .action(docsCommand);
+
+cli
+  .command('feedback', 'Report issues or give feedback')
+  .option('-b, --bug', 'Report a bug')
+  .action(feedbackCommand);
+
+cli
+  .command('changelog', 'Show recent changes')
+  .alias('whatsnew')
+  .action(changelogCommand);
 
 // ============================================
 // Help
