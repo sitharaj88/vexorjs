@@ -121,6 +121,19 @@ export {
   type SQLiteConfig,
 } from './drivers/sqlite.js';
 
+export {
+  createMySQLDriverFactory,
+  createMySQLPool,
+  createMySQLTransaction,
+  convertPlaceholders,
+  escapeIdentifier,
+  formatValue,
+  type MySQLConfig,
+  type MySQLSSLConfig,
+  type MySQLPoolConfig,
+  type MySQLPool,
+} from './drivers/mysql.js';
+
 // Migrations
 export {
   MigrationRunner,
@@ -137,6 +150,74 @@ export {
   type GeneratorOptions,
   type GeneratedMigration,
 } from './migrations/generator.js';
+
+// Subquery support
+export {
+  subquery,
+  scalar,
+  exists,
+  notExists,
+  inSubquery,
+  notInSubquery,
+  lateral,
+  withCTE,
+  WithBuilder,
+  all,
+  any,
+  some,
+  values,
+  union,
+  unionAll,
+  intersect,
+  except,
+  isSubquery,
+  isScalarSubquery,
+  isExistsSubquery,
+  isInSubquery,
+  isLateralSubquery,
+  type Subquery,
+  type ScalarSubquery,
+  type ExistsSubquery,
+  type InSubquery,
+  type LateralSubquery,
+  type CTEDefinition,
+} from './query/subquery.js';
+
+// Soft delete support
+export {
+  softDeletable,
+  getSoftDeleteCondition,
+  getSoftDeleteValues,
+  getRestoreValues,
+  getOnlyTrashedCondition,
+  generateSoftDeleteWhere,
+  generateOnlyTrashedWhere,
+  generateSoftDeleteUpdate,
+  generateRestoreUpdate,
+  createSoftDeleteContext,
+  addSoftDeleteColumn,
+  addSoftDeleteIndex,
+  removeSoftDeleteColumn,
+  type SoftDeleteOptions,
+  type SoftDeleteTable,
+  type SoftDeleteQuery,
+  type SoftDeleteQueryBuilder,
+} from './features/soft-delete.js';
+
+// Database seeding
+export {
+  fake,
+  Sequence,
+  createFactory,
+  createSeederRunner,
+  defineSeeder,
+  truncate,
+  type Seeder,
+  type SeederRunner,
+  type Factory,
+  type FactoryDefinition,
+  type SeederOptions,
+} from './seeder/index.js';
 
 // Database client
 export {
@@ -178,6 +259,10 @@ import {
 import { createPool as _createPool } from './connection/pool.js';
 import { createPostgresDriver as _createPostgresDriver } from './drivers/postgres.js';
 import { createSQLiteDriver as _createSQLiteDriver, createMemoryDatabase as _createMemoryDatabase } from './drivers/sqlite.js';
+import { createMySQLDriverFactory as _createMySQLDriverFactory } from './drivers/mysql.js';
+import { subquery as _subquery, scalar as _scalar, exists as _exists, notExists as _notExists, withCTE as _withCTE, union as _union, unionAll as _unionAll, intersect as _intersect, except as _except } from './query/subquery.js';
+import { softDeletable as _softDeletable, createSoftDeleteContext as _createSoftDeleteContext, addSoftDeleteColumn as _addSoftDeleteColumn } from './features/soft-delete.js';
+import { createSeederRunner as _createSeederRunner, createFactory as _createFactory, fake as _fake, defineSeeder as _defineSeeder, truncate as _truncate } from './seeder/index.js';
 import { createMigrationRunner as _createMigrationRunner } from './migrations/runner.js';
 import { createMigrationGenerator as _createMigrationGenerator } from './migrations/generator.js';
 import { createDatabase as _createDatabase, connect as _connect } from './database.js';
@@ -186,12 +271,15 @@ import { createDatabase as _createDatabase, connect as _connect } from './databa
  * Default export for convenient access
  */
 export default {
+  // Column and table builders
   column: _column,
   col: _col,
   table: _table,
   Table: _Table,
   index: _index,
   uniqueIndex: _uniqueIndex,
+
+  // Query builders
   select: _select,
   from: _from,
   insert: _insert,
@@ -199,6 +287,8 @@ export default {
   deleteFrom: _deleteFrom,
   del: _del,
   sql: _sql,
+
+  // Comparison operators
   eq: _eq,
   ne: _ne,
   lt: _lt,
@@ -213,12 +303,40 @@ export default {
   isNotNull: _isNotNull,
   and: _and,
   or: _or,
+
+  // Database and drivers
   createDatabase: _createDatabase,
   connect: _connect,
   createPool: _createPool,
   createPostgresDriver: _createPostgresDriver,
   createSQLiteDriver: _createSQLiteDriver,
+  createMySQLDriverFactory: _createMySQLDriverFactory,
   createMemoryDatabase: _createMemoryDatabase,
+
+  // Migrations
   createMigrationRunner: _createMigrationRunner,
   createMigrationGenerator: _createMigrationGenerator,
+
+  // Subqueries
+  subquery: _subquery,
+  scalar: _scalar,
+  exists: _exists,
+  notExists: _notExists,
+  withCTE: _withCTE,
+  union: _union,
+  unionAll: _unionAll,
+  intersect: _intersect,
+  except: _except,
+
+  // Soft delete
+  softDeletable: _softDeletable,
+  createSoftDeleteContext: _createSoftDeleteContext,
+  addSoftDeleteColumn: _addSoftDeleteColumn,
+
+  // Seeding
+  createSeederRunner: _createSeederRunner,
+  createFactory: _createFactory,
+  defineSeeder: _defineSeeder,
+  truncate: _truncate,
+  fake: _fake,
 };

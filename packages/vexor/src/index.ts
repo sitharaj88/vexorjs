@@ -411,5 +411,195 @@ export type {
   RetryResult,
 } from './resilience/index.js';
 
+// Rate Limiting exports
+export {
+  rateLimit,
+  createRateLimiter,
+  getRateLimitInfo,
+  slowDown,
+  MemoryStore as RateLimitMemoryStore,
+  SlidingWindowStore,
+  RedisStore as RateLimitRedisStore,
+} from './middleware/rate-limit.js';
+
+export type {
+  RateLimitOptions,
+  RateLimitStore,
+  RateLimitInfo,
+  RedisClient as RateLimitRedisClient,
+} from './middleware/rate-limit.js';
+
+// CORS exports
+export {
+  cors,
+  simpleCors,
+  getCorsHeaders,
+  applyCorsHeaders,
+  corsWithOrigins,
+  corsWithPattern,
+} from './middleware/cors.js';
+
+export type {
+  CorsOptions,
+  CorsOrigin,
+} from './middleware/cors.js';
+
+// Compression exports
+export {
+  compression,
+  compressResponse,
+  createCompressedResponse,
+  isCompressible,
+} from './middleware/compression.js';
+
+export type {
+  CompressionOptions,
+} from './middleware/compression.js';
+
+// File Upload exports
+export {
+  upload,
+  getUploadedFiles,
+  getFilesByField,
+  getFile,
+  getUploadFields,
+  getUploadError,
+  deleteUploadedFile,
+  singleUpload,
+  multiUpload,
+  fieldsUpload,
+  imageUpload,
+  documentUpload,
+  UploadError,
+} from './middleware/upload.js';
+
+export type {
+  UploadOptions,
+  UploadedFile,
+  UploadResult,
+} from './middleware/upload.js';
+
+// Health Check exports
+export {
+  healthCheck,
+  databaseCheck,
+  redisCheck,
+  httpCheck,
+  memoryCheck,
+  diskCheck,
+  customCheck,
+} from './middleware/health.js';
+
+export type {
+  HealthStatus,
+  HealthCheckResult,
+  HealthCheck,
+  HealthOptions,
+  HealthResponse,
+} from './middleware/health.js';
+
+// API Versioning exports
+export {
+  versioning,
+  createVersionRouter,
+  getApiVersion,
+  isVersion,
+  applyVersionHeader,
+  deprecated,
+  applyDeprecationHeaders,
+} from './middleware/versioning.js';
+
+export type {
+  VersioningOptions,
+  VersioningStrategy,
+  VersionedRoute,
+  VersionRouter,
+  VersionRouterInstance,
+} from './middleware/versioning.js';
+
+// Cache exports
+export {
+  CacheManager,
+  MemoryCacheStore,
+  LRUCacheStore,
+  RedisCacheStore,
+  cacheMiddleware,
+  cacheResponse,
+  createCache,
+  createMemoryCache,
+  createRedisCache,
+} from './cache/index.js';
+
+export type {
+  CacheOptions,
+  CacheEntry,
+  CacheStore,
+  CacheStats,
+  RedisClient as CacheRedisClient,
+} from './cache/index.js';
+
+// OAuth2/OIDC exports
+export {
+  OAuth,
+  OAuthError,
+  MemoryStateStore,
+  providers as OAuthProviders,
+  oauthMiddleware,
+  getOAuthUser,
+} from './auth/oauth.js';
+
+export type {
+  OAuthProvider,
+  OAuthConfig,
+  OAuthProfile,
+  OAuthUser,
+  OAuthTokens,
+  OAuthStateStore,
+  OAuthStateData,
+  OAuthSessionStore,
+} from './auth/oauth.js';
+
+// Lambda Adapter exports
+export {
+  createLambdaHandler,
+  createStreamingLambdaHandler,
+  createLambdaHandlerWithWarmup,
+  isWarmupEvent,
+} from './adapters/lambda.js';
+
+export type {
+  APIGatewayProxyEvent,
+  APIGatewayProxyResult,
+  APIGatewayProxyEventV2,
+  APIGatewayProxyResultV2,
+  LambdaFunctionUrlEvent,
+  ALBEvent,
+  ALBResult,
+  LambdaContext,
+  LambdaEvent,
+  LambdaResult,
+  LambdaHandler,
+  LambdaAdapterOptions,
+  StreamingLambdaContext,
+  StreamingHandler,
+} from './adapters/lambda.js';
+
+// Swagger UI / API Documentation exports
+export {
+  swaggerUI,
+  registerSwaggerUI,
+  reDoc,
+  registerReDoc,
+  scalar,
+  registerScalar,
+} from './openapi/swagger-ui.js';
+
+export type {
+  SwaggerUIOptions,
+  OpenAPISpec,
+  ReDocOptions,
+  ScalarOptions,
+} from './openapi/swagger-ui.js';
+
 // Default export
 export { Vexor as default } from './core/index.js';
