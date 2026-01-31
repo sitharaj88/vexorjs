@@ -9,15 +9,21 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
     },
     "./postgres": {
       "types": "./dist/drivers/postgres.d.ts",
-      "import": "./dist/drivers/postgres.js"
+      "import": "./dist/drivers/postgres.js",
+      "require": "./dist/drivers/postgres.js",
+      "default": "./dist/drivers/postgres.js"
     },
     "./sqlite": {
       "types": "./dist/drivers/sqlite.d.ts",
-      "import": "./dist/drivers/sqlite.js"
+      "import": "./dist/drivers/sqlite.js",
+      "require": "./dist/drivers/sqlite.js",
+      "default": "./dist/drivers/sqlite.js"
     }
   },
   "files": [

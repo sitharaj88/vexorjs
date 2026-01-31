@@ -144,11 +144,20 @@ export class SQLiteDriver implements DatabaseDriver {
    */
   private async connectNative(): Promise<void> {
     try {
+      // Try direct import first (works in Node.js and most test frameworks)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const mod = await (Function('return import("better-sqlite3")')() as Promise<any>);
-      const Database = mod.default;
+      let mod: any;
+      try {
+        // Dynamic import that works in most environments
+        mod = await import('better-sqlite3');
+      } catch {
+        // Fallback for bundlers that can't handle direct dynamic imports
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        mod = await (Function('return import("better-sqlite3")')() as Promise<any>);
+      }
+      const Database = mod.default || mod;
       this.db = new Database(this.config.filename) as unknown as BetterSQLite3Database;
-    } catch {
+    } catch (err) {
       throw new Error(
         'SQLite driver (better-sqlite3) not installed. Run: npm install better-sqlite3'
       );
@@ -223,12 +232,17 @@ export class SQLiteDriver implements DatabaseDriver {
   ): QueryResult<T> {
     const db = this.db as BetterSQLite3Database;
 
-    // Check if this is a SELECT query
+    // Check if this is a SELECT query or a statement with RETURNING
     const trimmedSql = sql.trim().toUpperCase();
+    // PRAGMA with = is a setter, not a query
+    const isPragmaSetter = trimmedSql.startsWith('PRAGMA') && trimmedSql.includes('=');
+    // RETURNING clause means we expect rows back from INSERT/UPDATE/DELETE
+    const hasReturning = trimmedSql.includes('RETURNING');
     const isSelect =
-      trimmedSql.startsWith('SELECT') ||
-      trimmedSql.startsWith('PRAGMA') ||
-      trimmedSql.startsWith('EXPLAIN');
+      ((trimmedSql.startsWith('SELECT') ||
+       trimmedSql.startsWith('PRAGMA') ||
+       trimmedSql.startsWith('EXPLAIN')) &&
+      !isPragmaSetter) || hasReturning;
 
     // Get or create prepared statement
     let stmt = this.statementCache.get(sql);
