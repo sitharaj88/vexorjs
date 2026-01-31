@@ -1,14 +1,36 @@
 import { NavLink } from 'react-router-dom';
-import { X } from 'lucide-react';
+import {
+  X,
+  Rocket,
+  Layers,
+  BookOpen,
+  Database,
+  Terminal,
+  Compass,
+  ChevronRight
+} from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 interface SidebarProps {
   open: boolean;
   onClose: () => void;
 }
 
-const navigation = [
+interface NavItem {
+  name: string;
+  href: string;
+}
+
+interface NavSection {
+  title: string;
+  icon: LucideIcon;
+  items: NavItem[];
+}
+
+const navigation: NavSection[] = [
   {
     title: 'Getting Started',
+    icon: Rocket,
     items: [
       { name: 'Introduction', href: '/getting-started' },
       { name: 'Installation', href: '/installation' },
@@ -17,6 +39,7 @@ const navigation = [
   },
   {
     title: 'Core Concepts',
+    icon: Layers,
     items: [
       { name: 'Overview', href: '/core-concepts' },
       { name: 'Routing', href: '/routing' },
@@ -27,6 +50,7 @@ const navigation = [
   },
   {
     title: 'API Reference',
+    icon: BookOpen,
     items: [
       { name: 'Overview', href: '/api' },
       { name: 'Vexor Class', href: '/api/vexor' },
@@ -37,6 +61,7 @@ const navigation = [
   },
   {
     title: 'Vexor ORM',
+    icon: Database,
     items: [
       { name: 'Overview', href: '/orm' },
       { name: 'Schema Definition', href: '/orm/schema' },
@@ -47,6 +72,7 @@ const navigation = [
   },
   {
     title: 'CLI',
+    icon: Terminal,
     items: [
       { name: 'Overview', href: '/cli' },
       { name: 'Commands', href: '/cli/commands' },
@@ -54,6 +80,7 @@ const navigation = [
   },
   {
     title: 'Guides',
+    icon: Compass,
     items: [
       { name: 'Overview', href: '/guides' },
       { name: 'Authentication', href: '/guides/authentication' },
@@ -93,20 +120,24 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
           </button>
         </div>
 
-        <nav className="px-4 py-6 space-y-8">
+        <nav className="px-3 py-6 space-y-6">
           {navigation.map((section) => (
             <div key={section.title}>
-              <h3 className="sidebar-section">{section.title}</h3>
-              <ul className="space-y-1">
+              <h3 className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2 px-3">
+                <section.icon className="w-3.5 h-3.5" />
+                {section.title}
+              </h3>
+              <ul className="space-y-0.5">
                 {section.items.map((item) => (
                   <li key={item.href}>
                     <NavLink
                       to={item.href}
                       onClick={onClose}
                       className={({ isActive }) =>
-                        `sidebar-link ${isActive ? 'active' : ''}`
+                        `group sidebar-link ${isActive ? 'active' : ''}`
                       }
                     >
+                      <ChevronRight className={`w-3 h-3 text-slate-400 dark:text-slate-600 transition-transform group-hover:translate-x-0.5`} />
                       {item.name}
                     </NavLink>
                   </li>

@@ -122,15 +122,18 @@ export async function errorHandler(error: Error, ctx: VexorContext): Promise<Res
 
   // Handle known error types
   if (error instanceof AppError) {
+    // Build base response
+    let response = ctx.status(error.statusCode);
+
     // Add rate limit headers if present
-    const rateLimitHeaders = (ctx as any)._rateLimitHeaders;
+    const rateLimitHeaders = (ctx as any)._rateLimitHeaders as Record<string, string> | undefined;
     if (rateLimitHeaders) {
       for (const [key, value] of Object.entries(rateLimitHeaders)) {
-        ctx.header(key, value as string);
+        response = response.header(key, value);
       }
     }
 
-    return ctx.status(error.statusCode).json(buildErrorResponse(error, ctx));
+    return response.json(buildErrorResponse(error, ctx));
   }
 
   // Handle JSON parse errors

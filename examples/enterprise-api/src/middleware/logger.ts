@@ -73,7 +73,7 @@ export function requestLogger() {
       requestId: ctx.requestId,
       method: ctx.method,
       path: ctx.path,
-      userAgent: ctx.header('user-agent'),
+      userAgent: ctx.header('user-agent') ?? undefined,
       ip: getClientIp(ctx),
       userId: (ctx as any).userId,
       message: 'Request started',
@@ -98,7 +98,7 @@ export function responseLogger(statusCode: number = 200) {
       path: ctx.path,
       statusCode,
       duration,
-      userAgent: ctx.header('user-agent'),
+      userAgent: ctx.header('user-agent') ?? undefined,
       ip: getClientIp(ctx),
       userId: (ctx as any).userId,
     });

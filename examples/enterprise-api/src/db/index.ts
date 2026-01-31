@@ -5,7 +5,7 @@
  * Can be easily swapped for PostgreSQL in production.
  */
 
-import { createDatabase } from '@vexorjs/orm';
+import { createDatabase, type SQLiteConfig } from '@vexorjs/orm';
 import { config } from '../config/index.js';
 import { mkdirSync, existsSync } from 'fs';
 import { dirname } from 'path';
@@ -22,11 +22,12 @@ if (!dbPath.includes(':memory:')) {
 // Create database connection with SQLite config
 // For in-memory databases, use a single connection to avoid multiple separate databases
 const isMemoryDb = dbPath === ':memory:';
+const sqliteConfig: SQLiteConfig = {
+  driver: 'sqlite',
+  filename: dbPath,
+};
 export const db = createDatabase(
-  {
-    driver: 'sqlite',
-    filename: dbPath,
-  },
+  sqliteConfig,
   {
     logging: config.isDevelopment && !config.isTest,
     // For in-memory databases, use single connection (multiple connections = multiple databases!)

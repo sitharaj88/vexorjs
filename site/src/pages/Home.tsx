@@ -63,38 +63,58 @@ export default function Home() {
   return (
     <div className="space-y-24">
       {/* Hero Section */}
-      <section className="text-center py-12">
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 text-sm font-medium mb-6">
-          <Sparkles className="w-4 h-4" />
-          Now in Public Beta
-        </div>
+      <section className="relative text-center py-16 lg:py-24 -mx-6 px-6 hero-gradient grid-pattern overflow-hidden">
+        {/* Floating orbs */}
+        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-primary-500/20 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-48 h-48 bg-accent-500/20 rounded-full blur-3xl animate-pulse delay-1000" />
 
-        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-slate-900 dark:text-white mb-6">
-          The Modern Backend Framework
-          <br />
-          <span className="bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent">
-            for Node.js
-          </span>
-        </h1>
+        <div className="relative">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200 dark:border-slate-700 text-primary-600 dark:text-primary-400 text-sm font-medium mb-8 shadow-lg">
+            <Sparkles className="w-4 h-4" />
+            Now in Public Beta
+          </div>
 
-        <p className="text-xl text-slate-600 dark:text-slate-400 max-w-3xl mx-auto mb-8">
-          Vexor is a batteries-included, high-performance, multi-runtime framework
-          with its own blazing-fast ORM. Build type-safe APIs at lightning speed.
-        </p>
+          <h1 className="text-4xl sm:text-5xl lg:text-7xl font-extrabold text-slate-900 dark:text-white mb-6 tracking-tight">
+            The Modern Backend Framework
+            <br />
+            <span className="bg-gradient-to-r from-primary-500 via-primary-600 to-accent-500 bg-clip-text text-transparent">
+              for Node.js
+            </span>
+          </h1>
 
-        <div className="flex flex-wrap items-center justify-center gap-4">
-          <Link to="/getting-started" className="btn-primary">
-            Get Started
-            <ArrowRight className="w-4 h-4 ml-2" />
-          </Link>
-          <a
-            href="https://github.com/vexorjs/vexor"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-secondary"
-          >
-            View on GitHub
-          </a>
+          <p className="text-lg lg:text-xl text-slate-600 dark:text-slate-400 max-w-3xl mx-auto mb-10 leading-relaxed">
+            Vexor is a batteries-included, high-performance, multi-runtime framework
+            with its own blazing-fast ORM. Build type-safe APIs at lightning speed.
+          </p>
+
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            <Link to="/getting-started" className="btn-primary text-lg px-8 py-3">
+              Get Started
+              <ArrowRight className="w-5 h-5 ml-2" />
+            </Link>
+            <a
+              href="https://github.com/vexorjs/vexor"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-secondary text-lg px-8 py-3"
+            >
+              View on GitHub
+            </a>
+          </div>
+
+          {/* Install command */}
+          <div className="mt-10 inline-flex items-center gap-3 px-5 py-3 rounded-xl bg-slate-900 dark:bg-slate-800 text-slate-100 font-mono text-sm border border-slate-700">
+            <span className="text-slate-500">$</span>
+            <span>npm create vexor@latest</span>
+            <button
+              className="text-slate-400 hover:text-white transition-colors"
+              onClick={() => navigator.clipboard.writeText('npm create vexor@latest')}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+            </button>
+          </div>
         </div>
       </section>
 

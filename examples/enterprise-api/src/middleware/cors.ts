@@ -68,7 +68,7 @@ export function cors(options: Partial<CorsOptions> = {}) {
  * Helper to add CORS headers to a response
  */
 export function addCorsHeaders(ctx: VexorContext, headers: Headers): void {
-  const corsHeaders = (ctx as any)._corsHeaders;
+  const corsHeaders = (ctx as any)._corsHeaders as Record<string, string> | undefined;
   if (corsHeaders) {
     for (const [key, value] of Object.entries(corsHeaders)) {
       if (value) {

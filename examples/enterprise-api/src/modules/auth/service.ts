@@ -213,8 +213,10 @@ export async function logoutAll(userId: number): Promise<void> {
 export async function verifyAccessToken(token: string): Promise<JWTPayload> {
   try {
     const result = await jwt.verify(token);
-    return result.payload as JWTPayload;
-  } catch (error) {
+    // Extract our custom claims from the verified JWT payload
+    const payload = result.payload as unknown as JWTPayload;
+    return payload;
+  } catch {
     throw new AuthenticationError('Invalid or expired access token');
   }
 }
@@ -275,16 +277,19 @@ export async function changePassword(
 // ============================================================================
 
 async function generateTokens(user: User): Promise<AuthTokens> {
-  const payload: JWTPayload = {
+  const expiresIn = parseExpiresIn(config.jwtExpiresIn);
+  const now = Math.floor(Date.now() / 1000);
+
+  // JWT payload with standard exp claim
+  const payload = {
     userId: user.id,
     email: user.email,
     role: user.role,
+    exp: now + expiresIn,
   };
 
-  const expiresIn = parseExpiresIn(config.jwtExpiresIn);
-
   // Generate access token
-  const accessToken = await jwt.sign(payload, { expiresIn: `${expiresIn}s` });
+  const accessToken = await jwt.sign(payload);
 
   // Generate refresh token
   const refreshToken = generateToken(32);
