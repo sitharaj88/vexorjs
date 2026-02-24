@@ -5,7 +5,7 @@
  * through the exported devCommand by mocking file system access and child_process.spawn.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from 'vitest';
 
 const mockChildOn = vi.fn();
 const mockChildKill = vi.fn();
@@ -30,10 +30,10 @@ import { devCommand } from '../commands/dev.js';
 const mockedSpawn = vi.mocked(spawn);
 const mockedAccess = vi.mocked(access);
 
-let consoleLogSpy: ReturnType<typeof vi.spyOn>;
-let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
-let processExitSpy: ReturnType<typeof vi.spyOn>;
-let processOnSpy: ReturnType<typeof vi.spyOn>;
+let consoleLogSpy: MockInstance;
+let consoleErrorSpy: MockInstance;
+let processExitSpy: MockInstance;
+let processOnSpy: MockInstance;
 
 beforeEach(() => {
   vi.clearAllMocks();

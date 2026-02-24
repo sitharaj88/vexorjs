@@ -6,7 +6,7 @@
  * indirectly through the exported dbCommand by mocking dependencies.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from 'vitest';
 
 vi.mock('fs/promises', () => ({
   readdir: vi.fn(),
@@ -36,9 +36,9 @@ import { dbCommand } from '../commands/db.js';
 
 const mockedReaddir = vi.mocked(readdir);
 
-let consoleLogSpy: ReturnType<typeof vi.spyOn>;
-let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
-let processExitSpy: ReturnType<typeof vi.spyOn>;
+let consoleLogSpy: MockInstance;
+let consoleErrorSpy: MockInstance;
+let processExitSpy: MockInstance;
 
 beforeEach(() => {
   vi.clearAllMocks();

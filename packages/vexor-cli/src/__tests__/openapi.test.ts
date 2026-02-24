@@ -6,7 +6,7 @@
  * toYaml, extractTags) are tested indirectly through the exported commands.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from 'vitest';
 import { readFile, writeFile, readdir } from 'fs/promises';
 import { resolve } from 'path';
 
@@ -108,8 +108,8 @@ function mockRouteFiles(files: Record<string, string>) {
 // Setup / Teardown
 // ---------------------------------------------------------------------------
 
-let exitSpy: ReturnType<typeof vi.spyOn>;
-let cwdSpy: ReturnType<typeof vi.spyOn>;
+let exitSpy: MockInstance;
+let cwdSpy: MockInstance;
 
 beforeEach(() => {
   vi.clearAllMocks();

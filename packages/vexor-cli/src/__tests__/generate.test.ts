@@ -6,7 +6,7 @@
  * tested indirectly through the exported generateCommand function.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from 'vitest';
 import { mkdir, writeFile, access } from 'fs/promises';
 
 // ---------------------------------------------------------------------------
@@ -57,10 +57,10 @@ function getWrittenPaths(): string[] {
 // Setup / Teardown
 // ---------------------------------------------------------------------------
 
-let exitSpy: ReturnType<typeof vi.spyOn>;
-let cwdSpy: ReturnType<typeof vi.spyOn>;
-let consoleLogSpy: ReturnType<typeof vi.spyOn>;
-let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
+let exitSpy: MockInstance;
+let cwdSpy: MockInstance;
+let consoleLogSpy: MockInstance;
+let consoleErrorSpy: MockInstance;
 
 beforeEach(() => {
   vi.clearAllMocks();

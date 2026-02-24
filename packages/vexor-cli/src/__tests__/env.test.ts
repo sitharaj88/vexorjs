@@ -6,7 +6,7 @@
  * the exported command functions.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from 'vitest';
 import { readFile, writeFile, access, copyFile } from 'fs/promises';
 import { resolve } from 'path';
 
@@ -119,9 +119,9 @@ function mockMultipleFiles(files: Record<string, string>) {
 // Setup / Teardown
 // ---------------------------------------------------------------------------
 
-let exitSpy: ReturnType<typeof vi.spyOn>;
-let cwdSpy: ReturnType<typeof vi.spyOn>;
-let consoleLogSpy: ReturnType<typeof vi.spyOn>;
+let exitSpy: MockInstance;
+let cwdSpy: MockInstance;
+let consoleLogSpy: MockInstance;
 
 beforeEach(() => {
   vi.clearAllMocks();

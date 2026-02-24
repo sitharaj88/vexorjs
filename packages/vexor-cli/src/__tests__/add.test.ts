@@ -6,7 +6,7 @@
  * updatePackageScripts) are tested indirectly through the exported commands.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from 'vitest';
 
 vi.mock('fs/promises', () => ({
   readFile: vi.fn(),
@@ -64,7 +64,7 @@ const mockedWriteFile = vi.mocked(writeFile);
 const mockedExecSync = vi.mocked(execSync);
 const mockedPrompts = vi.mocked(prompts);
 
-let processExitSpy: ReturnType<typeof vi.spyOn>;
+let processExitSpy: MockInstance;
 
 beforeEach(() => {
   vi.clearAllMocks();

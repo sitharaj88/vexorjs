@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from 'vitest';
 import { mkdir, writeFile, readdir, access } from 'fs/promises';
 import { execSync } from 'child_process';
 
@@ -90,7 +90,7 @@ let logger: typeof import('../utils/logger.js').logger;
 let prompts: typeof import('prompts').default;
 
 describe('newCommand', () => {
-  let exitSpy: ReturnType<typeof vi.spyOn>;
+  let exitSpy: MockInstance;
 
   beforeEach(async () => {
     vi.clearAllMocks();

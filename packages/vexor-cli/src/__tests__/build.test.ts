@@ -6,7 +6,7 @@
  * by mocking file system access and child_process.spawn.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from 'vitest';
 
 type SpawnOnHandler = (event: string, cb: (...args: any[]) => void) => void;
 
@@ -37,7 +37,7 @@ const mockedAccess = vi.mocked(access);
 const mockedReadFile = vi.mocked(readFile);
 const mockedWriteFile = vi.mocked(writeFile);
 
-let consoleLogSpy: ReturnType<typeof vi.spyOn>;
+let consoleLogSpy: MockInstance;
 
 beforeEach(() => {
   vi.clearAllMocks();

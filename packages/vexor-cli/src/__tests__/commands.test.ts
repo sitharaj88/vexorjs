@@ -5,7 +5,7 @@
  * template generation, logger utility, and generate command helpers.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, type MockInstance } from 'vitest';
 import { templates, getTemplateChoices } from '../utils/templates.js';
 import { logger } from '../utils/logger.js';
 
@@ -179,7 +179,7 @@ describe('getTemplateChoices', () => {
 // ---------------------------------------------------------------------------
 
 describe('logger', () => {
-  let consoleSpy: ReturnType<typeof vi.spyOn>;
+  let consoleSpy: MockInstance;
 
   beforeEach(() => {
     consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
