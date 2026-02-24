@@ -12,6 +12,9 @@
     "test": "turbo run test",
     "lint": "turbo run lint",
     "clean": "turbo run clean && rm -rf node_modules",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "turbo run build && changeset publish",
     "bench": "npm run bench:quick --workspace=vexor-benchmarks",
     "bench:quick": "npm run bench:quick --workspace=vexor-benchmarks",
     "bench:compare": "npm run bench:compare --workspace=vexor-benchmarks",
@@ -20,6 +23,7 @@
     "example:api": "node examples/basic-api/index.js"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.29.8",
     "@types/node": "^22.0.0",
     "@types/prompts": "^2.4.9",
     "tsup": "^8.3.0",

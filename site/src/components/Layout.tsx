@@ -3,6 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import TableOfContents from './TableOfContents';
+import Footer from './Footer';
 
 export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -28,7 +29,10 @@ export default function Layout() {
         {/* Main content */}
         <main className="flex-1 min-w-0 lg:pl-72">
           {isHome ? (
-            <Outlet />
+            <>
+              <Outlet />
+              <Footer />
+            </>
           ) : (
             <div className="max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-10">
               <Outlet />

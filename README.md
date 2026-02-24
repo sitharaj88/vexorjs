@@ -1,30 +1,48 @@
-# Vexor
+<p align="center">
+  <img src="site/public/favicon.svg" width="80" height="80" alt="Vexor Logo" />
+</p>
 
-[![npm version](https://img.shields.io/npm/v/@vexorjs/core.svg)](https://www.npmjs.com/package/@vexorjs/core)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
+<h1 align="center">Vexor</h1>
 
-A batteries-included, high-performance, multi-runtime Node.js backend framework with its own blazing-fast ORM.
+<p align="center">
+  A batteries-included, high-performance, multi-runtime Node.js backend framework with its own blazing-fast ORM.
+</p>
 
-**[Documentation](https://sitharaj88.github.io/vexorjs/)** | **[API Reference](https://sitharaj88.github.io/vexorjs/api/vexor-class)** | **[Examples](https://github.com/sitharaj88/vexorjs/tree/main/examples)**
+<p align="center">
+  <a href="https://www.npmjs.com/package/@vexorjs/core"><img src="https://img.shields.io/npm/v/@vexorjs/core.svg?style=flat-square&color=6366f1" alt="npm version" /></a>
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square" alt="License: MIT" /></a>
+  <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.0+-blue.svg?style=flat-square" alt="TypeScript" /></a>
+  <a href="https://github.com/sitharaj88/vexorjs/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/sitharaj88/vexorjs/ci.yml?style=flat-square&label=CI" alt="CI" /></a>
+  <a href="https://github.com/sitharaj88/vexorjs"><img src="https://img.shields.io/github/stars/sitharaj88/vexorjs?style=flat-square" alt="GitHub Stars" /></a>
+</p>
+
+<p align="center">
+  <a href="https://sitharaj88.github.io/vexorjs/"><strong>Documentation</strong></a> &middot;
+  <a href="https://sitharaj88.github.io/vexorjs/getting-started"><strong>Getting Started</strong></a> &middot;
+  <a href="https://sitharaj88.github.io/vexorjs/api/vexor-class"><strong>API Reference</strong></a> &middot;
+  <a href="https://github.com/sitharaj88/vexorjs/tree/main/examples"><strong>Examples</strong></a>
+</p>
+
+---
 
 ## Features
 
-- **High Performance** - Radix tree router with O(1) static route lookup, JIT-compiled validation
-- **Multi-Runtime** - Runs on Node.js, Bun, Deno, and Edge (Cloudflare Workers, Vercel Edge)
-- **Type-Safe** - End-to-end TypeScript inference without code generation
-- **Batteries Included** - Authentication, logging, observability, real-time support built-in
-- **Vexor ORM** - Fast, type-safe database queries with migrations and connection pooling
+- **High Performance** — Radix tree router with O(1) static route lookup, JIT-compiled validation, and zero-allocation request handling
+- **Multi-Runtime** — Runs on Node.js, Bun, Deno, Cloudflare Workers, and Vercel Edge
+- **Type-Safe** — End-to-end TypeScript inference without code generation
+- **Batteries Included** — Authentication, rate limiting, CORS, caching, logging, observability, real-time support, and more
+- **Vexor ORM** — Built-in type-safe ORM with query builder, migrations, relations, and connection pooling
+- **Powerful CLI** — Scaffold projects, generate modules, run migrations, and manage environments
 
 ## Packages
 
 | Package | Version | Description |
 |---------|---------|-------------|
-| [@vexorjs/core](./packages/vexor) | 1.0.0 | Core framework |
-| [@vexorjs/orm](./packages/vexor-orm) | 1.0.0 | Type-safe ORM |
-| [@vexorjs/cli](./packages/vexor-cli) | 1.0.0 | CLI tool for scaffolding |
+| [@vexorjs/core](./packages/vexor) | ![npm](https://img.shields.io/npm/v/@vexorjs/core?style=flat-square&color=6366f1) | Core framework — routing, middleware, validation, adapters |
+| [@vexorjs/orm](./packages/vexor-orm) | ![npm](https://img.shields.io/npm/v/@vexorjs/orm?style=flat-square&color=6366f1) | Type-safe ORM — queries, migrations, pooling |
+| [@vexorjs/cli](./packages/vexor-cli) | ![npm](https://img.shields.io/npm/v/@vexorjs/cli?style=flat-square&color=6366f1) | CLI tool — scaffolding, code generation, dev tools |
 
-## Installation
+## Quick Start
 
 ```bash
 # Install the core framework
@@ -37,9 +55,7 @@ npm install @vexorjs/orm
 npm install -g @vexorjs/cli
 ```
 
-## Quick Start
-
-### Basic API
+### Create Your First API
 
 ```typescript
 import { Vexor, Type } from '@vexorjs/core';
@@ -52,21 +68,6 @@ app.get('/', async (ctx) => {
 });
 
 // Route with validation
-app.get('/users/:id', {
-  params: Type.Object({ id: Type.String() }),
-  response: {
-    200: Type.Object({
-      id: Type.String(),
-      name: Type.String(),
-      email: Type.String()
-    })
-  }
-}, async (ctx) => {
-  const user = await findUser(ctx.params.id);
-  return ctx.json(user);
-});
-
-// POST with body validation
 app.post('/users', {
   body: Type.Object({
     name: Type.String({ minLength: 1 }),
@@ -86,7 +87,6 @@ console.log('Server running on http://localhost:3000');
 ```typescript
 import { table, column, createConnection, eq } from '@vexorjs/orm';
 
-// Define your schema
 const users = table('users', {
   id: column.serial().primaryKey(),
   name: column.varchar(255).notNull(),
@@ -94,7 +94,6 @@ const users = table('users', {
   createdAt: column.timestamp().defaultNow()
 });
 
-// Connect to database
 const db = await createConnection({
   driver: 'postgres',
   connectionString: process.env.DATABASE_URL
@@ -105,12 +104,6 @@ const user = await db.select()
   .from(users)
   .where(eq(users.id, 1))
   .first();
-
-// Insert with full type checking
-const newUser = await db.insert(users).values({
-  name: 'John Doe',
-  email: 'john@example.com'
-}).returning();
 
 // Transactions
 await db.transaction(async (tx) => {
@@ -142,28 +135,28 @@ vexor dev
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     Application Layer                        │
+│                     Application Layer                       │
 │         (Handlers, Controllers, Services, Modules)          │
 ├─────────────────────────────────────────────────────────────┤
-│                      Framework Core                          │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
-│  │ Type System │  │ Validation  │  │    Serialization    │  │
-│  │   (Schema)  │  │ (JIT Comp.) │  │    (JIT Compile)    │  │
-│  └─────────────┘  └─────────────┘  └─────────────────────┘  │
+│                      Framework Core                         │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐ │
+│  │ Type System  │  │ Validation  │  │    Serialization    │ │
+│  │   (Schema)   │  │ (JIT Comp.) │  │    (JIT Compile)    │ │
+│  └─────────────┘  └─────────────┘  └─────────────────────┘ │
 ├─────────────────────────────────────────────────────────────┤
-│                       Vexor ORM                              │
+│                       Vexor ORM                             │
 │   (Query Builder, Migrations, Connection Pool, Relations)   │
 ├─────────────────────────────────────────────────────────────┤
 │                    Middleware Pipeline                       │
 │    (onRequest → preValidation → preHandler → onSend)        │
 ├─────────────────────────────────────────────────────────────┤
-│                      Router Layer                            │
+│                      Router Layer                           │
 │         (Radix Tree with Static Route Short-Circuit)        │
 ├─────────────────────────────────────────────────────────────┤
 │                    HTTP Adapter Layer                        │
-│  ┌────────┐  ┌────────┐  ┌────────┐  ┌─────────────────┐   │
-│  │ Node.js│  │  Bun   │  │  Deno  │  │  Edge (CF/Vercel)│   │
-│  └────────┘  └────────┘  └────────┘  └─────────────────┘   │
+│  ┌────────┐  ┌────────┐  ┌────────┐  ┌─────────────────┐  │
+│  │ Node.js│  │  Bun   │  │  Deno  │  │ Edge (CF/Vercel) │  │
+│  └────────┘  └────────┘  └────────┘  └─────────────────┘  │
 ├─────────────────────────────────────────────────────────────┤
 │                 Web Standards Foundation                     │
 │        (Request, Response, Headers, URL, Streams)           │
@@ -175,14 +168,13 @@ vexor dev
 ```
 vexorjs/
 ├── packages/
-│   ├── vexor/          # @vexorjs/core - Core framework
-│   ├── vexor-orm/      # @vexorjs/orm - ORM package
-│   └── vexor-cli/      # @vexorjs/cli - CLI tool
+│   ├── vexor/          # @vexorjs/core — Core framework
+│   ├── vexor-orm/      # @vexorjs/orm — ORM package
+│   └── vexor-cli/      # @vexorjs/cli — CLI tool
 ├── examples/           # Example applications
 ├── benchmarks/         # Performance benchmarks
-├── site/               # Documentation source
-├── docs/               # Built documentation (GitHub Pages)
-└── tests/              # Integration tests
+├── site/               # Documentation site (React + Vite)
+└── .github/            # CI/CD workflows
 ```
 
 ## Development
@@ -201,41 +193,40 @@ npm run build
 # Run tests
 npm test
 
-# Run quick benchmarks
+# Run benchmarks
 npm run bench:quick
-
-# Run full comparison benchmarks
-npm run bench:compare
-```
-
-## Benchmarks
-
-Run the performance benchmarks:
-
-```bash
-# Quick benchmark (no external dependencies)
-npm run bench:quick
-
-# Full HTTP comparison (vs Fastify, Hono, Express)
-npm run bench:compare
 ```
 
 ## Documentation
 
-Full documentation is available at [https://sitharaj88.github.io/vexorjs/](https://sitharaj88.github.io/vexorjs/)
+Full documentation is available at [sitharaj88.github.io/vexorjs](https://sitharaj88.github.io/vexorjs/)
 
 - [Getting Started](https://sitharaj88.github.io/vexorjs/getting-started)
 - [Routing](https://sitharaj88.github.io/vexorjs/routing)
-- [Validation](https://sitharaj88.github.io/vexorjs/validation)
-- [ORM Guide](https://sitharaj88.github.io/vexorjs/orm/overview)
+- [Middleware](https://sitharaj88.github.io/vexorjs/middleware/rate-limiting)
+- [Auth & Security](https://sitharaj88.github.io/vexorjs/auth/authentication)
+- [Vexor ORM](https://sitharaj88.github.io/vexorjs/orm/overview)
 - [CLI Reference](https://sitharaj88.github.io/vexorjs/cli/overview)
+- [Advanced Guides](https://sitharaj88.github.io/vexorjs/advanced/adapters)
+
+## Acknowledgments
+
+Inspired by [Fastify](https://fastify.io/), [Hono](https://hono.dev/), and [Elysia](https://elysiajs.com/). ORM design influenced by [Drizzle](https://orm.drizzle.team/).
+
+## Author
+
+**Sitharaj Seenivasan**
+
+- Website: [sitharaj.in](https://sitharaj.in)
+- LinkedIn: [sitharaj08](https://linkedin.com/in/sitharaj08)
+- GitHub: [sitharaj88](https://github.com/sitharaj88)
+
+## Support
+
+If you find Vexor useful, consider buying me a coffee!
+
+<a href="https://buymeacoffee.com/sitharaj88"><img src="https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=flat-square&logo=buy-me-a-coffee&logoColor=black" alt="Buy Me a Coffee" /></a>
 
 ## License
 
 MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-- Inspired by [Fastify](https://fastify.io/), [Hono](https://hono.dev/), and [Elysia](https://elysiajs.com/)
-- ORM design influenced by [Drizzle](https://orm.drizzle.team/)
-- Built with TypeScript and love
