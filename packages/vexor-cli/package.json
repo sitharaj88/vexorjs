@@ -1,0 +1,71 @@
+{
+  "name": "@vexorjs/cli",
+  "version": "1.0.0",
+  "description": "CLI tool for Vexor framework - project scaffolding, code generation, and development utilities",
+  "type": "module",
+  "bin": {
+    "vexor": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src/",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "vexor",
+    "cli",
+    "framework",
+    "scaffolding",
+    "generator",
+    "nodejs",
+    "typescript",
+    "backend"
+  ],
+  "author": "Sitharaj Seenivasan",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sitharaj88/vexorjs.git",
+    "directory": "packages/vexor-cli"
+  },
+  "homepage": "https://github.com/sitharaj88/vexorjs",
+  "bugs": {
+    "url": "https://github.com/sitharaj88/vexorjs/issues"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/prompts": "^2.4.9",
+    "@types/semver": "^7.5.8",
+    "tsup": "^8.5.0",
+    "typescript": "^5.8.0",
+    "vitest": "^2.0.0"
+  },
+  "dependencies": {
+    "cac": "^6.7.14",
+    "chalk": "^5.3.0",
+    "ora": "^8.0.1",
+    "prompts": "^2.4.2",
+    "semver": "^7.6.0"
+  },
+  "sideEffects": false,
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

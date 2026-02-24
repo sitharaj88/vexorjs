@@ -1,0 +1,26 @@
+{
+  "name": "enterprise-api-example",
+  "version": "1.0.0",
+  "description": "Enterprise-grade API example demonstrating all Vexor features",
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "dev": "tsx watch src/index.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "migrate": "tsx src/db/migrate.ts",
+    "seed": "tsx src/db/seed.ts"
+  },
+  "dependencies": {
+    "@vexorjs/core": "file:../../packages/vexor",
+    "@vexorjs/orm": "file:../../packages/vexor-orm",
+    "better-sqlite3": "^11.10.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.0",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.0"
+  }
+}
