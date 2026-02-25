@@ -73,7 +73,10 @@
     "deno",
     "edge"
   ],
-  "author": "Vexor Team",
+  "publishConfig": {
+    "access": "public"
+  },
+  "author": "Sitharaj Seenivasan",
   "license": "MIT",
   "repository": {
     "type": "git",

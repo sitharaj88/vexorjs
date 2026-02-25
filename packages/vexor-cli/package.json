@@ -38,6 +38,9 @@
     "typescript",
     "backend"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "author": "Sitharaj Seenivasan",
   "license": "MIT",
   "repository": {
