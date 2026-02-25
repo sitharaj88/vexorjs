@@ -87,7 +87,7 @@ const mockExecSync = vi.mocked(execSync);
 
 let newCommand: typeof import('../commands/new.js').newCommand;
 let logger: typeof import('../utils/logger.js').logger;
-let prompts: typeof import('prompts').default;
+let prompts: typeof import('prompts');
 
 describe('newCommand', () => {
   let exitSpy: MockInstance;

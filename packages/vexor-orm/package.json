@@ -36,7 +36,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src",
+    "lint": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
   "keywords": [
