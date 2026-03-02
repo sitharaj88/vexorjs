@@ -1,6 +1,6 @@
 {
   "name": "@vexorjs/orm",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Blazing-fast, type-safe ORM for Vexor framework",
   "type": "module",
   "main": "./dist/index.js",
