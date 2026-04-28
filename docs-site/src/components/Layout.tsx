@@ -8,11 +8,14 @@ export default function Layout() {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const isHomePage = location.pathname === '/' || location.pathname === '';
-  const isDocsPage = location.pathname.startsWith('/docs');
+  const isDocsPage = location.pathname.startsWith('/docs') || location.pathname.startsWith('/learn');
 
-  // Close sidebar on route change
+  // Close sidebar and scroll to top on route change
   useEffect(() => {
     setSidebarOpen(false);
+    if (!location.hash) {
+      window.scrollTo({ top: 0 });
+    }
   }, [location.pathname]);
 
   // Prevent body scroll when sidebar is open
@@ -37,6 +40,11 @@ export default function Layout() {
     if (path.includes('/middleware')) return 'Middleware';
     if (path.includes('/realtime')) return 'Real-time';
     if (path.includes('/deployment')) return 'Deployment';
+    if (path === '/learn') return 'Learning Center';
+    if (path.includes('/learn/fundamentals')) return 'Fundamentals';
+    if (path.includes('/learn/building-apis')) return 'Building APIs';
+    if (path.includes('/learn/architecture')) return 'Architecture';
+    if (path.includes('/learn/production')) return 'Production';
     return 'Docs';
   };
 
@@ -61,7 +69,7 @@ export default function Layout() {
                     <Menu className="w-5 h-5" />
                   </button>
                   <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-                    <span>Docs</span>
+                    <span>{location.pathname.startsWith('/learn') ? 'Learn' : 'Docs'}</span>
                     <ChevronRight className="w-4 h-4" />
                     <span className="font-medium text-slate-900 dark:text-white">{getBreadcrumb()}</span>
                   </div>

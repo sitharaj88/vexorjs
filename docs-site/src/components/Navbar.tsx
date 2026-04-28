@@ -7,6 +7,7 @@ const navLinks = [
   { href: '/docs/getting-started', label: 'Docs' },
   { href: '/docs/cli', label: 'CLI' },
   { href: '/docs/orm', label: 'ORM' },
+  { href: '/learn', label: 'Learn' },
 ];
 
 export default function Navbar() {
@@ -33,7 +34,7 @@ export default function Navbar() {
                 to={link.href}
                 className={clsx(
                   'nav-link text-sm',
-                  location.pathname.startsWith(link.href) && 'active'
+                  (link.href === '/learn' ? location.pathname.startsWith('/learn') : location.pathname.startsWith(link.href)) && 'active'
                 )}
               >
                 {link.label}

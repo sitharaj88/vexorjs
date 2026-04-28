@@ -10,7 +10,11 @@ import {
   Layers,
   Terminal,
   X,
-  ChevronRight
+  ChevronRight,
+  GraduationCap,
+  Code2,
+  Network,
+  Rocket
 } from 'lucide-react';
 
 interface SidebarSection {
@@ -83,6 +87,53 @@ const sidebarSections: SidebarSection[] = [
       { href: '/docs/deployment#node', label: 'Node.js' },
       { href: '/docs/deployment#bun', label: 'Bun' },
       { href: '/docs/deployment#lambda', label: 'AWS Lambda' },
+    ],
+  },
+  {
+    title: 'Learn: Fundamentals',
+    links: [
+      { href: '/learn/fundamentals', label: 'Beginner Guide', icon: <GraduationCap className="w-4 h-4" /> },
+      { href: '/learn/fundamentals#http-basics', label: 'HTTP & REST Basics' },
+      { href: '/learn/fundamentals#typescript', label: 'TypeScript Essentials' },
+      { href: '/learn/fundamentals#first-api', label: 'Your First API' },
+      { href: '/learn/fundamentals#request-response', label: 'Request & Response' },
+      { href: '/learn/fundamentals#json', label: 'Working with JSON' },
+      { href: '/learn/fundamentals#restful-crud', label: 'RESTful CRUD API' },
+    ],
+  },
+  {
+    title: 'Learn: Building APIs',
+    links: [
+      { href: '/learn/building-apis', label: 'Intermediate Guide', icon: <Code2 className="w-4 h-4" /> },
+      { href: '/learn/building-apis#authentication', label: 'Authentication & JWT' },
+      { href: '/learn/building-apis#database', label: 'Database Patterns' },
+      { href: '/learn/building-apis#error-handling', label: 'Error Handling' },
+      { href: '/learn/building-apis#validation', label: 'Input Validation' },
+      { href: '/learn/building-apis#file-uploads', label: 'File Uploads' },
+      { href: '/learn/building-apis#testing', label: 'Testing APIs' },
+    ],
+  },
+  {
+    title: 'Learn: Architecture',
+    links: [
+      { href: '/learn/architecture', label: 'Advanced Guide', icon: <Network className="w-4 h-4" /> },
+      { href: '/learn/architecture#system-design', label: 'System Design' },
+      { href: '/learn/architecture#microservices', label: 'Microservices' },
+      { href: '/learn/architecture#event-driven', label: 'Event-Driven' },
+      { href: '/learn/architecture#caching', label: 'Caching Strategies' },
+      { href: '/learn/architecture#performance', label: 'Performance' },
+    ],
+  },
+  {
+    title: 'Learn: Production',
+    links: [
+      { href: '/learn/production', label: 'Expert Guide', icon: <Rocket className="w-4 h-4" /> },
+      { href: '/learn/production#docker', label: 'Docker & Containers' },
+      { href: '/learn/production#monitoring', label: 'Monitoring & Logging' },
+      { href: '/learn/production#security', label: 'Security Hardening' },
+      { href: '/learn/production#cicd', label: 'CI/CD Pipelines' },
+      { href: '/learn/production#scaling', label: 'Scaling & Clustering' },
+      { href: '/learn/production#config', label: 'Environment Config' },
     ],
   },
 ];
