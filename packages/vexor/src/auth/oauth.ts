@@ -239,6 +239,147 @@ export class MemoryStateStore implements OAuthStateStore {
 }
 
 // ============================================================================
+// Redis State Store (production-ready)
+// ============================================================================
+
+/**
+ * Minimal Redis client interface — compatible with `ioredis`, `node-redis` v4+,
+ * `@upstash/redis`, and any client exposing string-based set/get/del with
+ * second-precision expiry. Adapt third-party clients with a thin wrapper if
+ * their methods differ.
+ */
+export interface RedisLike {
+  /**
+   * Set a key with an EX (seconds) expiry. Two call shapes are supported:
+   *
+   *   redis.set(key, value, 'EX', seconds)        // ioredis
+   *   redis.set(key, value, { EX: seconds })       // node-redis v4+
+   */
+  set(
+    key: string,
+    value: string,
+    ...args: unknown[]
+  ): Promise<unknown> | unknown;
+  get(key: string): Promise<string | null> | string | null;
+  del(key: string): Promise<unknown> | unknown;
+}
+
+export interface RedisStateStoreOptions {
+  /** TTL in seconds (default: 600 — 10 minutes). */
+  ttl?: number;
+  /** Key prefix to namespace OAuth state in shared Redis instances. */
+  prefix?: string;
+  /**
+   * Override how `SET key value EX seconds` is invoked. Defaults to the
+   * ioredis-style positional signature `set(key, value, 'EX', seconds)`.
+   * Use `'options'` for node-redis v4+ which expects `{ EX: seconds }`.
+   */
+  setStyle?: 'positional' | 'options';
+}
+
+/**
+ * Redis-backed `OAuthStateStore` for multi-instance deployments.
+ *
+ *   import Redis from 'ioredis';
+ *   const oauth = createOAuth({
+ *     stateStore: new RedisStateStore(new Redis(process.env.REDIS_URL))
+ *   });
+ */
+export class RedisStateStore implements OAuthStateStore {
+  private redis: RedisLike;
+  private ttl: number;
+  private prefix: string;
+  private setStyle: 'positional' | 'options';
+
+  constructor(redis: RedisLike, options: RedisStateStoreOptions = {}) {
+    this.redis = redis;
+    this.ttl = options.ttl ?? 600;
+    this.prefix = options.prefix ?? 'vexor:oauth:state:';
+    this.setStyle = options.setStyle ?? 'positional';
+  }
+
+  private key(state: string): string {
+    return `${this.prefix}${state}`;
+  }
+
+  async set(state: string, data: OAuthStateData): Promise<void> {
+    const k = this.key(state);
+    const v = JSON.stringify(data);
+    if (this.setStyle === 'options') {
+      await this.redis.set(k, v, { EX: this.ttl });
+    } else {
+      await this.redis.set(k, v, 'EX', this.ttl);
+    }
+  }
+
+  async get(state: string): Promise<OAuthStateData | null> {
+    const raw = await this.redis.get(this.key(state));
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw) as OAuthStateData;
+    } catch {
+      // Corrupted entry — drop and treat as missing.
+      await this.redis.del(this.key(state));
+      return null;
+    }
+  }
+
+  async delete(state: string): Promise<void> {
+    await this.redis.del(this.key(state));
+  }
+}
+
+/**
+ * Redis-backed `OAuthSessionStore`. Same options shape as `RedisStateStore`,
+ * defaults to a longer TTL (24h) appropriate for session data.
+ */
+export class RedisSessionStore implements OAuthSessionStore {
+  private redis: RedisLike;
+  private ttl: number;
+  private prefix: string;
+  private setStyle: 'positional' | 'options';
+
+  constructor(
+    redis: RedisLike,
+    options: RedisStateStoreOptions = {}
+  ) {
+    this.redis = redis;
+    this.ttl = options.ttl ?? 86400; // 24h
+    this.prefix = options.prefix ?? 'vexor:oauth:session:';
+    this.setStyle = options.setStyle ?? 'positional';
+  }
+
+  private key(sessionId: string): string {
+    return `${this.prefix}${sessionId}`;
+  }
+
+  async set(sessionId: string, user: OAuthUser): Promise<void> {
+    const k = this.key(sessionId);
+    const v = JSON.stringify(user);
+    if (this.setStyle === 'options') {
+      await this.redis.set(k, v, { EX: this.ttl });
+    } else {
+      await this.redis.set(k, v, 'EX', this.ttl);
+    }
+  }
+
+  async get(sessionId: string): Promise<OAuthUser | null> {
+    const raw = await this.redis.get(this.key(sessionId));
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw) as OAuthUser;
+    } catch {
+      await this.redis.del(this.key(sessionId));
+      return null;
+    }
+  }
+
+  async delete(sessionId: string): Promise<void> {
+    await this.redis.del(this.key(sessionId));
+  }
+}
+
+// ============================================================================
 // PKCE Helpers
 // ============================================================================
 

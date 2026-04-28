@@ -227,6 +227,33 @@ export {
   type DatabaseOptions,
 } from './database.js';
 
+// Query result cache
+export {
+  QueryCache,
+  MemoryCacheStore,
+  createQueryCache,
+  buildCacheKey,
+  type QueryCacheStore,
+  type QueryCacheOptions,
+} from './cache/index.js';
+
+// Relations
+export {
+  hasOne,
+  hasMany,
+  belongsTo,
+  belongsToMany,
+  loadRelations,
+  type Relation,
+  type RelationKind,
+  type RelationMap,
+  type HasOneRelation,
+  type HasManyRelation,
+  type BelongsToRelation,
+  type BelongsToManyRelation,
+  type RelationExecutor,
+} from './relations/index.js';
+
 // Re-export column as vexor for API compatibility
 export { column as vexor } from './core/column.js';
 

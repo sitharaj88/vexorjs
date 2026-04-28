@@ -12,9 +12,10 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { rmSync } from 'node:fs';
 import { Database, createDatabase, connect } from '../database.js';
-import { table } from '../core/table.js';
+import { table, index, uniqueIndex } from '../core/table.js';
 import { column } from '../core/column.js';
 import { eq } from '../query/builder.js';
+import { hasMany, hasOne, belongsTo, belongsToMany } from '../relations/index.js';
 import {
   SelectBuilder,
   InsertBuilder,
@@ -310,16 +311,16 @@ describe('Database', () => {
     });
   });
 
-  describe('unsupported driver', () => {
-    it('throws when configured with an unknown driver', async () => {
-      // The error is raised during connect when buildDriverFactory runs
-      const bogus = createDatabase({
+  describe('driver routing', () => {
+    it('accepts mysql config (driver factory wired into Database)', () => {
+      // Connecting would require mysql2; we only verify the driver string is
+      // accepted by createDatabase / createDriverFactory dispatch.
+      const mysqlDb = createDatabase({
         driver: 'mysql',
+        database: 'app',
       } as unknown as Parameters<typeof createDatabase>[0]);
 
-      // mysql isn't installed; happens to also fail. Check the postgres path
-      // for a more direct failure mode by passing an entirely unknown driver.
-      expect(bogus).toBeInstanceOf(Database);
+      expect(mysqlDb).toBeInstanceOf(Database);
     });
 
     it('throws "Unsupported database driver" for an unknown driver string', async () => {
@@ -448,6 +449,258 @@ describe('Database', () => {
       const remaining = await db.selectFrom(items);
       expect(remaining).toHaveLength(1);
       expect(remaining[0].name).toBe('b');
+    });
+  });
+
+  describe('createTable / dropTable (with indexes)', () => {
+    let cleanupFile: () => void;
+
+    beforeEach(() => {
+      const { config, cleanup } = tempFileConfig();
+      cleanupFile = cleanup;
+      db = createDatabase(config);
+    });
+
+    afterEach(() => {
+      cleanupFile?.();
+    });
+
+    it('creates a table from a TableDef', async () => {
+      await db.connect();
+      const widgets = table('widgets', {
+        id: column.integer().primaryKey(),
+        label: column.text().notNull(),
+      });
+
+      await db.createTable(widgets);
+
+      const result = await db.query<{ name: string }>(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='widgets'"
+      );
+      expect(result.rows).toHaveLength(1);
+    });
+
+    it('creates declared indexes alongside the table', async () => {
+      await db.connect();
+      const events = table(
+        'events',
+        {
+          id: column.integer().primaryKey(),
+          user_id: column.integer().notNull(),
+          email: column.text().notNull(),
+        },
+        {
+          indexes: [
+            index('idx_events_user', 'user_id'),
+            uniqueIndex('uq_events_email', 'email'),
+          ],
+        }
+      );
+
+      await db.createTable(events);
+
+      const idx = await db.query<{ name: string; tbl_name: string; sql: string }>(
+        "SELECT name, tbl_name, sql FROM sqlite_master WHERE type='index' AND tbl_name='events'"
+      );
+
+      const names = idx.rows.map((r) => r.name);
+      expect(names).toContain('idx_events_user');
+      expect(names).toContain('uq_events_email');
+
+      const uniqueIdx = idx.rows.find((r) => r.name === 'uq_events_email');
+      expect(uniqueIdx?.sql).toMatch(/UNIQUE/i);
+    });
+
+    it('respects ifNotExists option', async () => {
+      await db.connect();
+      const t = table('again', {
+        id: column.integer().primaryKey(),
+      });
+
+      await db.createTable(t);
+      // Second call should not throw with ifNotExists
+      await expect(
+        db.createTable(t, { ifNotExists: true })
+      ).resolves.toBeUndefined();
+    });
+
+    it('dropTable removes the table', async () => {
+      await db.connect();
+      const t = table('soon_gone', { id: column.integer().primaryKey() });
+      await db.createTable(t);
+      await db.dropTable(t);
+
+      const result = await db.query<{ name: string }>(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='soon_gone'"
+      );
+      expect(result.rows).toHaveLength(0);
+    });
+
+    it('dropTable accepts a string name', async () => {
+      await db.connect();
+      await db.query('CREATE TABLE name_only (id INTEGER PRIMARY KEY)');
+      await db.dropTable('name_only');
+
+      const result = await db.query<{ name: string }>(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='name_only'"
+      );
+      expect(result.rows).toHaveLength(0);
+    });
+
+    it('createTable throws when not connected', async () => {
+      const t = table('x', { id: column.integer().primaryKey() });
+      await expect(db.createTable(t)).rejects.toThrow('not connected');
+    });
+
+    it('dropTable throws when not connected', async () => {
+      await expect(db.dropTable('x')).rejects.toThrow('not connected');
+    });
+  });
+
+  describe('loadRelations (end-to-end via SQLite)', () => {
+    let cleanupFile: () => void;
+
+    const usersT = table('users', {
+      id: column.integer().primaryKey(),
+      name: column.text().notNull(),
+    });
+
+    const postsT = table('posts', {
+      id: column.integer().primaryKey(),
+      user_id: column.integer().notNull(),
+      title: column.text().notNull(),
+    });
+
+    const profilesT = table('profiles', {
+      id: column.integer().primaryKey(),
+      user_id: column.integer().notNull(),
+      bio: column.text(),
+    });
+
+    const tagsT = table('tags', {
+      id: column.integer().primaryKey(),
+      name: column.text().notNull(),
+    });
+
+    const postTagsT = table('post_tags', {
+      post_id: column.integer().notNull(),
+      tag_id: column.integer().notNull(),
+    });
+
+    beforeEach(async () => {
+      const { config, cleanup } = tempFileConfig();
+      cleanupFile = cleanup;
+      db = await connect(config);
+      await db.createTable(usersT);
+      await db.createTable(postsT);
+      await db.createTable(profilesT);
+      await db.createTable(tagsT);
+      await db.createTable(postTagsT);
+
+      await db.query('INSERT INTO users (id, name) VALUES (1, ?), (2, ?)', [
+        'alice',
+        'bob',
+      ]);
+      await db.query(
+        'INSERT INTO posts (id, user_id, title) VALUES (1, 1, ?), (2, 1, ?), (3, 2, ?)',
+        ['hello', 'world', 'orphan']
+      );
+      await db.query(
+        'INSERT INTO profiles (id, user_id, bio) VALUES (10, 1, ?)',
+        ['alice bio']
+      );
+      await db.query('INSERT INTO tags (id, name) VALUES (100, ?), (101, ?)', [
+        'red',
+        'blue',
+      ]);
+      await db.query(
+        'INSERT INTO post_tags (post_id, tag_id) VALUES (1, 100), (1, 101), (2, 100)'
+      );
+    });
+
+    afterEach(() => {
+      cleanupFile?.();
+    });
+
+    it('eager-loads hasMany without N+1', async () => {
+      const users = await db.execute<{ id: number; name: string }>(
+        'SELECT * FROM users'
+      );
+      await db.loadRelations(
+        users,
+        { posts: hasMany(postsT, { foreignKey: 'user_id' }) },
+        { posts: true }
+      );
+
+      const alice = users.find((u) => u.name === 'alice') as any;
+      const bob = users.find((u) => u.name === 'bob') as any;
+      expect(alice.posts).toHaveLength(2);
+      expect(bob.posts).toHaveLength(1);
+    });
+
+    it('eager-loads hasOne', async () => {
+      const users = await db.execute<{ id: number; name: string }>(
+        'SELECT * FROM users'
+      );
+      await db.loadRelations(
+        users,
+        { profile: hasOne(profilesT, { foreignKey: 'user_id' }) },
+        { profile: true }
+      );
+
+      const alice = users.find((u) => u.name === 'alice') as any;
+      const bob = users.find((u) => u.name === 'bob') as any;
+      expect(alice.profile?.bio).toBe('alice bio');
+      expect(bob.profile).toBeNull();
+    });
+
+    it('eager-loads belongsTo', async () => {
+      const posts = await db.execute<{ id: number; user_id: number }>(
+        'SELECT * FROM posts ORDER BY id'
+      );
+      await db.loadRelations(
+        posts,
+        { author: belongsTo(usersT, { foreignKey: 'user_id' }) },
+        { author: true }
+      );
+
+      expect((posts[0] as any).author?.name).toBe('alice');
+      expect((posts[2] as any).author?.name).toBe('bob');
+    });
+
+    it('eager-loads belongsToMany through a join table', async () => {
+      const posts = await db.execute<{ id: number; title: string }>(
+        'SELECT * FROM posts ORDER BY id'
+      );
+      await db.loadRelations(
+        posts,
+        {
+          tags: belongsToMany(tagsT, {
+            through: postTagsT,
+            sourceKey: 'post_id',
+            targetKey: 'tag_id',
+          }),
+        },
+        { tags: true }
+      );
+
+      const post1 = posts[0] as any;
+      const post2 = posts[1] as any;
+      const post3 = posts[2] as any;
+      expect(post1.tags).toHaveLength(2);
+      expect(post2.tags).toHaveLength(1);
+      expect(post3.tags).toHaveLength(0);
+    });
+
+    it('throws when calling loadRelations before connect', async () => {
+      await db.close();
+      await expect(
+        db.loadRelations(
+          [{ id: 1 }],
+          { posts: hasMany(postsT, { foreignKey: 'user_id' }) },
+          { posts: true }
+        )
+      ).rejects.toThrow('not connected');
     });
   });
 

@@ -601,5 +601,20 @@ export type {
   ScalarOptions,
 } from './openapi/swagger-ui.js';
 
+// GraphQL adapter
+export {
+  createGraphQLHandler,
+  parseGraphQLRequest,
+  statusFor,
+  renderGraphiQL,
+  type GraphQLRequest,
+  type GraphQLResponse,
+  type GraphQLHandler,
+  type GraphQLExecutor,
+  type GraphQLSchema,
+  type GraphQLHTTPContext,
+  type CreateGraphQLHandlerOptions,
+} from './graphql/index.js';
+
 // Default export
 export { Vexor as default } from './core/index.js';

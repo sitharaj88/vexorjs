@@ -11,6 +11,7 @@ import { generateCommand } from './commands/generate.js';
 import { dbCommand } from './commands/db.js';
 import { devCommand } from './commands/dev.js';
 import { buildCommand } from './commands/build.js';
+import { testCommand } from './commands/test.js';
 import { configCommand } from './commands/config.js';
 import { infoCommand, doctorCommand } from './commands/info.js';
 import {
@@ -31,6 +32,7 @@ import {
   envDiffCommand,
   envValidateCommand,
 } from './commands/env.js';
+import { envCheckCommand } from './commands/env-schema.js';
 import { logger } from './utils/logger.js';
 
 const cli = cac('vexor');
@@ -178,6 +180,14 @@ cli
   .option('-f, --file <file>', 'Env file to use', { default: '.env' })
   .action((options) => envValidateCommand(options.file));
 
+cli
+  .command('env:check', 'Validate .env against an env.schema.json')
+  .option('-f, --file <file>', '.env file to validate', { default: '.env' })
+  .option('-s, --schema <file>', 'Schema file', { default: 'env.schema.json' })
+  .action((options) =>
+    envCheckCommand({ file: options.file, schema: options.schema })
+  );
+
 // ============================================
 // OpenAPI Commands
 // ============================================
@@ -213,6 +223,20 @@ cli
   .option('--target <target>', 'Build target (node, bun, edge)', { default: 'node' })
   .option('--minify', 'Minify output')
   .action(buildCommand);
+
+cli
+  .command('test [pattern]', 'Run the project test suite')
+  .option('-w, --watch', 'Watch for changes and re-run')
+  .option('-c, --coverage', 'Collect coverage')
+  .option('--ui', 'Open the test runner UI (vitest only)')
+  .action((pattern, options) =>
+    testCommand({
+      pattern,
+      watch: options.watch,
+      coverage: options.coverage,
+      ui: options.ui,
+    })
+  );
 
 // ============================================
 // Info and Diagnostics

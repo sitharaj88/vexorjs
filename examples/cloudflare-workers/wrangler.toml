@@ -1,0 +1,14 @@
+name = "vexor-cf-worker"
+main = "src/index.ts"
+compatibility_date = "2024-09-01"
+
+# Local dev:  wrangler dev
+# Deploy:     wrangler deploy
+
+# Add your bindings here. Examples:
+# kv_namespaces = [
+#   { binding = "KV_NAMESPACE", id = "<your-kv-id>" }
+# ]
+#
+# [vars]
+# API_TOKEN = "set-via-wrangler-secret"

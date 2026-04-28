@@ -257,6 +257,25 @@ describe('createMySQLDriverFactory', () => {
     ]);
   });
 
+  it('translates $N placeholders to ? before executing', async () => {
+    mockExecute.mockResolvedValue([[], []]);
+
+    const driver = await createMySQLDriverFactory({
+      driver: 'mysql',
+      database: 'app',
+    })();
+
+    await driver.query('SELECT * FROM users WHERE id = $1 AND name = $2', [
+      1,
+      'Alice',
+    ]);
+
+    expect(mockExecute).toHaveBeenCalledWith(
+      'SELECT * FROM users WHERE id = ? AND name = ?',
+      [1, 'Alice']
+    );
+  });
+
   it('returns affectedRows / lastInsertId for INSERT', async () => {
     mockExecute.mockResolvedValue([{ affectedRows: 1, insertId: 99 }, undefined]);
 

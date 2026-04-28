@@ -24,6 +24,12 @@
       "import": "./dist/drivers/sqlite.js",
       "require": "./dist/drivers/sqlite.js",
       "default": "./dist/drivers/sqlite.js"
+    },
+    "./mysql": {
+      "types": "./dist/drivers/mysql.d.ts",
+      "import": "./dist/drivers/mysql.js",
+      "require": "./dist/drivers/mysql.js",
+      "default": "./dist/drivers/mysql.js"
     }
   },
   "files": [

@@ -10,23 +10,29 @@ import { execSync } from 'child_process';
 import ora from 'ora';
 import prompts from 'prompts';
 import { logger } from '../utils/logger.js';
+import {
+  resolveAllIntegrations,
+  type Integration,
+} from './add-registry.js';
 
-interface Integration {
-  name: string;
-  description: string;
-  packages: {
-    dependencies?: string[];
-    devDependencies?: string[];
-  };
-  files?: Record<string, string>;
-  scripts?: Record<string, string>;
-  postInstall?: string[];
-}
+export {
+  registerIntegration,
+  unregisterIntegration,
+  getRegisteredIntegrations,
+  type Integration,
+} from './add-registry.js';
 
 /**
- * Available integrations
+ * Built-in integrations.
+ *
+ * Users can extend this set by:
+ *   - calling `registerIntegration(name, def)` (programmatic)
+ *   - dropping JSON files in `.vexor/integrations/` (project-local)
+ *
+ * The CLI merges all sources via `resolveAllIntegrations()` before resolving
+ * the requested integration.
  */
-const integrations: Record<string, Integration> = {
+const builtInIntegrations: Record<string, Integration> = {
   prisma: {
     name: 'Prisma ORM',
     description: 'Next-generation ORM for Node.js & TypeScript',
@@ -472,6 +478,13 @@ export async function addCommand(name?: string): Promise<void> {
 
   let integrationName = name;
 
+  // Merge built-ins with runtime + project-local integrations.
+  const { all: integrations, warnings } = await resolveAllIntegrations(
+    builtInIntegrations,
+    process.cwd()
+  );
+  for (const w of warnings) logger.warn(w);
+
   // Interactive mode if no name provided
   if (!integrationName) {
     const choices = Object.entries(integrations).map(([key, value]) => ({
@@ -500,7 +513,7 @@ export async function addCommand(name?: string): Promise<void> {
     process.exit(1);
   }
 
-  const integration = integrations[integrationName as keyof typeof integrations];
+  const integration = integrations[integrationName];
 
   if (!integration) {
     logger.error(`Unknown integration: ${integrationName}`);
@@ -600,7 +613,13 @@ export async function listIntegrationsCommand(): Promise<void> {
   logger.title('Available Integrations');
   logger.blank();
 
-  const rows: string[][] = Object.entries(integrations).map(([key, val]) => [
+  const { all, warnings } = await resolveAllIntegrations(
+    builtInIntegrations,
+    process.cwd()
+  );
+  for (const w of warnings) logger.warn(w);
+
+  const rows: string[][] = Object.entries(all).map(([key, val]) => [
     key,
     val.name,
     val.description,
@@ -610,6 +629,7 @@ export async function listIntegrationsCommand(): Promise<void> {
   logger.blank();
   logger.info('Usage: vexor add <integration>');
   logger.info('       vexor add (interactive mode)');
+  logger.info('Custom integrations: drop JSON files in .vexor/integrations/');
 }
 
 export default { addCommand, listIntegrationsCommand };

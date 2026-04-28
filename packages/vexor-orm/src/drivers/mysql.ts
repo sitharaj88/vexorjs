@@ -189,30 +189,32 @@ export function createMySQLDriverFactory(config: MySQLConfig) {
         sql: string,
         params?: unknown[]
       ): Promise<QueryResult<T>> {
-        try {
-          const [rows, fields] = await connection.execute(sql, params || []);
+        // Shared query builder emits PostgreSQL-style $1, $2 placeholders;
+        // mysql2 binds positional `?` placeholders. Translate before execute.
+        const translatedSql = convertPlaceholders(sql);
+        const [rows, fields] = await connection.execute(
+          translatedSql,
+          params || []
+        );
 
-          // Handle INSERT/UPDATE/DELETE results
-          if (!Array.isArray(rows)) {
-            const result = rows as MySQLQueryResult;
-            return {
-              rows: [] as T[],
-              rowCount: result.affectedRows || 0,
-              lastInsertId: result.insertId,
-            };
-          }
-
+        // Handle INSERT/UPDATE/DELETE results
+        if (!Array.isArray(rows)) {
+          const result = rows as MySQLQueryResult;
           return {
-            rows: rows as T[],
-            rowCount: rows.length,
-            fields: (fields as MySQLFieldInfo[])?.map((f) => ({
-              name: f.name,
-              type: getMySQLType(f.type),
-            })),
+            rows: [] as T[],
+            rowCount: result.affectedRows || 0,
+            lastInsertId: result.insertId,
           };
-        } catch (error) {
-          throw error;
         }
+
+        return {
+          rows: rows as T[],
+          rowCount: rows.length,
+          fields: (fields as MySQLFieldInfo[])?.map((f) => ({
+            name: f.name,
+            type: getMySQLType(f.type),
+          })),
+        };
       },
 
       async close(): Promise<void> {
@@ -241,7 +243,11 @@ export async function createMySQLTransaction(
       sql: string,
       params?: unknown[]
     ): Promise<QueryResult<T>> {
-      const [rows, fields] = await connection.execute(sql, params || []);
+      const translatedSql = convertPlaceholders(sql);
+      const [rows, fields] = await connection.execute(
+        translatedSql,
+        params || []
+      );
 
       if (!Array.isArray(rows)) {
         const result = rows as MySQLQueryResult;
@@ -263,7 +269,8 @@ export async function createMySQLTransaction(
     },
 
     async execute<T = unknown>(sql: string, params?: unknown[]): Promise<T[]> {
-      const [rows] = await connection.execute(sql, params || []);
+      const translatedSql = convertPlaceholders(sql);
+      const [rows] = await connection.execute(translatedSql, params || []);
       return Array.isArray(rows) ? rows : [];
     },
 
@@ -359,7 +366,11 @@ export function createMySQLPool(config: MySQLPoolConfig) {
             sql: string,
             params?: unknown[]
           ): Promise<QueryResult<T>> {
-            const [rows, fields] = await connection.execute(sql, params || []);
+            const translatedSql = convertPlaceholders(sql);
+            const [rows, fields] = await connection.execute(
+              translatedSql,
+              params || []
+            );
 
             if (!Array.isArray(rows)) {
               const result = rows as MySQLQueryResult;
@@ -392,7 +403,8 @@ export function createMySQLPool(config: MySQLPoolConfig) {
         sql: string,
         params?: unknown[]
       ): Promise<QueryResult<T>> {
-        const [rows, fields] = await pool.execute(sql, params || []);
+        const translatedSql = convertPlaceholders(sql);
+        const [rows, fields] = await pool.execute(translatedSql, params || []);
 
         if (!Array.isArray(rows)) {
           const result = rows as MySQLQueryResult;

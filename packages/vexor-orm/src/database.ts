@@ -20,6 +20,7 @@ import { ConnectionPool, createPool, type PoolOptions } from './connection/pool.
 import { TransactionManager, type TransactionOptions } from './connection/transaction.js';
 import { createPostgresDriverFactory, type PostgresConfig } from './drivers/postgres.js';
 import { createSQLiteDriverFactory, type SQLiteConfig } from './drivers/sqlite.js';
+import { createMySQLDriverFactory, type MySQLConfig } from './drivers/mysql.js';
 import {
   SelectBuilder,
   InsertBuilder,
@@ -32,6 +33,8 @@ import {
   type WhereCondition,
 } from './query/builder.js';
 import { MigrationRunner, type MigrationFile, type MigrationRunnerOptions } from './migrations/runner.js';
+import { MigrationGenerator } from './migrations/generator.js';
+import { loadRelations, type RelationMap } from './relations/index.js';
 
 /**
  * Database options
@@ -308,6 +311,69 @@ export class Database {
   }
 
   /**
+   * Eager-load relations for a list of parent rows.
+   *
+   * One IN-query per relation — no N+1 fan-out. Each loaded relation is
+   * attached to its parent under the relation name.
+   *
+   *   const users = await db.findMany(usersTable);
+   *   await db.loadRelations(users, { posts: hasMany(postsTable, { foreignKey: 'user_id' }) }, { posts: true });
+   *   //  users[0].posts → Post[]
+   */
+  async loadRelations<TParent extends Record<string, unknown>>(
+    rows: TParent[],
+    relations: RelationMap,
+    spec: Record<string, true>
+  ): Promise<TParent[]> {
+    this.ensureConnected();
+    return loadRelations(
+      { query: <T = unknown>(sql: string, params?: unknown[]) => this.query<T>(sql, params) },
+      rows,
+      relations,
+      spec
+    );
+  }
+
+  /**
+   * Create a table from its TableDef.
+   *
+   * Generates `CREATE TABLE` plus any `CREATE INDEX` statements declared in
+   * `table.indexes`, and executes them sequentially. Use `ifNotExists` to
+   * make the operation idempotent.
+   */
+  async createTable(
+    tableDef: TableDef,
+    options: { ifNotExists?: boolean } = {}
+  ): Promise<void> {
+    this.ensureConnected();
+    const generator = new MigrationGenerator({
+      ifNotExists: options.ifNotExists ?? false,
+    });
+    const migration = generator.createTable(tableDef);
+    for (const sql of migration.up) {
+      await this.query(sql);
+    }
+  }
+
+  /**
+   * Drop a table by TableDef or name.
+   */
+  async dropTable(
+    target: TableDef | string,
+    options: { ifExists?: boolean } = {}
+  ): Promise<void> {
+    this.ensureConnected();
+    const tableName = typeof target === 'string' ? target : target.tableName;
+    const generator = new MigrationGenerator({
+      ifExists: options.ifExists ?? false,
+    });
+    const migration = generator.dropTable(tableName);
+    for (const sql of migration.up) {
+      await this.query(sql);
+    }
+  }
+
+  /**
    * Run pending migrations
    */
   async migrate(migrations?: MigrationFile[]): Promise<void> {
@@ -356,6 +422,8 @@ export class Database {
         return createPostgresDriverFactory(this.config as PostgresConfig);
       case 'sqlite':
         return createSQLiteDriverFactory(this.config as SQLiteConfig);
+      case 'mysql':
+        return createMySQLDriverFactory(this.config as MySQLConfig);
       default:
         throw new Error(`Unsupported database driver: ${this.config.driver}`);
     }
