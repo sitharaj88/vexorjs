@@ -12,8 +12,8 @@ export const templates: Record<string, ProjectTemplate> = {
     name: 'REST API',
     description: 'Full-featured REST API with authentication, database, and validation',
     dependencies: {
-      '@vexorjs/core': '^1.0.0',
-      '@vexorjs/orm': '^1.0.0',
+      '@vexorjs/core': '^1.1.0',
+      '@vexorjs/orm': '^1.1.0',
     },
     devDependencies: {
       '@types/node': '^22.0.0',
@@ -409,7 +409,7 @@ npm run dev
     name: 'Minimal',
     description: 'Minimal setup with just the essentials',
     dependencies: {
-      '@vexorjs/core': '^1.0.0',
+      '@vexorjs/core': '^1.1.0',
     },
     devDependencies: {
       '@types/node': '^22.0.0',
@@ -476,7 +476,7 @@ npm run dev
     name: 'Microservice',
     description: 'Microservice with health checks, tracing, and resilience patterns',
     dependencies: {
-      '@vexorjs/core': '^1.0.0',
+      '@vexorjs/core': '^1.1.0',
     },
     devDependencies: {
       '@types/node': '^22.0.0',
@@ -659,7 +659,7 @@ docker run -p 3000:3000 {{name}}
     name: 'WebSocket',
     description: 'Real-time WebSocket server with rooms and pub/sub',
     dependencies: {
-      '@vexorjs/core': '^1.0.0',
+      '@vexorjs/core': '^1.1.0',
     },
     devDependencies: {
       '@types/node': '^22.0.0',

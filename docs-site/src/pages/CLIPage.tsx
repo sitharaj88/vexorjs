@@ -128,6 +128,53 @@ vexor build
 # Build for edge runtime
 vexor build --target edge`;
 
+const testCode = `# Auto-detects vitest, jest, mocha, or "node --test" from package.json
+vexor test
+
+# Watch mode
+vexor test --watch
+
+# Collect coverage
+vexor test --coverage
+
+# Open vitest UI
+vexor test --ui
+
+# Pattern / file filter
+vexor test users.test.ts`;
+
+const envCheckCode = `# Validate .env against env.schema.json
+vexor env:check
+
+# Custom file paths
+vexor env:check --file .env.production --schema env.schema.prod.json`;
+
+const envSchemaJson = `// env.schema.json — validated by vexor env:check
+{
+  "DATABASE_URL":   { "type": "url",     "required": true },
+  "PORT":           { "type": "integer", "required": true, "min": 1, "max": 65535 },
+  "NODE_ENV":       {
+    "type": "enum",
+    "values": ["development", "production", "test"],
+    "default": "development"
+  },
+  "JWT_SECRET":     { "type": "string", "required": true, "minLength": 32 },
+  "ENABLE_FEATURE": { "type": "boolean", "default": false }
+}`;
+
+const customIntegrationJson = `// .vexor/integrations/pino.json
+// Drop in any JSON file with this shape and \`vexor add pino\` works.
+{
+  "key": "pino",
+  "name": "Pino logger",
+  "description": "Fast structured logger",
+  "packages": { "dependencies": ["pino"] },
+  "files": {
+    "src/lib/logger.ts": "import pino from 'pino';\\nexport const logger = pino();\\n"
+  },
+  "scripts": { "log": "pino-pretty < server.log" }
+}`;
+
 const diagnosticsCode = `# Show system information
 vexor info
 
@@ -343,6 +390,50 @@ export default function CLIPage() {
           Start development server and build for production.
         </p>
         <CodeBlock code={devCode} language="bash" showLineNumbers />
+      </section>
+
+      {/* Testing */}
+      <section id="test">
+        <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-slate-900 dark:text-white">
+          Run tests
+        </h2>
+        <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 mb-4">
+          <code>vexor test</code> auto-detects the project's runner from <code>package.json</code> — vitest, jest, mocha,
+          or <code>node --test</code> — and dispatches accordingly. No setup required.
+        </p>
+        <CodeBlock code={testCode} language="bash" showLineNumbers />
+      </section>
+
+      {/* env:check */}
+      <section id="env-check">
+        <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-slate-900 dark:text-white">
+          Schema-based env validation
+        </h2>
+        <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 mb-4">
+          <code>vexor env:check</code> validates your <code>.env</code> against an <code>env.schema.json</code> at the
+          project root. Types: <code>string</code>, <code>integer</code>, <code>number</code>, <code>boolean</code>,
+          <code> url</code>, <code>email</code>, <code>enum</code> — with <code>required</code>, <code>default</code>,
+          <code> min</code>/<code>max</code>, <code>minLength</code>/<code>maxLength</code>, <code>pattern</code>.
+          Exits non-zero on failure, perfect for CI gates.
+        </p>
+        <CodeBlock code={envCheckCode} language="bash" showLineNumbers />
+        <h3 className="text-base sm:text-lg font-semibold mt-6 mb-3 text-slate-900 dark:text-white">
+          Schema file
+        </h3>
+        <CodeBlock code={envSchemaJson} filename="env.schema.json" showLineNumbers />
+      </section>
+
+      {/* Pluggable integrations */}
+      <section id="custom-integrations">
+        <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-slate-900 dark:text-white">
+          Custom integrations
+        </h2>
+        <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 mb-4">
+          Extend <code>vexor add</code> without forking the CLI. Drop a JSON file in
+          <code> .vexor/integrations/</code> and it'll appear in <code>vexor add:list</code> immediately.
+          Resolution order: project-local → runtime-registered → built-in.
+        </p>
+        <CodeBlock code={customIntegrationJson} filename=".vexor/integrations/pino.json" showLineNumbers />
       </section>
 
       {/* Diagnostics */}

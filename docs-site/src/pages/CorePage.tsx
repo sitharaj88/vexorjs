@@ -190,6 +190,77 @@ app.addHook('onError', async (error, ctx) => {
   return ctx.status(500).json({ error: 'Internal Server Error' });
 });`;
 
+const graphqlCode = `import { createGraphQLHandler } from '@vexorjs/core';
+import { buildSchema, execute, parse } from 'graphql';
+
+const schema = buildSchema(\`type Query { hello(name: String): String! }\`);
+const rootValue = { hello: ({ name }) => \`hi \${name ?? 'world'}\` };
+
+const handler = createGraphQLHandler({
+  graphiql: true, // GET /graphql renders the playground
+  executor: async ({ query, variables, operationName }) =>
+    (await execute({
+      schema,
+      document: parse(query),
+      rootValue,
+      variableValues: variables,
+      operationName,
+    })) as any,
+});
+
+app.post('/graphql', handler);
+app.get('/graphql', handler);`;
+
+const grpcCode = `import { GrpcService, GrpcError, GrpcStatus, createGrpcHandler } from '@vexorjs/core';
+
+const greeter = new GrpcService('Greeter')
+  // Unary RPC
+  .unary<{ name: string }, { message: string }>('SayHello', async (req) => {
+    if (!req.name) throw new GrpcError(GrpcStatus.INVALID_ARGUMENT, 'name required');
+    return { message: \`hi \${req.name}\` };
+  })
+  // Server-streaming RPC — yield each value as a separate frame
+  .serverStream<{ from: number; to: number }, { n: number }>(
+    'Range',
+    async function* (req) {
+      for (let i = req.from; i <= req.to; i++) yield { n: i };
+    }
+  );
+
+const handler = createGrpcHandler({ services: [greeter] });
+app.post('/Greeter/:method', (ctx) =>
+  handler({ method: ctx.method, path: ctx.path, request: ctx.request })
+);`;
+
+const oauthRedisCode = `import {
+  OAuth,
+  providers,
+  RedisStateStore,
+  RedisSessionStore,
+} from '@vexorjs/core';
+import Redis from 'ioredis';
+
+const redis = new Redis(process.env.REDIS_URL!);
+
+const oauth = new OAuth({
+  providers: {
+    github: providers.github(
+      process.env.GH_CLIENT_ID!,
+      process.env.GH_CLIENT_SECRET!
+    ),
+  },
+  // Multi-instance-safe stores
+  stateStore:   new RedisStateStore(redis,   { ttl: 600,   prefix: 'app:state:' }),
+  sessionStore: new RedisSessionStore(redis, { ttl: 86400, prefix: 'app:sess:' }),
+});
+
+app.get('/auth/github', async (ctx) => {
+  return ctx.redirect(await oauth.getAuthorizationUrl('github'));
+});
+
+// node-redis v4+ uses { EX } object syntax instead of positional args:
+// new RedisStateStore(client, { setStyle: 'options' })`;
+
 const errorHandlingCode = `// Global error handler
 app.setErrorHandler(async (error, ctx) => {
   // Log the error
@@ -345,6 +416,38 @@ export default function CorePage() {
           Vexor provides centralized error handling with custom error handlers.
         </p>
         <CodeBlock code={errorHandlingCode} filename="errors.ts" showLineNumbers />
+      </section>
+
+      {/* GraphQL */}
+      <section id="graphql">
+        <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">GraphQL</h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
+          The built-in GraphQL adapter is pure HTTP plumbing — bring your own executor (Yoga, Apollo, raw <code>graphql</code>),
+          and get an optional GraphiQL playground for free.
+        </p>
+        <CodeBlock code={graphqlCode} filename="graphql.ts" showLineNumbers />
+      </section>
+
+      {/* gRPC-Web */}
+      <section id="grpc">
+        <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">gRPC-Web</h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
+          Full gRPC-Web wire format on plain HTTP/1.1+ — usable from browsers, edge runtimes, and behind any HTTP proxy.
+          Supports unary and server-streaming methods. JSON codec by default; pluggable for Protobuf.
+        </p>
+        <CodeBlock code={grpcCode} filename="grpc.ts" showLineNumbers />
+      </section>
+
+      {/* OAuth + Redis */}
+      <section id="oauth-redis">
+        <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">OAuth with Redis-backed stores</h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
+          Eight built-in providers (Google, GitHub, Discord, Twitter, Microsoft, Facebook, LinkedIn, Apple) plus production-ready
+          state and session stores backed by Redis. The <code>RedisLike</code> interface is intentionally minimal — works with
+          <code> ioredis</code>, <code>node-redis</code> v4+, <code>@upstash/redis</code>, or any client exposing
+          <code> set</code>/<code>get</code>/<code>del</code>.
+        </p>
+        <CodeBlock code={oauthRedisCode} filename="oauth.ts" showLineNumbers />
       </section>
 
       {/* Next Steps */}

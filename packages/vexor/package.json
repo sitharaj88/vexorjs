@@ -1,6 +1,6 @@
 {
   "name": "@vexorjs/core",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "A blazing-fast, batteries-included, multi-runtime Node.js backend framework",
   "type": "module",
   "main": "./dist/index.js",

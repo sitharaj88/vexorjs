@@ -297,6 +297,84 @@ await db.transaction(async (tx) => {
   }
 });`;
 
+const relationsCode = `import { hasMany, hasOne, belongsTo, belongsToMany } from '@vexorjs/orm';
+
+// Eager-load related rows in a single IN-query per relation — never N+1.
+const usersRows = await db.findMany(users);
+
+await db.loadRelations(
+  usersRows,
+  {
+    posts:   hasMany(posts, { foreignKey: 'user_id' }),
+    profile: hasOne(profiles, { foreignKey: 'user_id' }),
+    company: belongsTo(companies, { foreignKey: 'company_id' }),
+    tags: belongsToMany(tags, {
+      through: userTags,
+      sourceKey: 'user_id',
+      targetKey: 'tag_id',
+    }),
+  },
+  { posts: true, profile: true, company: true, tags: true }
+);
+
+// usersRows[0].posts   → Post[]
+// usersRows[0].profile → Profile | null
+// usersRows[0].company → Company | null
+// usersRows[0].tags    → Tag[]`;
+
+const softDeleteRelationsCode = `import { softDeletable, hasMany } from '@vexorjs/orm';
+
+// Wrap the relation target with softDeletable() to auto-filter deleted rows.
+await db.loadRelations(
+  usersRows,
+  { posts: hasMany(softDeletable(posts), { foreignKey: 'user_id' }) },
+  { posts: true }
+);
+// → SELECT * FROM "posts" WHERE "user_id" IN (...) AND "deleted_at" IS NULL`;
+
+const schemaAsCode = `import { connect, table, column, index, uniqueIndex } from '@vexorjs/orm';
+
+const events = table('events', {
+  id: column.serial().primaryKey(),
+  user_id: column.integer().notNull(),
+  email: column.text().notNull(),
+}, {
+  indexes: [
+    index('idx_events_user', 'user_id'),
+    uniqueIndex('uq_events_email', 'email'),
+  ],
+});
+
+const db = await connect({ driver: 'sqlite', filename: ':memory:' });
+
+// Materialize the table + its indexes in one call.
+await db.createTable(events, { ifNotExists: true });
+
+// Online schema changes
+await db.addColumn(events, 'archived_at', column.timestamp());
+await db.dropColumn(events, 'archived_at');
+
+await db.dropTable(events, { ifExists: true });`;
+
+const cacheCode = `import { connect, createQueryCache } from '@vexorjs/orm';
+
+const db = await connect(config, {
+  cache: createQueryCache({ defaultTtlMs: 30_000 }),
+});
+
+// Wrapped read — first call hits the DB, repeats are served from cache.
+const popular = await db.cached(
+  'SELECT * FROM products WHERE qty > $1',
+  [0],
+  { ttlMs: 60_000 }
+);
+
+// Concurrent callers share one in-flight DB call (no thundering herd).
+
+// After a write, invalidate.
+await db.invalidateCache();          // clear all
+await db.invalidateCache(specificKey);// clear one`;
+
 const migrationCode = `// migrations/001_create_users.ts
 import { Migration } from '@vexorjs/orm';
 
@@ -506,6 +584,45 @@ export default function ORMPage() {
             the entire transaction is automatically rolled back. No manual cleanup required.
           </p>
         </div>
+      </section>
+
+      {/* Relations */}
+      <section id="relations">
+        <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">Relations & eager loading</h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
+          Declare <code>hasOne</code>, <code>hasMany</code>, <code>belongsTo</code>, and <code>belongsToMany</code> relations.
+          <code> db.loadRelations(rows, ...)</code> issues a single <code>IN</code>-query per relation across all parents — no N+1 fan-out.
+        </p>
+        <CodeBlock code={relationsCode} filename="relations.ts" showLineNumbers />
+
+        <h3 className="text-lg font-semibold mt-6 mb-3 text-slate-900 dark:text-white">Soft-delete-aware</h3>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
+          Wrap the target with <code>softDeletable()</code> and the eager loader appends the appropriate <code>IS NULL</code>
+          (or boolean-flag) filter. Custom column names, <code>includeDeleted: true</code>, and <code>belongsToMany</code> all honored.
+        </p>
+        <CodeBlock code={softDeleteRelationsCode} filename="relations-soft-delete.ts" showLineNumbers />
+      </section>
+
+      {/* Schema as code */}
+      <section id="schema-as-code">
+        <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">Schema as code</h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
+          Skip the migration roundtrip during prototyping: <code>db.createTable()</code> materializes <code>CREATE TABLE</code> + every
+          declared <code>CREATE INDEX</code> from a <code>TableDef</code>. <code>db.addColumn()</code> / <code>dropColumn()</code> /
+          <code> dropTable()</code> handle online schema changes.
+        </p>
+        <CodeBlock code={schemaAsCode} filename="schema-as-code.ts" showLineNumbers />
+      </section>
+
+      {/* Query cache */}
+      <section id="cache">
+        <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">Query result cache</h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
+          Wire a cache into <code>Database</code> and use <code>db.cached()</code> for opt-in, per-query TTL caching with
+          in-flight de-duplication. The default backend is in-memory with LRU eviction; bring your own by implementing
+          <code> QueryCacheStore</code>.
+        </p>
+        <CodeBlock code={cacheCode} filename="cached.ts" showLineNumbers />
       </section>
 
       {/* Migrations */}

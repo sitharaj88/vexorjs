@@ -84,10 +84,44 @@ vexor add eslint      # ESLint + Prettier
 vexor add github      # GitHub Actions CI/CD
 vexor add swagger     # Swagger/OpenAPI docs
 vexor add sentry      # Error tracking
+vexor add graphql     # GraphQL endpoint + GraphiQL playground
 
-# List available integrations
+# List available integrations (built-in + custom)
 vexor add:list
 ```
+
+#### Custom integrations
+
+Extend the registry without forking the CLI. Drop a JSON file in
+`.vexor/integrations/` at the project root:
+
+```json
+// .vexor/integrations/pino.json
+{
+  "key": "pino",
+  "name": "Pino logger",
+  "description": "Fast structured logger",
+  "packages": { "dependencies": ["pino"] },
+  "files": {
+    "src/lib/logger.ts": "import pino from 'pino';\nexport const logger = pino();\n"
+  },
+  "scripts": { "log": "pino-pretty < server.log" }
+}
+```
+
+Now `vexor add pino` works. Or register programmatically:
+
+```ts
+import { registerIntegration } from '@vexorjs/cli';
+
+registerIntegration('pino', {
+  name: 'Pino',
+  description: 'Fast logger',
+  packages: { dependencies: ['pino'] },
+});
+```
+
+Precedence: project-local → runtime-registered → built-in.
 
 ### Database Commands
 
@@ -123,7 +157,24 @@ vexor env:remove <key>       # Remove a variable
 vexor env:init        # Create .env from .env.example
 vexor env:diff        # Compare .env with .env.example
 vexor env:validate    # Validate required variables
+vexor env:check       # Validate .env against env.schema.json
 ```
+
+#### Schema-based env validation
+
+Create `env.schema.json` at the project root:
+
+```json
+{
+  "DATABASE_URL":   { "type": "url",     "required": true },
+  "PORT":           { "type": "integer", "required": true, "min": 1, "max": 65535 },
+  "NODE_ENV":       { "type": "enum", "values": ["development", "production", "test"], "default": "development" },
+  "JWT_SECRET":     { "type": "string", "required": true, "minLength": 32 },
+  "ENABLE_FEATURE": { "type": "boolean", "default": false }
+}
+```
+
+Then `vexor env:check` validates your `.env` against it (types: `string`, `integer`, `number`, `boolean`, `url`, `email`, `enum`, plus `required` / `default` / `min`/`max` / `minLength`/`maxLength` / `pattern`). Exits non-zero on failure — perfect for CI gates.
 
 ### OpenAPI/Swagger
 
@@ -145,6 +196,18 @@ vexor build                  # Build for production
 vexor build --target edge    # Build for edge runtime
 vexor build --minify         # Minify output
 ```
+
+### Testing
+
+```bash
+vexor test               # Run the test suite (auto-detects runner)
+vexor test --watch       # Watch mode
+vexor test --coverage    # Collect coverage
+vexor test --ui          # Open vitest UI
+vexor test users.test.ts # Pattern / file filter
+```
+
+Detection order: `vitest` → `jest` → `mocha` → `node --test` → `npm test` script. Detected from `devDependencies`, then `scripts.test`, then defaults to `node --test test/ tests/ src/`.
 
 ### Diagnostics
 
@@ -195,6 +258,8 @@ The CLI supports both global and local configuration:
 
 ## Integrations
 
+Built-in:
+
 | Integration | What it adds |
 |-------------|--------------|
 | `prisma` | Prisma ORM, schema file, migration scripts |
@@ -205,6 +270,9 @@ The CLI supports both global and local configuration:
 | `github` | GitHub Actions CI/CD workflows |
 | `swagger` | Swagger UI and OpenAPI documentation |
 | `sentry` | Sentry error tracking integration |
+| `graphql` | GraphQL endpoint with GraphiQL playground |
+
+Pluggable: add custom integrations by dropping JSON in `.vexor/integrations/` or by calling `registerIntegration()` — see [Add Integrations](#add-integrations) above.
 
 ## Documentation
 
