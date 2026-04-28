@@ -119,12 +119,16 @@ export class SQLiteDriver implements DatabaseDriver {
       throw new Error('Not connected to SQLite');
     }
 
+    // The shared query builder emits PostgreSQL-style $1, $2 placeholders.
+    // SQLite (better-sqlite3 / sql.js) bind positional `?` placeholders, so
+    // translate before execution. `?` placeholders pass through untouched.
+    const translatedSql = convertPostgresPlaceholders(sql);
     const normalizedParams = params?.map((p) => this.normalizeParam(p));
 
     if (this.isWasm) {
-      return this.queryWasm<T>(sql, normalizedParams);
+      return this.queryWasm<T>(translatedSql, normalizedParams);
     } else {
-      return this.queryNative<T>(sql, normalizedParams);
+      return this.queryNative<T>(translatedSql, normalizedParams);
     }
   }
 
@@ -455,4 +459,12 @@ export async function createMemoryDatabase(): Promise<SQLiteDriver> {
   });
   await driver.connect();
   return driver;
+}
+
+/**
+ * Translate PostgreSQL-style `$1`, `$2` placeholders to SQLite-style `?`.
+ * Pre-existing `?` placeholders pass through unchanged.
+ */
+export function convertPostgresPlaceholders(sql: string): string {
+  return sql.replace(/\$\d+/g, '?');
 }
