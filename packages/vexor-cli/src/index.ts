@@ -6,6 +6,9 @@
  */
 
 import { cac } from 'cac';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
 import { newCommand } from './commands/new.js';
 import { generateCommand } from './commands/generate.js';
 import { dbCommand } from './commands/db.js';
@@ -37,8 +40,19 @@ import { logger } from './utils/logger.js';
 
 const cli = cac('vexor');
 
-// Version
-cli.version('1.0.0');
+// Read version from package.json so it stays in sync with the published one.
+function readVersion(): string {
+  try {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const pkgPath = resolve(here, '..', 'package.json');
+    const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8')) as { version?: string };
+    return pkg.version ?? '0.0.0';
+  } catch {
+    return '0.0.0';
+  }
+}
+
+cli.version(readVersion());
 
 // ============================================
 // Project Creation

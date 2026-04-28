@@ -12,6 +12,58 @@
 
 import type { TableDef } from '../core/types.js';
 
+/**
+ * Either a plain TableDef or a `softDeletable(table)` wrapper.
+ *
+ * Defined inline (not imported from features/soft-delete) to keep the
+ * relations module dependency-light. We only need the shape: a `table`
+ * property and `options` describing the deleted-flag column.
+ */
+export type RelationTarget =
+  | TableDef
+  | {
+      table: TableDef;
+      options: {
+        column: string;
+        useBooleanFlag?: boolean;
+        booleanColumn?: string;
+        includeDeleted?: boolean;
+      };
+    };
+
+interface SoftDeleteFilter {
+  /** Either `IS NULL` or `= 0` depending on the soft-delete strategy. */
+  sql: string;
+}
+
+/**
+ * Extract the underlying TableDef and an optional soft-delete WHERE
+ * fragment. Plain TableDefs return `{ filter: undefined }`.
+ */
+function resolveTarget(target: RelationTarget): {
+  table: TableDef;
+  filter: SoftDeleteFilter | undefined;
+} {
+  if ('_brand' in target && target._brand === 'TableDef') {
+    return { table: target, filter: undefined };
+  }
+  const wrapped = target as Exclude<RelationTarget, TableDef>;
+  if (wrapped.options.includeDeleted) {
+    return { table: wrapped.table, filter: undefined };
+  }
+  if (wrapped.options.useBooleanFlag) {
+    const col = wrapped.options.booleanColumn ?? 'is_deleted';
+    return {
+      table: wrapped.table,
+      filter: { sql: `${quoteIdent(col)} = 0` },
+    };
+  }
+  return {
+    table: wrapped.table,
+    filter: { sql: `${quoteIdent(wrapped.options.column)} IS NULL` },
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Relation definitions
 // ---------------------------------------------------------------------------
@@ -21,7 +73,7 @@ export type RelationKind = 'hasOne' | 'hasMany' | 'belongsTo' | 'belongsToMany';
 export interface BaseRelation {
   readonly _brand: 'Relation';
   readonly kind: RelationKind;
-  readonly target: TableDef;
+  readonly target: RelationTarget;
 }
 
 export interface HasOneRelation extends BaseRelation {
@@ -84,9 +136,12 @@ export interface BelongsToManyOptions {
  * Declare a one-to-one relation (target has a FK back to this table).
  *
  *   hasOne(profiles, { foreignKey: 'user_id' })
+ *
+ * Pass a `softDeletable(profiles)` wrapper to auto-filter soft-deleted
+ * children from eager loads.
  */
 export function hasOne(
-  target: TableDef,
+  target: RelationTarget,
   options: HasOneOptions
 ): HasOneRelation {
   return {
@@ -104,7 +159,7 @@ export function hasOne(
  *   hasMany(posts, { foreignKey: 'user_id' })
  */
 export function hasMany(
-  target: TableDef,
+  target: RelationTarget,
   options: HasManyOptions
 ): HasManyRelation {
   return {
@@ -122,7 +177,7 @@ export function hasMany(
  *   belongsTo(users, { foreignKey: 'user_id' })
  */
 export function belongsTo(
-  target: TableDef,
+  target: RelationTarget,
   options: BelongsToOptions
 ): BelongsToRelation {
   return {
@@ -144,7 +199,7 @@ export function belongsTo(
  *   })
  */
 export function belongsToMany(
-  target: TableDef,
+  target: RelationTarget,
   options: BelongsToManyOptions
 ): BelongsToManyRelation {
   return {
@@ -250,7 +305,8 @@ async function loadOne(
   switch (relation.kind) {
     case 'hasOne':
     case 'hasMany': {
-      const { target, foreignKey, localKey } = relation;
+      const { foreignKey, localKey } = relation;
+      const { table, filter } = resolveTarget(relation.target);
       const ids = uniqueValues(parents.map((p) => p[localKey]));
       if (ids.length === 0) {
         for (const p of parents) {
@@ -259,9 +315,10 @@ async function loadOne(
         return;
       }
 
-      const sql = `SELECT * FROM ${quoteIdent(
-        target.tableName
-      )} WHERE ${quoteIdent(foreignKey)} IN (${placeholders(ids.length)})`;
+      const where = `${quoteIdent(foreignKey)} IN (${placeholders(ids.length)})`;
+      const sql = `SELECT * FROM ${quoteIdent(table.tableName)} WHERE ${where}${
+        filter ? ` AND ${filter.sql}` : ''
+      }`;
       const result = await executor.query<Record<string, unknown>>(sql, ids);
 
       const grouped = groupBy(result.rows, foreignKey);
@@ -275,16 +332,18 @@ async function loadOne(
     }
 
     case 'belongsTo': {
-      const { target, foreignKey, ownerKey } = relation;
+      const { foreignKey, ownerKey } = relation;
+      const { table, filter } = resolveTarget(relation.target);
       const ids = uniqueValues(parents.map((p) => p[foreignKey]));
       if (ids.length === 0) {
         for (const p of parents) p[name] = null;
         return;
       }
 
-      const sql = `SELECT * FROM ${quoteIdent(
-        target.tableName
-      )} WHERE ${quoteIdent(ownerKey)} IN (${placeholders(ids.length)})`;
+      const where = `${quoteIdent(ownerKey)} IN (${placeholders(ids.length)})`;
+      const sql = `SELECT * FROM ${quoteIdent(table.tableName)} WHERE ${where}${
+        filter ? ` AND ${filter.sql}` : ''
+      }`;
       const result = await executor.query<Record<string, unknown>>(sql, ids);
 
       const byKey = new Map<unknown, Record<string, unknown>>();
@@ -299,8 +358,8 @@ async function loadOne(
     }
 
     case 'belongsToMany': {
-      const { target, through, sourceKey, targetKey, localKey, ownerKey } =
-        relation;
+      const { through, sourceKey, targetKey, localKey, ownerKey } = relation;
+      const { table, filter } = resolveTarget(relation.target);
       const ids = uniqueValues(parents.map((p) => p[localKey]));
       if (ids.length === 0) {
         for (const p of parents) p[name] = [];
@@ -311,12 +370,18 @@ async function loadOne(
         typeof through === 'string' ? through : through.tableName;
 
       // Single join query: target rows + the source-side FK from the join.
+      // The soft-delete filter applies to the *target* table's column, so
+      // qualify with `t.` to disambiguate.
+      const filterSql = filter
+        ? ` AND t.${filter.sql.replace(/^"([^"]+)"/, '"$1"')}`
+        : '';
       const sql =
         `SELECT t.*, j.${quoteIdent(sourceKey)} AS __source_key ` +
         `FROM ${quoteIdent(throughName)} j ` +
-        `INNER JOIN ${quoteIdent(target.tableName)} t ` +
+        `INNER JOIN ${quoteIdent(table.tableName)} t ` +
         `ON j.${quoteIdent(targetKey)} = t.${quoteIdent(ownerKey)} ` +
-        `WHERE j.${quoteIdent(sourceKey)} IN (${placeholders(ids.length)})`;
+        `WHERE j.${quoteIdent(sourceKey)} IN (${placeholders(ids.length)})` +
+        filterSql;
 
       const result = await executor.query<Record<string, unknown>>(sql, ids);
 

@@ -616,5 +616,28 @@ export {
   type CreateGraphQLHandlerOptions,
 } from './graphql/index.js';
 
+// gRPC-Web adapter
+export {
+  createGrpcHandler,
+  GrpcService,
+  GrpcError,
+  GrpcStatus,
+  jsonCodec,
+  parseFrames,
+  encodeFrame,
+  encodeTrailers,
+  parseTrailers,
+  type GrpcStatusCode,
+  type GrpcFrame,
+  type GrpcContext,
+  type GrpcHandler,
+  type GrpcHTTPContext,
+  type Codec,
+  type ServiceMethod,
+  type UnaryHandler,
+  type ServerStreamHandler,
+  type CreateGrpcHandlerOptions,
+} from './grpc/index.js';
+
 // Default export
 export { Vexor as default } from './core/index.js';

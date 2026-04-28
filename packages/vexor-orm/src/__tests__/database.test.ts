@@ -16,6 +16,7 @@ import { table, index, uniqueIndex } from '../core/table.js';
 import { column } from '../core/column.js';
 import { eq } from '../query/builder.js';
 import { hasMany, hasOne, belongsTo, belongsToMany } from '../relations/index.js';
+import { createQueryCache } from '../cache/index.js';
 import {
   SelectBuilder,
   InsertBuilder,
@@ -701,6 +702,151 @@ describe('Database', () => {
           { posts: true }
         )
       ).rejects.toThrow('not connected');
+    });
+  });
+
+  describe('cached / invalidateCache', () => {
+    let cleanupFile: () => void;
+
+    beforeEach(async () => {
+      const { config, cleanup } = tempFileConfig();
+      cleanupFile = cleanup;
+      db = createDatabase(config, { cache: createQueryCache({ defaultTtlMs: 5_000 }) });
+      await db.connect();
+      await db.query('CREATE TABLE x (id INTEGER PRIMARY KEY, n INTEGER)');
+      await db.query('INSERT INTO x (n) VALUES (1), (2), (3)');
+    });
+
+    afterEach(() => {
+      cleanupFile?.();
+    });
+
+    it('returns rows on first call', async () => {
+      const rows = await db.cached<{ id: number; n: number }>(
+        'SELECT * FROM x ORDER BY id'
+      );
+      expect(rows).toHaveLength(3);
+    });
+
+    it('serves repeated calls from cache', async () => {
+      const sql = 'SELECT n FROM x ORDER BY id';
+      const a = await db.cached(sql);
+      // Mutate the underlying table; cached call should still return stale data.
+      await db.query('DELETE FROM x');
+      const b = await db.cached(sql);
+      expect(b).toEqual(a);
+      expect((b as Array<unknown>).length).toBe(3);
+    });
+
+    it('invalidateCache(key) drops a single entry', async () => {
+      const sql = 'SELECT n FROM x';
+      await db.cached(sql);
+      await db.query('DELETE FROM x');
+
+      // Use the same key strategy as cached() does internally.
+      const { buildCacheKey } = await import('../cache/index.js');
+      await db.invalidateCache(buildCacheKey(sql, []));
+
+      const fresh = await db.cached(sql);
+      expect(fresh).toEqual([]);
+    });
+
+    it('invalidateCache() with no args clears everything', async () => {
+      const sql = 'SELECT n FROM x';
+      await db.cached(sql);
+      await db.query('DELETE FROM x');
+      await db.invalidateCache();
+
+      const fresh = await db.cached(sql);
+      expect(fresh).toEqual([]);
+    });
+
+    it('honors a per-call ttlMs override', async () => {
+      const sql = 'SELECT n FROM x';
+      await db.cached(sql, [], { ttlMs: 1 });
+      // Wait past the TTL and the cache must miss
+      await new Promise((r) => setTimeout(r, 5));
+      await db.query('DELETE FROM x');
+      const fresh = await db.cached(sql, [], { ttlMs: 1 });
+      expect(fresh).toEqual([]);
+    });
+
+    it('falls back to a plain query when no cache is configured', async () => {
+      // Build a fresh db without a cache option
+      const { config, cleanup } = tempFileConfig();
+      const noCacheDb = await connect(config);
+      try {
+        await noCacheDb.query('CREATE TABLE x (id INTEGER PRIMARY KEY)');
+        await noCacheDb.query('INSERT INTO x (id) VALUES (1)');
+        const rows = await noCacheDb.cached('SELECT * FROM x');
+        expect(rows).toHaveLength(1);
+        // No cache means each call hits the DB
+        await noCacheDb.query('DELETE FROM x');
+        const fresh = await noCacheDb.cached('SELECT * FROM x');
+        expect(fresh).toEqual([]);
+      } finally {
+        await noCacheDb.close();
+        cleanup();
+      }
+    });
+
+    it('cached() throws when not connected', async () => {
+      await db.close();
+      await expect(db.cached('SELECT 1')).rejects.toThrow('not connected');
+    });
+  });
+
+  describe('addColumn / dropColumn (end-to-end)', () => {
+    let cleanupFile: () => void;
+
+    beforeEach(async () => {
+      const { config, cleanup } = tempFileConfig();
+      cleanupFile = cleanup;
+      db = await connect(config);
+      await db.query('CREATE TABLE widgets (id INTEGER PRIMARY KEY)');
+    });
+
+    afterEach(() => {
+      cleanupFile?.();
+    });
+
+    it('addColumn adds a column from a ColumnBuilder', async () => {
+      await db.addColumn('widgets', 'label', column.text());
+      await db.query('INSERT INTO widgets (id, label) VALUES (1, ?)', ['hello']);
+      const r = await db.query<{ label: string }>('SELECT label FROM widgets');
+      expect(r.rows[0].label).toBe('hello');
+    });
+
+    it('addColumn accepts a TableDef as the target', async () => {
+      const widgets = table('widgets', { id: column.integer().primaryKey() });
+      await db.addColumn(widgets, 'qty', column.integer());
+      await db.query('INSERT INTO widgets (id, qty) VALUES (1, 99)');
+      const r = await db.query<{ qty: number }>('SELECT qty FROM widgets');
+      expect(r.rows[0].qty).toBe(99);
+    });
+
+    it('dropColumn removes a column', async () => {
+      await db.addColumn('widgets', 'tmp', column.text());
+      await db.dropColumn('widgets', 'tmp');
+
+      // SQLite reports columns via PRAGMA — confirm `tmp` is gone.
+      const r = await db.query<{ name: string }>('PRAGMA table_info(widgets)');
+      const names = r.rows.map((row) => row.name);
+      expect(names).not.toContain('tmp');
+    });
+
+    it('addColumn throws when not connected', async () => {
+      await db.close();
+      await expect(
+        db.addColumn('widgets', 'x', column.text())
+      ).rejects.toThrow('not connected');
+    });
+
+    it('dropColumn throws when not connected', async () => {
+      await db.close();
+      await expect(db.dropColumn('widgets', 'x')).rejects.toThrow(
+        'not connected'
+      );
     });
   });
 

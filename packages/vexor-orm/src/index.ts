@@ -247,6 +247,7 @@ export {
   type Relation,
   type RelationKind,
   type RelationMap,
+  type RelationTarget,
   type HasOneRelation,
   type HasManyRelation,
   type BelongsToRelation,
@@ -293,6 +294,18 @@ import { createSeederRunner as _createSeederRunner, createFactory as _createFact
 import { createMigrationRunner as _createMigrationRunner } from './migrations/runner.js';
 import { createMigrationGenerator as _createMigrationGenerator } from './migrations/generator.js';
 import { createDatabase as _createDatabase, connect as _connect } from './database.js';
+import {
+  hasOne as _hasOne,
+  hasMany as _hasMany,
+  belongsTo as _belongsTo,
+  belongsToMany as _belongsToMany,
+  loadRelations as _loadRelations,
+} from './relations/index.js';
+import {
+  createQueryCache as _createQueryCache,
+  MemoryCacheStore as _MemoryCacheStore,
+  buildCacheKey as _buildCacheKey,
+} from './cache/index.js';
 
 /**
  * Default export for convenient access
@@ -366,4 +379,16 @@ export default {
   defineSeeder: _defineSeeder,
   truncate: _truncate,
   fake: _fake,
+
+  // Relations
+  hasOne: _hasOne,
+  hasMany: _hasMany,
+  belongsTo: _belongsTo,
+  belongsToMany: _belongsToMany,
+  loadRelations: _loadRelations,
+
+  // Query cache
+  createQueryCache: _createQueryCache,
+  MemoryCacheStore: _MemoryCacheStore,
+  buildCacheKey: _buildCacheKey,
 };

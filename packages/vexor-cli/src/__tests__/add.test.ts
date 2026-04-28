@@ -107,7 +107,7 @@ function mockFullAddFlow(): void {
 // ---------------------------------------------------------------------------
 
 describe('listIntegrationsCommand', () => {
-  it('should display a table with all 8 integrations', async () => {
+  it('should display a table with all 9 integrations', async () => {
     await listIntegrationsCommand();
 
     expect(logger.title).toHaveBeenCalledWith('Available Integrations');
@@ -117,7 +117,7 @@ describe('listIntegrationsCommand', () => {
     );
 
     const rows = (logger.table as ReturnType<typeof vi.fn>).mock.calls[0][1] as string[][];
-    expect(rows).toHaveLength(8);
+    expect(rows).toHaveLength(9);
 
     const keys = rows.map(r => r[0]);
     expect(keys).toContain('prisma');
@@ -128,6 +128,7 @@ describe('listIntegrationsCommand', () => {
     expect(keys).toContain('github');
     expect(keys).toContain('swagger');
     expect(keys).toContain('sentry');
+    expect(keys).toContain('graphql');
   });
 
   it('should show usage instructions after the table', async () => {

@@ -408,6 +408,62 @@ export default Sentry;
 `,
     },
   },
+
+  graphql: {
+    name: 'GraphQL',
+    description: 'Mount a GraphQL endpoint with Vexor + GraphiQL playground',
+    packages: {
+      dependencies: ['graphql'],
+    },
+    files: {
+      'src/graphql/schema.ts': `import { buildSchema } from 'graphql';
+
+/**
+ * Define your schema in SDL. Replace this with your own types and resolvers.
+ */
+export const schema = buildSchema(\`
+  type Query {
+    hello(name: String): String!
+  }
+\`);
+
+export const rootValue = {
+  hello: ({ name }: { name?: string }) => \`hello, \${name ?? 'world'}\`,
+};
+`,
+      'src/graphql/handler.ts': `import { execute, parse } from 'graphql';
+import { createGraphQLHandler } from '@vexorjs/core';
+import { schema, rootValue } from './schema.js';
+
+export const graphqlHandler = createGraphQLHandler({
+  graphiql: true,
+  endpoint: '/graphql',
+  executor: async ({ query, variables, operationName }) => {
+    const document = parse(query);
+    return await execute({
+      schema,
+      document,
+      rootValue,
+      variableValues: variables,
+      operationName,
+    }) as { data?: unknown; errors?: { message: string }[] };
+  },
+});
+`,
+      'src/graphql/README.md': `# GraphQL endpoint
+
+Mount in your app:
+
+\`\`\`ts
+import { graphqlHandler } from './graphql/handler.js';
+app.post('/graphql', graphqlHandler);
+app.get('/graphql', graphqlHandler);  // GraphiQL playground
+\`\`\`
+
+Open <http://localhost:3000/graphql> in a browser to use GraphiQL.
+`,
+    },
+  },
 };
 
 /**

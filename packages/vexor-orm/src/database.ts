@@ -14,6 +14,8 @@ import type {
   InferSelectType,
   InferInsertType,
   InferUpdateType,
+  ColumnDef,
+  ColumnBuilder,
 } from './core/types.js';
 
 import { ConnectionPool, createPool, type PoolOptions } from './connection/pool.js';
@@ -35,6 +37,7 @@ import {
 import { MigrationRunner, type MigrationFile, type MigrationRunnerOptions } from './migrations/runner.js';
 import { MigrationGenerator } from './migrations/generator.js';
 import { loadRelations, type RelationMap } from './relations/index.js';
+import { QueryCache, buildCacheKey } from './cache/index.js';
 
 /**
  * Database options
@@ -46,6 +49,13 @@ export interface DatabaseOptions {
   migrations?: MigrationRunnerOptions;
   /** Enable query logging */
   logging?: boolean | ((sql: string, params?: unknown[]) => void);
+  /**
+   * Optional query cache. When provided, `db.cached()` will read/write
+   * through it; without one, `db.cached()` falls back to running the query
+   * uncached. Bring your own (e.g. Redis-backed) by implementing
+   * `QueryCacheStore` and passing `new QueryCache({ store })`.
+   */
+  cache?: QueryCache;
 }
 
 /**
@@ -311,6 +321,51 @@ export class Database {
   }
 
   /**
+   * Run a SELECT through the configured query cache.
+   *
+   * Cache hit: returns the cached rows. Miss: runs the query, stores the
+   * rows, and returns them. Concurrent callers with the same key share
+   * one in-flight DB call (no thundering herd).
+   *
+   * If no cache was passed in `DatabaseOptions`, this falls back to a
+   * normal `execute()` so callers can opt into caching app-wide later.
+   *
+   *   const rows = await db.cached(
+   *     'SELECT * FROM users WHERE active = $1', [true],
+   *     { ttlMs: 30_000 }
+   *   );
+   */
+  async cached<T = unknown>(
+    sql: string,
+    params: unknown[] = [],
+    options: { ttlMs?: number; key?: string } = {}
+  ): Promise<T[]> {
+    this.ensureConnected();
+    const cache = this.options.cache;
+    if (!cache) {
+      return this.execute<T>(sql, params);
+    }
+    const key = options.key ?? buildCacheKey(sql, params);
+    return cache.wrap<T[]>(key, options.ttlMs, () =>
+      this.execute<T>(sql, params)
+    );
+  }
+
+  /**
+   * Invalidate cached entries. Pass a key for a single invalidation, or
+   * call without args to clear everything.
+   */
+  async invalidateCache(key?: string): Promise<void> {
+    const cache = this.options.cache;
+    if (!cache) return;
+    if (key === undefined) {
+      await cache.clear();
+    } else {
+      await cache.delete(key);
+    }
+  }
+
+  /**
    * Eager-load relations for a list of parent rows.
    *
    * One IN-query per relation — no N+1 fan-out. Each loaded relation is
@@ -350,6 +405,56 @@ export class Database {
       ifNotExists: options.ifNotExists ?? false,
     });
     const migration = generator.createTable(tableDef);
+    for (const sql of migration.up) {
+      await this.query(sql);
+    }
+  }
+
+  /**
+   * Add a column to an existing table. Accepts a `ColumnBuilder` (from
+   * `column.text()` etc.) or a fully-built `ColumnDef`.
+   *
+   *   await db.addColumn(usersTable, 'avatar_url', column.text());
+   */
+  async addColumn(
+    target: TableDef | string,
+    columnName: string,
+    columnSpec: ColumnBuilder<unknown> | ColumnDef
+  ): Promise<void> {
+    this.ensureConnected();
+    const tableName = typeof target === 'string' ? target : target.tableName;
+    const def = this.normalizeColumn(columnSpec, columnName);
+    const generator = new MigrationGenerator();
+    const migration = generator.addColumn(tableName, columnName, def);
+    for (const sql of migration.up) {
+      await this.query(sql);
+    }
+  }
+
+  private normalizeColumn(
+    spec: ColumnBuilder<unknown> | ColumnDef,
+    name: string
+  ): ColumnDef {
+    // ColumnDef is identified by `_brand`; otherwise we have a builder.
+    if ('_brand' in spec && spec._brand === 'ColumnDef') {
+      return { ...spec, name } as ColumnDef;
+    }
+    return (spec as ColumnBuilder<unknown>).build(name);
+  }
+
+  /**
+   * Drop a column from a table.
+   *
+   *   await db.dropColumn(usersTable, 'avatar_url');
+   */
+  async dropColumn(
+    target: TableDef | string,
+    columnName: string
+  ): Promise<void> {
+    this.ensureConnected();
+    const tableName = typeof target === 'string' ? target : target.tableName;
+    const generator = new MigrationGenerator();
+    const migration = generator.dropColumn(tableName, columnName);
     for (const sql of migration.up) {
       await this.query(sql);
     }

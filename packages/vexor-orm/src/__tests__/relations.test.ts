@@ -17,6 +17,7 @@ import {
   loadRelations,
   type RelationExecutor,
 } from '../relations/index.js';
+import { softDeletable } from '../features/soft-delete.js';
 
 // ---------------------------------------------------------------------------
 // Test tables
@@ -352,6 +353,117 @@ describe('loadRelations', () => {
         { tags: true }
       );
       expect(exec.calls[0].sql).toContain('FROM "post_tags" j');
+    });
+  });
+
+  describe('soft-delete-aware targets', () => {
+    it('hasMany with softDeletable() appends `IS NULL` filter', async () => {
+      const exec = makeExecutor([{ rows: [] }]);
+      await loadRelations(
+        exec,
+        [{ id: 1 }],
+        { posts: hasMany(softDeletable(posts), { foreignKey: 'user_id' }) },
+        { posts: true }
+      );
+
+      expect(exec.calls[0].sql).toContain('WHERE "user_id" IN ($1)');
+      expect(exec.calls[0].sql).toContain('AND "deleted_at" IS NULL');
+    });
+
+    it('belongsTo with softDeletable() filters parents too', async () => {
+      const exec = makeExecutor([{ rows: [] }]);
+      await loadRelations(
+        exec,
+        [{ user_id: 1 }],
+        { author: belongsTo(softDeletable(users), { foreignKey: 'user_id' }) },
+        { author: true }
+      );
+
+      expect(exec.calls[0].sql).toContain('AND "deleted_at" IS NULL');
+    });
+
+    it('belongsToMany applies the filter to the target side via t.<col>', async () => {
+      const exec = makeExecutor([{ rows: [] }]);
+      await loadRelations(
+        exec,
+        [{ id: 1 }],
+        {
+          tags: belongsToMany(softDeletable(tags), {
+            through: postTags,
+            sourceKey: 'post_id',
+            targetKey: 'tag_id',
+          }),
+        },
+        { tags: true }
+      );
+
+      expect(exec.calls[0].sql).toContain('AND t."deleted_at" IS NULL');
+    });
+
+    it('respects a custom soft-delete column', async () => {
+      const exec = makeExecutor([{ rows: [] }]);
+      await loadRelations(
+        exec,
+        [{ id: 1 }],
+        {
+          posts: hasMany(
+            softDeletable(posts, { column: 'archived_at' }),
+            { foreignKey: 'user_id' }
+          ),
+        },
+        { posts: true }
+      );
+
+      expect(exec.calls[0].sql).toContain('AND "archived_at" IS NULL');
+    });
+
+    it('uses `<col> = 0` for boolean-flag soft delete', async () => {
+      const exec = makeExecutor([{ rows: [] }]);
+      await loadRelations(
+        exec,
+        [{ id: 1 }],
+        {
+          posts: hasMany(
+            softDeletable(posts, {
+              useBooleanFlag: true,
+              booleanColumn: 'is_deleted',
+            }),
+            { foreignKey: 'user_id' }
+          ),
+        },
+        { posts: true }
+      );
+
+      expect(exec.calls[0].sql).toContain('AND "is_deleted" = 0');
+    });
+
+    it('skips the filter when includeDeleted is set', async () => {
+      const exec = makeExecutor([{ rows: [] }]);
+      await loadRelations(
+        exec,
+        [{ id: 1 }],
+        {
+          posts: hasMany(
+            softDeletable(posts, { includeDeleted: true }),
+            { foreignKey: 'user_id' }
+          ),
+        },
+        { posts: true }
+      );
+
+      expect(exec.calls[0].sql).not.toContain('deleted');
+    });
+
+    it('plain TableDef (no wrapper) has no filter', async () => {
+      const exec = makeExecutor([{ rows: [] }]);
+      await loadRelations(
+        exec,
+        [{ id: 1 }],
+        { posts: hasMany(posts, { foreignKey: 'user_id' }) },
+        { posts: true }
+      );
+
+      expect(exec.calls[0].sql).not.toContain('deleted');
     });
   });
 

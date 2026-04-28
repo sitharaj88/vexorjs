@@ -80,13 +80,17 @@
   },
   "peerDependencies": {
     "pg": "^8.0.0",
-    "better-sqlite3": "^11.0.0"
+    "better-sqlite3": "^11.0.0",
+    "mysql2": "^3.0.0"
   },
   "peerDependenciesMeta": {
     "pg": {
       "optional": true
     },
     "better-sqlite3": {
+      "optional": true
+    },
+    "mysql2": {
       "optional": true
     }
   }

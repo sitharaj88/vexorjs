@@ -127,9 +127,52 @@ vexor generate model User name:string email:string:unique
 # Run migrations
 vexor db:migrate
 
+# Run the test suite (auto-detects vitest / jest / mocha / node:test)
+vexor test
+
+# Validate .env against env.schema.json
+vexor env:check
+
 # Start development server
 vexor dev
 ```
+
+## Capabilities
+
+### ORM
+
+- **Drivers**: Postgres, SQLite, **MySQL** — all routed through one `Database` client with PostgreSQL-style `$N` placeholders translated per driver.
+- **Relations**: `hasOne`, `hasMany`, `belongsTo`, `belongsToMany` with eager loading via `db.loadRelations(rows, relations, spec)` — one IN-query per relation, no N+1.
+  ```ts
+  await db.loadRelations(
+    users,
+    { posts: hasMany(postsTable, { foreignKey: 'user_id' }) },
+    { posts: true }
+  );
+  ```
+- **Schema as code**: `db.createTable(tableDef)` and `db.dropTable(target)` materialize tables and indexes from `table()` definitions without writing migrations.
+- **Query result cache**: `createQueryCache({ defaultTtlMs })` with TTL, LRU eviction, in-flight de-duplication, and a pluggable `QueryCacheStore` for Redis/etc.
+- **Migrations + soft delete + seeding** — covered by the existing test suites.
+
+### Framework
+
+- **GraphQL adapter**: `createGraphQLHandler({ schema | executor, contextFactory, graphiql })` — pure HTTP plumbing, lazy-loads the `graphql` package only when used, optional GraphiQL playground.
+- **gRPC-Web**: `createGrpcHandler({ services, codec })` — full gRPC-Web wire format on plain HTTP/1.1+, JSON codec by default, pluggable for Protobuf.
+  ```ts
+  const greeter = new GrpcService('Greeter')
+    .unary<HelloRequest, HelloResponse>('SayHello', async (req) => ({
+      message: `hi ${req.name}`,
+    }));
+  app.post('/Greeter/:method', createGrpcHandler({ services: [greeter] }));
+  ```
+- **OAuth state stores**: `RedisStateStore` and `RedisSessionStore` for multi-instance deployments. Compatible with `ioredis`, `node-redis` v4+, `@upstash/redis`, or any client conforming to `RedisLike`.
+- **Edge runtimes**: First-class adapters for **Cloudflare Workers** (`createCloudflareWorker`) and **Vercel Edge** (`createVercelEdgeHandler`) — see [examples/cloudflare-workers](./examples/cloudflare-workers) and [examples/vercel-edge](./examples/vercel-edge).
+
+### CLI
+
+- **`vexor test`** — auto-detects vitest, jest, mocha, or `node --test` and runs accordingly.
+- **`vexor env:check`** — validates `.env` against `env.schema.json` (string/integer/number/boolean/url/email/enum + min/max/pattern).
+- **Pluggable integrations**: extend `vexor add` programmatically with `registerIntegration()` or by dropping JSON into `.vexor/integrations/`.
 
 ## Architecture
 
