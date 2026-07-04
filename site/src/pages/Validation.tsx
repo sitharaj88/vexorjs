@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, CheckCircle } from 'lucide-react';
 import CodeBlock from '../components/CodeBlock';
+import InfoBlock from '../components/InfoBlock';
 
 const basicSchemaCode = `import { Type } from '@vexorjs/core';
 
@@ -24,9 +25,77 @@ const scores = Type.Array(Type.Number(), { minItems: 1, maxItems: 10 });
 
 // Objects
 const user = Type.Object({
+  name: Type.String(),                       // required
+  email: Type.String({ format: 'email' }),   // required
+  age: Type.Optional(Type.Number()),         // optional
+});`;
+
+const requiredByDefaultCode = `import { Type } from '@vexorjs/core';
+
+// Properties in Type.Object are REQUIRED by default.
+// This matches the type that Static<T> infers.
+const CreateUserSchema = Type.Object({
+  name: Type.String(),                 // required
+  email: Type.String(),                // required
+  bio: Type.Optional(Type.String()),   // optional
+});
+
+// POST body {}                          -> 400 (name and email missing)
+// POST body { name: 'Ada' }             -> 400 (email missing)
+// POST body { name: 'Ada', email: '.' } -> 200 (bio may be omitted)
+
+// An explicit \`required\` option overrides the default:
+const PatchUserSchema = Type.Object({
   name: Type.String(),
-  email: Type.String({ format: 'email' }),
-  age: Type.Optional(Type.Number()),
+  email: Type.String(),
+}, { required: ['name'] });  // only name is required now
+
+// Related helpers:
+Type.Partial({ name: Type.String() });  // all properties optional
+Type.Strict({ name: Type.String() });   // all required + additionalProperties: false`;
+
+const endToEndInferenceCode = `import { Vexor, Type } from '@vexorjs/core';
+
+const app = new Vexor();
+
+// The body schema flows into the handler: no code generation,
+// no manual type annotations.
+app.post('/users', {
+  schema: {
+    body: Type.Object({ name: Type.String() }),
+  },
+}, async (ctx) => {
+  const body = await ctx.body();  // typed { name: string }
+  return ctx.json({ created: body.name });
+});
+
+// The bare shorthand (no \`schema\` wrapper) infers exactly the same:
+app.post('/teams', {
+  body: Type.Object({ name: Type.String() }),
+}, async (ctx) => {
+  const body = await ctx.body();  // { name: string }
+  return ctx.status(201).json(body);
+});
+
+// ctx.query is typed from the query schema
+app.get('/search', {
+  schema: {
+    query: Type.Object({
+      q: Type.String(),
+      sort: Type.Optional(Type.String()),
+    }),
+  },
+}, async (ctx) => {
+  ctx.query.q;     // string
+  ctx.query.sort;  // string | undefined
+  return ctx.json({ q: ctx.query.q });
+});
+
+// ctx.params is inferred from the path literal -- no schema needed
+app.get('/users/:id/posts/:postId', async (ctx) => {
+  ctx.params.id;      // string
+  ctx.params.postId;  // string
+  return ctx.json(ctx.params);
 });`;
 
 const typeInferenceCode = `import { Type, type Static } from '@vexorjs/core';
@@ -55,53 +124,48 @@ type User = Static<typeof UserSchema>;
 //   createdAt: string;
 // }
 
-// Use in routes - ctx.body is automatically typed as User
+// Use in routes - ctx.body() resolves to the User type
 app.post('/users', {
   body: UserSchema,
 }, async (ctx) => {
-  const user: User = ctx.body;  // Fully typed!
+  const user: User = await ctx.body();  // Fully typed!
   return ctx.json(user);
 });`;
 
-const routeValidationCode = `app.post('/users', {
-  // Validate URL parameters
-  params: Type.Object({
-    orgId: Type.String(),
-  }),
-
-  // Validate query string
-  query: Type.Object({
-    notify: Type.Optional(Type.Boolean()),
-    redirect: Type.Optional(Type.String()),
-  }),
-
-  // Validate request body
-  body: Type.Object({
-    name: Type.String({ minLength: 1 }),
-    email: Type.String({ format: 'email' }),
-    password: Type.String({ minLength: 8 }),
-  }),
-
-  // Document response types (for OpenAPI)
-  response: {
-    201: Type.Object({
-      id: Type.String(),
-      name: Type.String(),
-      email: Type.String(),
+const routeValidationCode = `app.post('/orgs/:orgId/users', {
+  schema: {
+    // Validate URL parameters
+    params: Type.Object({
+      orgId: Type.String(),
     }),
-    400: Type.Object({
-      error: Type.String(),
-      details: Type.Array(Type.Object({
-        field: Type.String(),
-        message: Type.String(),
-      })),
+
+    // Validate query string
+    query: Type.Object({
+      notify: Type.Optional(Type.String()),
+      redirect: Type.Optional(Type.String()),
     }),
+
+    // Validate request body (properties required unless Optional)
+    body: Type.Object({
+      name: Type.String({ minLength: 1 }),
+      email: Type.String({ format: 'email' }),
+      password: Type.String({ minLength: 8 }),
+    }),
+
+    // Document response types (for OpenAPI)
+    response: {
+      201: Type.Object({
+        id: Type.String(),
+        name: Type.String(),
+        email: Type.String(),
+      }),
+    },
   },
 }, async (ctx) => {
   // All inputs are validated and typed
-  const { orgId } = ctx.params;
-  const { notify } = ctx.query;
-  const { name, email, password } = ctx.body;
+  const { orgId } = ctx.params;      // string
+  const { notify } = ctx.query;      // string | undefined
+  const { name, email, password } = await ctx.body();
 
   const user = await createUser({ name, email, password, orgId });
 
@@ -110,6 +174,15 @@ const routeValidationCode = `app.post('/users', {
   }
 
   return ctx.status(201).json(user);
+});
+
+// The bare shorthand (schemas directly in the options object)
+// validates and infers exactly the same:
+app.post('/teams', {
+  body: Type.Object({ name: Type.String() }),
+}, async (ctx) => {
+  const body = await ctx.body();  // { name: string }
+  return ctx.status(201).json(body);
 });`;
 
 const optionalFieldsCode = `const UserSchema = Type.Object({
@@ -169,72 +242,65 @@ const anything = Type.Any();`;
 const customValidationCode = `// Custom format validation
 const PhoneSchema = Type.String({
   pattern: '^\\\\+?[1-9]\\\\d{1,14}$',
-  errorMessage: 'Invalid phone number format',
 });
 
-// Custom refinement (using transform)
+// Cross-field validation via a preValidation route hook
 app.post('/users', {
-  body: Type.Object({
-    email: Type.String({ format: 'email' }),
-    confirmEmail: Type.String({ format: 'email' }),
-  }),
-  preValidation: async (ctx) => {
-    const body = await ctx.readJson();
-    if (body.email !== body.confirmEmail) {
-      return ctx.status(400).json({
-        error: 'Validation failed',
-        details: [{ field: 'confirmEmail', message: 'Emails must match' }],
-      });
-    }
-    ctx.set('validatedBody', body);
+  schema: {
+    body: Type.Object({
+      email: Type.String({ format: 'email' }),
+      confirmEmail: Type.String({ format: 'email' }),
+    }),
+  },
+  hooks: {
+    preValidation: [
+      async (ctx) => {
+        const body = await ctx.readJson<{ email: string; confirmEmail: string }>();
+        if (body.email !== body.confirmEmail) {
+          return ctx.json({
+            error: 'Validation failed',
+            issues: [{ path: ['body', 'confirmEmail'], message: 'Emails must match' }],
+          }, 400);
+        }
+      },
+    ],
   },
 }, async (ctx) => {
+  const body = await ctx.body();
   // Handle the request
-});
+  return ctx.status(201).json(body);
+});`;
 
-// Reusable validators
-const createValidator = (schema) => {
-  const compiled = compile(schema);
-  return (data: unknown) => {
-    const result = compiled(data);
-    if (!result.valid) {
-      throw new ValidationError(result.errors);
-    }
-    return result.value;
-  };
-};`;
-
-const validationErrorsCode = `// Validation errors return 400 with details
-// Response format:
+const validationErrorsCode = `// Validation failures return HTTP 400 with a structured body:
 {
-  "error": "Validation failed",
-  "details": [
+  "error": "Body validation failed",
+  "code": "VALIDATION_ERROR",
+  "issues": [
     {
-      "field": "email",
-      "message": "must be a valid email",
-      "value": "not-an-email"
+      "path": ["body", "email"],
+      "message": "Invalid email format"
     },
     {
-      "field": "password",
-      "message": "must be at least 8 characters",
-      "value": "short"
+      "path": ["body", "name"],
+      "message": "Required property missing"
     }
   ]
-}
+}`;
 
-// Customize error handling
-app.addHook('onError', async (ctx, error) => {
-  if (error instanceof ValidationError) {
-    return ctx.status(400).json({
+const customErrorHandlingCode = `// Customize the response with a global error handler
+app.setErrorHandler((error, ctx) => {
+  if (error.name === 'ValidationError') {
+    const issues = (error as Error & { issues: Array<{ path?: (string | number)[]; message: string }> }).issues;
+    return ctx.json({
       code: 'VALIDATION_ERROR',
       message: 'Request validation failed',
-      errors: error.issues.map(issue => ({
-        path: issue.path.join('.'),
+      errors: issues.map((issue) => ({
+        path: (issue.path ?? []).join('.'),
         message: issue.message,
       })),
-    });
+    }, 400);
   }
-  throw error;
+  return ctx.internalError();
 });`;
 
 export default function Validation() {
@@ -298,6 +364,34 @@ export default function Validation() {
         <CodeBlock code={basicSchemaCode} showLineNumbers />
       </section>
 
+      {/* Required by Default */}
+      <section>
+        <h2 id="required-by-default" className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
+          Required by Default
+        </h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
+          Properties declared in <code className="prose-code">Type.Object({'{...}'})</code> are{' '}
+          <strong>required by default</strong>. To make a property optional, wrap it in{' '}
+          <code className="prose-code">Type.Optional(...)</code>. This matches TypeBox semantics and,
+          crucially, the type that <code className="prose-code">Static&lt;T&gt;</code> infers: if the
+          inferred type says a property is present, the validator guarantees it at runtime. What you
+          see in your editor is what the validator enforces.
+        </p>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
+          If you need full control over the required list -- for example, a PATCH endpoint that reuses
+          a schema but only demands a subset of fields -- pass an explicit{' '}
+          <code className="prose-code">required: [...]</code> option to{' '}
+          <code className="prose-code">Type.Object</code>. An explicit list always overrides the
+          derived default.
+        </p>
+        <CodeBlock code={requiredByDefaultCode} showLineNumbers />
+        <InfoBlock variant="info" title="Schema and Type Stay in Sync">
+          A property is required at runtime exactly when it is non-optional in the inferred{' '}
+          <code className="prose-code">Static&lt;T&gt;</code> type. If a request omits a required
+          property, validation fails with a 400 before your handler runs.
+        </InfoBlock>
+      </section>
+
       {/* Type Inference */}
       <section>
         <h2 id="type-inference" className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
@@ -308,6 +402,35 @@ export default function Validation() {
           TypeScript types from schemas.
         </p>
         <CodeBlock code={typeInferenceCode} showLineNumbers />
+      </section>
+
+      {/* End-to-End Type Inference */}
+      <section>
+        <h2 id="end-to-end-inference" className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
+          End-to-End Type Inference
+        </h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
+          Route schemas do more than validate at runtime -- they flow directly into the handler's
+          context type, with no code generation step. When you attach a{' '}
+          <code className="prose-code">body</code> schema to a route,{' '}
+          <code className="prose-code">await ctx.body()</code> returns the inferred type. A{' '}
+          <code className="prose-code">query</code> schema types <code className="prose-code">ctx.query</code>,
+          and <code className="prose-code">ctx.params</code> is inferred from the path string literal
+          itself: <code className="prose-code">'/users/:id'</code> gives you{' '}
+          <code className="prose-code">{'{ id: string }'}</code> with zero configuration.
+        </p>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
+          Both option forms participate in inference equally. You can pass schemas under the{' '}
+          <code className="prose-code">schema</code> key (<code className="prose-code">{'{ schema: { body } }'}</code>)
+          or use the bare shorthand (<code className="prose-code">{'{ body }'}</code>) -- the handler's
+          context is narrowed identically either way.
+        </p>
+        <CodeBlock code={endToEndInferenceCode} showLineNumbers />
+        <InfoBlock variant="tip" title="No Code Generation">
+          Inference happens entirely in the TypeScript type system, driven by the path literal and the
+          schema you pass. There is no build step, no generated client, and nothing to keep in sync --
+          rename a path parameter or change a schema and the handler's types update immediately.
+        </InfoBlock>
       </section>
 
       {/* Route Validation */}
@@ -360,9 +483,22 @@ export default function Validation() {
           Validation Errors
         </h2>
         <p className="text-slate-600 dark:text-slate-400 mb-4">
-          When validation fails, Vexor returns a 400 error with details about the failures.
+          When validation fails, Vexor responds with HTTP 400 and a JSON body containing an{' '}
+          <code className="prose-code">error</code> message, the machine-readable code{' '}
+          <code className="prose-code">VALIDATION_ERROR</code>, and an{' '}
+          <code className="prose-code">issues</code> array. Each issue has a{' '}
+          <code className="prose-code">path</code> (prefixed with the section that failed --{' '}
+          <code className="prose-code">params</code>, <code className="prose-code">query</code>,{' '}
+          <code className="prose-code">body</code>, or <code className="prose-code">headers</code>)
+          and a human-readable <code className="prose-code">message</code>. The handler never runs.
         </p>
         <CodeBlock code={validationErrorsCode} language="json" />
+        <p className="text-slate-600 dark:text-slate-400 mt-6 mb-4">
+          To customize the shape of validation error responses, register a global error handler with{' '}
+          <code className="prose-code">app.setErrorHandler()</code> and check for{' '}
+          <code className="prose-code">ValidationError</code>.
+        </p>
+        <CodeBlock code={customErrorHandlingCode} />
       </section>
 
       {/* Schema Types Reference */}

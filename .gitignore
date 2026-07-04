@@ -62,7 +62,8 @@ pnpm-lock.yaml
 # Optional: TypeScript cache
 *.tsbuildinfo
 
-# Generated documentation
+# Generated documentation (deployed via GitHub Actions, never committed)
+/docs/
 docs/api/
 
 # Local database files

@@ -5,7 +5,8 @@ export default defineConfig({
   plugins: [react()],
   base: '/vexorjs/',
   build: {
-    outDir: '../docs',
-    emptyOutDir: true,
+    // Deployed by .github/workflows/docs.yml (GitHub Pages, Actions mode);
+    // the build output is not committed to the repository
+    outDir: 'dist',
   },
 });

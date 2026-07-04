@@ -7,6 +7,19 @@ name: Release
 on:
   push:
     branches: [main]
+    # Docs-only changes must not trigger a release run.
+    # NOTE: .changeset/**.md must keep triggering — do not ignore it.
+    paths-ignore:
+      - 'site/**'
+      - 'docs-site/**'
+      - 'docs/**'
+      - 'examples/**'
+      - 'README.md'
+      - 'CONTRIBUTING.md'
+      - 'CODE_OF_CONDUCT.md'
+      - 'SECURITY.md'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/PULL_REQUEST_TEMPLATE.md'
   workflow_dispatch:
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}

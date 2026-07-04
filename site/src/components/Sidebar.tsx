@@ -13,6 +13,7 @@ import {
   Activity,
   Radio,
   Compass,
+  GraduationCap,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -43,6 +44,17 @@ const navigation: NavSection[] = [
     ],
   },
   {
+    title: 'Learn',
+    icon: GraduationCap,
+    items: [
+      { name: 'Learning Path', href: '/learn' },
+      { name: 'Fundamentals', href: '/learn/fundamentals' },
+      { name: 'Building APIs', href: '/learn/building-apis' },
+      { name: 'Architecture', href: '/learn/architecture' },
+      { name: 'Production & DevOps', href: '/learn/production' },
+    ],
+  },
+  {
     title: 'Core Concepts',
     icon: Layers,
     items: [
@@ -60,6 +72,7 @@ const navigation: NavSection[] = [
       { name: 'Rate Limiting', href: '/middleware/rate-limiting' },
       { name: 'CORS', href: '/middleware/cors' },
       { name: 'Compression', href: '/middleware/compression' },
+      { name: 'Static Files', href: '/middleware/static-files' },
       { name: 'File Upload', href: '/middleware/upload' },
       { name: 'Health Checks', href: '/middleware/health' },
       { name: 'API Versioning', href: '/middleware/versioning' },

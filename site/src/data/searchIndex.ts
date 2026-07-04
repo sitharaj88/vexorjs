@@ -12,6 +12,13 @@ const searchIndex: SearchEntry[] = [
   { path: '/installation', title: 'Installation', section: 'Getting Started', keywords: ['install', 'setup', 'npm', 'yarn', 'pnpm', 'bun'], description: 'Install Vexor and set up your development environment.' },
   { path: '/quick-start', title: 'Quick Start', section: 'Getting Started', keywords: ['quickstart', 'hello world', 'first app', 'tutorial', 'beginner'], description: 'Build your first Vexor application in 5 minutes.' },
 
+  // Learn
+  { path: '/learn', title: 'Learning Path', section: 'Learn', keywords: ['learn', 'learning path', 'tutorial', 'course', 'tracks', 'beginner', 'curriculum'], description: 'A structured learning path from your first API to production-grade systems.' },
+  { path: '/learn/fundamentals', title: 'Fundamentals', section: 'Learn', keywords: ['fundamentals', 'http', 'rest', 'typescript', 'first api', 'json', 'crud', 'beginner', 'basics'], description: 'HTTP, TypeScript, and building your first CRUD API with Vexor.' },
+  { path: '/learn/building-apis', title: 'Building APIs', section: 'Learn', keywords: ['building apis', 'authentication', 'jwt', 'database', 'error handling', 'validation', 'file uploads', 'testing', 'intermediate'], description: 'Authentication, database patterns, error handling, validation, and testing.' },
+  { path: '/learn/architecture', title: 'Architecture & System Design', section: 'Learn', keywords: ['architecture', 'system design', 'microservices', 'event driven', 'caching', 'performance', 'scalability', 'advanced'], description: 'System design, microservices, event-driven architecture, caching, and performance.' },
+  { path: '/learn/production', title: 'Production & DevOps', section: 'Learn', keywords: ['production', 'devops', 'docker', 'monitoring', 'security', 'ci cd', 'scaling', 'clustering', 'graceful shutdown', 'environment config'], description: 'Docker, CI/CD, monitoring, security hardening, scaling, and configuration.' },
+
   // Core Concepts
   { path: '/core-concepts', title: 'Core Concepts', section: 'Core Concepts', keywords: ['concepts', 'architecture', 'fundamentals'], description: 'Understand the fundamental building blocks of Vexor.' },
   { path: '/routing', title: 'Routing', section: 'Core Concepts', keywords: ['routes', 'router', 'path', 'params', 'wildcard', 'groups', 'http methods'], description: 'Define routes, parameters, wildcards, and route groups.' },
@@ -23,6 +30,7 @@ const searchIndex: SearchEntry[] = [
   { path: '/middleware/rate-limiting', title: 'Rate Limiting', section: 'Middleware', keywords: ['rate limit', 'throttle', 'limit', 'window', 'sliding window', 'slow down', 'ddos'], description: 'Protect your API with configurable rate limiting strategies.' },
   { path: '/middleware/cors', title: 'CORS', section: 'Middleware', keywords: ['cors', 'cross origin', 'origin', 'access control', 'preflight'], description: 'Configure Cross-Origin Resource Sharing for your API.' },
   { path: '/middleware/compression', title: 'Compression', section: 'Middleware', keywords: ['compress', 'gzip', 'brotli', 'deflate', 'encoding'], description: 'Compress HTTP responses to reduce bandwidth.' },
+  { path: '/middleware/static-files', title: 'Static Files', section: 'Middleware', keywords: ['static', 'serve static', 'assets', 'files', 'sendfile', 'etag', 'cache control', 'mime', 'public directory', 'index.html'], description: 'Serve static assets from disk with ETags, Cache-Control, and streaming.' },
   { path: '/middleware/upload', title: 'File Upload', section: 'Middleware', keywords: ['upload', 'file', 'multipart', 'form data', 'image', 'document'], description: 'Handle file uploads with validation and storage.' },
   { path: '/middleware/health', title: 'Health Checks', section: 'Middleware', keywords: ['health', 'healthcheck', 'liveness', 'readiness', 'status', 'monitoring'], description: 'Add health check endpoints for monitoring and orchestration.' },
   { path: '/middleware/versioning', title: 'API Versioning', section: 'Middleware', keywords: ['version', 'api version', 'v1', 'v2', 'header', 'path', 'deprecation'], description: 'Version your API using path, header, or query strategies.' },

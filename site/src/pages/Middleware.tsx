@@ -31,6 +31,75 @@ app.addHook('onError', async (ctx, error) => {
   console.error('Error:', error);
 });`;
 
+const shortCircuitCode = `// Any hook can return a Response to end the request immediately.
+// Remaining phases and the route handler are skipped;
+// onSend hooks still run on the short-circuit response.
+
+// Auth guard: stop unauthorized requests before the handler
+app.addHook('preHandler', async (ctx) => {
+  const user = ctx.get('user');
+
+  if (!user?.isAdmin) {
+    return new Response(
+      JSON.stringify({ error: 'Forbidden' }),
+      { status: 403, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
+  // Return nothing (undefined) to continue the pipeline
+});
+
+// CORS preflight: answer OPTIONS without ever reaching a handler
+app.addHook('onRequest', async (ctx) => {
+  if (ctx.method === 'OPTIONS') {
+    return new Response(null, { status: 204 });
+  }
+});`;
+
+const unmatchedRoutesCode = `// Global onRequest hooks run even when no route matches.
+app.addHook('onRequest', async (ctx) => {
+  ctx.setResponseHeader('Access-Control-Allow-Origin', 'https://myapp.com');
+
+  if (ctx.method === 'OPTIONS') {
+    // Answers preflight for ANY path — even ones with no route
+    return new Response(null, { status: 204 });
+  }
+});
+
+// GET /no-such-route
+//   → 404, but the queued CORS header is still applied
+//
+// DELETE /users (registered for GET/POST only)
+//   → 405 with an Allow header, queued headers applied too
+//
+// Without this behavior, a browser preflighting a request to an
+// unmatched or method-mismatched path would see a CORS failure
+// instead of the real 404/405 error.`;
+
+const queuedHeadersCode = `// Queue headers on the context; the pipeline applies them
+// to the final response — whatever the handler returns.
+
+app.addHook('onRequest', async (ctx) => {
+  ctx.setResponseHeader('X-Request-Id', crypto.randomUUID());
+
+  ctx.mergeResponseHeaders({
+    'X-Frame-Options': 'DENY',
+    'X-Content-Type-Options': 'nosniff',
+  });
+});
+
+// Works with context helpers...
+app.get('/data', async (ctx) => {
+  return ctx.json({ ok: true }); // carries X-Request-Id + security headers
+});
+
+// ...and with raw Response objects — no manual header juggling
+app.get('/raw', async () => {
+  return new Response('hello', {
+    headers: { 'Content-Type': 'text/plain' },
+  }); // queued headers are still applied by the pipeline
+});`;
+
 const authMiddlewareCode = `// Authentication middleware
 async function authMiddleware(ctx: Context) {
   const token = ctx.req.header('Authorization')?.replace('Bearer ', '');
@@ -249,6 +318,75 @@ export default function Middleware() {
         </div>
       </section>
 
+      {/* Short-Circuiting */}
+      <section>
+        <h2 id="short-circuiting" className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
+          Short-Circuiting with a Response
+        </h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
+          Any hook may return a <code className="prose-code">Response</code> to end the request
+          immediately. The remaining lifecycle phases and the route handler are skipped, and the
+          returned response becomes the request's result. This is the mechanism behind auth
+          guards (return a 403 before the handler runs), CORS preflight handling (return a 204
+          for OPTIONS), rate limiting, and maintenance-mode switches. Returning{' '}
+          <code className="prose-code">undefined</code> (or nothing) lets the pipeline continue
+          to the next hook.
+        </p>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
+          One phase is exempt: <code className="prose-code">onSend</code> hooks always run, even
+          on a short-circuited response. This guarantees that response transformations --
+          security headers, logging, timing metrics -- are applied uniformly whether the
+          response came from a handler or from an early return in a hook.
+        </p>
+        <CodeBlock code={shortCircuitCode} />
+      </section>
+
+      {/* Unmatched Routes */}
+      <section>
+        <h2 id="unmatched-routes" className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
+          Hooks on Unmatched Routes
+        </h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
+          Global <code className="prose-code">onRequest</code> hooks run for every request --
+          including requests that match no route. This matters most for CORS: a browser sends a
+          preflight OPTIONS request before reporting the real error to your frontend, so CORS
+          middleware registered as a global <code className="prose-code">onRequest</code> hook
+          can answer the preflight for any path and let the browser surface the actual 404 or
+          405 instead of a misleading CORS failure.
+        </p>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
+          Headers queued on the context (see below) are applied to the automatic 404 and 405
+          responses too, so error responses carry the same CORS and security headers as
+          successful ones.
+        </p>
+        <CodeBlock code={unmatchedRoutesCode} />
+      </section>
+
+      {/* Queued Response Headers */}
+      <section>
+        <h2 id="queued-response-headers" className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
+          Queued Response Headers
+        </h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
+          Hooks often need to attach headers to a response they never see -- the handler has not
+          run yet, and it might return a raw <code className="prose-code">Response</code> object
+          the hook has no reference to. Instead of juggling headers manually,{' '}
+          <code className="prose-code">ctx.setResponseHeader(name, value)</code> queues a single
+          header on the context and <code className="prose-code">ctx.mergeResponseHeaders(obj)</code>{' '}
+          queues several at once. At the end of the pipeline, after{' '}
+          <code className="prose-code">onSend</code> hooks, all queued headers are applied to the
+          final response -- regardless of whether it was built with context helpers like{' '}
+          <code className="prose-code">ctx.json()</code>, returned as a raw{' '}
+          <code className="prose-code">Response</code>, or produced by a short-circuiting hook.
+        </p>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
+          Queued headers overwrite same-named headers already present on the response, so hooks
+          get the final say. Vexor's own CORS middleware, request-ID plugin, and security-header
+          plugin are all built on this mechanism.
+        </p>
+        <CodeBlock code={queuedHeadersCode} />
+      </section>
+
       {/* Authentication */}
       <section>
         <h2 id="authentication" className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
@@ -318,7 +456,9 @@ export default function Middleware() {
             <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
             <div className="text-amber-800 dark:text-amber-200 text-sm">
               <strong>Important:</strong> If middleware returns a response, the chain stops.
-              Subsequent middleware and the handler will not run.
+              Subsequent middleware and the handler will not run -- only{' '}
+              <code className="prose-code">onSend</code> hooks still execute. See{' '}
+              <a href="#short-circuiting" className="underline">Short-Circuiting with a Response</a>.
             </div>
           </div>
         </div>

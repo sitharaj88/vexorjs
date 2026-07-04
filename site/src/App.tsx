@@ -33,6 +33,13 @@ import OrmRelations from './pages/orm/OrmRelations';
 import CliOverview from './pages/cli/CliOverview';
 import CliCommands from './pages/cli/CliCommands';
 
+// Learn section (lazy)
+const Learn = lazy(() => import('./pages/learn/Learn'));
+const LearnFundamentals = lazy(() => import('./pages/learn/LearnFundamentals'));
+const LearnArchitecture = lazy(() => import('./pages/learn/LearnArchitecture'));
+const LearnBuildingApis = lazy(() => import('./pages/learn/LearnBuildingApis'));
+const LearnProduction = lazy(() => import('./pages/learn/LearnProduction'));
+
 // Middleware section (lazy)
 const RateLimiting = lazy(() => import('./pages/middleware/RateLimiting'));
 const Cors = lazy(() => import('./pages/middleware/Cors'));
@@ -40,6 +47,7 @@ const Compression = lazy(() => import('./pages/middleware/Compression'));
 const Upload = lazy(() => import('./pages/middleware/Upload'));
 const Health = lazy(() => import('./pages/middleware/Health'));
 const Versioning = lazy(() => import('./pages/middleware/Versioning'));
+const StaticFiles = lazy(() => import('./pages/middleware/StaticFiles'));
 
 // Infrastructure section (lazy)
 const Caching = lazy(() => import('./pages/infrastructure/Caching'));
@@ -105,6 +113,13 @@ function App() {
         <Route path="installation" element={<Installation />} />
         <Route path="quick-start" element={<QuickStart />} />
 
+        {/* Learn */}
+        <Route path="learn" element={<LazyPage><Learn /></LazyPage>} />
+        <Route path="learn/fundamentals" element={<LazyPage><LearnFundamentals /></LazyPage>} />
+        <Route path="learn/architecture" element={<LazyPage><LearnArchitecture /></LazyPage>} />
+        <Route path="learn/building-apis" element={<LazyPage><LearnBuildingApis /></LazyPage>} />
+        <Route path="learn/production" element={<LazyPage><LearnProduction /></LazyPage>} />
+
         {/* Core Concepts */}
         <Route path="core-concepts" element={<CoreConcepts />} />
         <Route path="routing" element={<Routing />} />
@@ -119,6 +134,7 @@ function App() {
         <Route path="middleware/upload" element={<LazyPage><Upload /></LazyPage>} />
         <Route path="middleware/health" element={<LazyPage><Health /></LazyPage>} />
         <Route path="middleware/versioning" element={<LazyPage><Versioning /></LazyPage>} />
+        <Route path="middleware/static-files" element={<LazyPage><StaticFiles /></LazyPage>} />
 
         {/* Infrastructure */}
         <Route path="infrastructure/caching" element={<LazyPage><Caching /></LazyPage>} />
