@@ -7,6 +7,7 @@ import {
   Database,
   Terminal,
   ArrowRight,
+  ArrowUpRight,
   Server,
   Lock,
   Activity,
@@ -16,14 +17,24 @@ import {
   Copy,
   Check,
   GraduationCap,
+  Gauge,
+  Scale,
 } from 'lucide-react';
 import { useState } from 'react';
 import CodeBlock from '../components/CodeBlock';
 
 const VERSION = 'v1.2';
 const GITHUB_URL = 'https://github.com/sitharaj88/vexorjs';
+const BENCHMARKS_URL = `${GITHUB_URL}/blob/main/BENCHMARKS.md`;
 
 const runtimes = ['Node.js', 'Bun', 'Deno', 'Cloudflare Workers', 'Vercel Edge', 'AWS Lambda'];
+
+const stats = [
+  { value: '2,100+', label: 'Tests in CI' },
+  { value: '6', label: 'Runtimes supported' },
+  { value: '~30×', label: 'JIT validation speedup' },
+  { value: 'MIT', label: 'Licensed & open source' },
+];
 
 const batteries = [
   'Auth & JWT',
@@ -99,14 +110,29 @@ function InstallCommand() {
 
 function BentoCard({
   className = '',
+  glow = false,
   children,
 }: {
   className?: string;
+  /** Faint gradient border for the cards that carry the core pitch */
+  glow?: boolean;
   children: React.ReactNode;
 }) {
+  if (glow) {
+    return (
+      <div
+        className={`relative rounded-3xl p-px bg-gradient-to-br from-primary-500/50 via-slate-200 to-accent-500/40 dark:from-primary-400/40 dark:via-slate-800 dark:to-accent-400/30 transition-shadow duration-300 hover:shadow-xl hover:shadow-primary-500/10 dark:hover:shadow-primary-400/10 ${className}`}
+      >
+        <div className="relative h-full rounded-[calc(1.5rem-1px)] bg-white dark:bg-slate-900 p-6 overflow-hidden">
+          {children}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
-      className={`relative rounded-2xl ring-1 ring-slate-200 dark:ring-slate-800 bg-white dark:bg-slate-900/50 p-6 overflow-hidden ${className}`}
+      className={`relative rounded-3xl ring-1 ring-slate-200 dark:ring-slate-800 bg-white dark:bg-slate-900/50 p-6 overflow-hidden transition-all duration-300 hover:ring-primary-300/80 dark:hover:ring-primary-700/80 hover:shadow-lg hover:shadow-primary-500/5 dark:hover:shadow-primary-400/5 ${className}`}
     >
       {children}
     </div>
@@ -115,35 +141,36 @@ function BentoCard({
 
 export default function Home() {
   return (
-    <div className="pb-20">
+    <div className="pb-24">
       {/* Hero */}
-      <section className="relative pt-20 pb-16 lg:pt-28 lg:pb-20 px-6 hero-gradient overflow-hidden">
+      <section className="relative pt-24 pb-14 lg:pt-32 lg:pb-16 px-6 hero-gradient overflow-hidden">
         <div className="absolute inset-0 dot-pattern" aria-hidden="true" />
+        <div className="hero-aurora" aria-hidden="true" />
 
-        <div className="relative max-w-3xl mx-auto text-center">
+        <div className="relative max-w-6xl mx-auto text-center">
           <a
             href={`${GITHUB_URL}/releases`}
             target="_blank"
             rel="noopener noreferrer"
-            className="pill mb-7 hover:ring-primary-400 dark:hover:ring-primary-500 transition-all"
+            className="pill mb-8 hover:ring-primary-400 dark:hover:ring-primary-500 transition-all"
           >
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             Vexor {VERSION} — typed handlers, static files, graceful shutdown
             <ArrowRight className="w-3 h-3" />
           </a>
 
-          <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-5 text-balance leading-[1.05]">
+          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-6 text-balance leading-[1.05] max-w-4xl mx-auto">
             The backend framework
             <br />
             <span className="gradient-text">for every runtime</span>
           </h1>
 
-          <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400 max-w-xl mx-auto mb-8 leading-relaxed text-balance">
+          <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto mb-9 leading-relaxed text-balance">
             Batteries-included and type-safe by inference, with its own ORM.
             Write it once — run it on Node.js, Bun, Deno, and the edge.
           </p>
 
-          <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
+          <div className="flex flex-wrap items-center justify-center gap-3 mb-9">
             <Link to="/getting-started" className="btn-primary px-6 py-2.5">
               Get Started
               <ArrowRight className="w-4 h-4" />
@@ -162,9 +189,23 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Trusted numbers */}
+      <section className="max-w-6xl mx-auto px-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-px rounded-2xl overflow-hidden ring-1 ring-slate-200 dark:ring-slate-800 bg-slate-200 dark:bg-slate-800 shadow-sm">
+          {stats.map((stat) => (
+            <div key={stat.label} className="bg-white dark:bg-slate-950 px-6 py-5 text-center">
+              <div className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                {stat.value}
+              </div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">{stat.label}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* Code showcase */}
-      <section className="max-w-5xl mx-auto px-6 -mt-2">
-        <div className="grid lg:grid-cols-5 gap-8 items-center">
+      <section className="max-w-6xl mx-auto px-6 mt-24">
+        <div className="grid lg:grid-cols-5 gap-10 items-center">
           <div className="lg:col-span-2 order-2 lg:order-1">
             <p className="text-[13px] font-semibold uppercase tracking-widest text-primary-600 dark:text-primary-400 mb-3">
               Type-safe by inference
@@ -197,9 +238,9 @@ export default function Home() {
       </section>
 
       {/* Bento grid */}
-      <section className="max-w-5xl mx-auto px-6 mt-24">
+      <section className="max-w-6xl mx-auto px-6 mt-28">
         <div className="mb-10">
-          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white mb-3">
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white mb-3 text-balance">
             Everything you need, nothing to assemble
           </h2>
           <p className="text-slate-600 dark:text-slate-400 max-w-2xl text-[15px]">
@@ -210,7 +251,7 @@ export default function Home() {
 
         <div className="grid md:grid-cols-6 gap-4">
           {/* Multi-runtime — wide */}
-          <BentoCard className="md:col-span-4">
+          <BentoCard glow className="md:col-span-4">
             <div
               className="absolute inset-0 opacity-60"
               style={{
@@ -226,7 +267,7 @@ export default function Home() {
                 </div>
                 <h3 className="font-semibold text-slate-900 dark:text-white">Multi-runtime</h3>
               </div>
-              <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed mb-4 max-w-md">
+              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-4 max-w-md">
                 Built on Web Standards. The same app runs everywhere — smoke-tested on
                 Node.js, Bun, and Deno in CI.
               </p>
@@ -246,8 +287,8 @@ export default function Home() {
               </div>
               <h3 className="font-semibold text-slate-900 dark:text-white">Fast by design</h3>
             </div>
-            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-              Radix tree router with O(1) static lookup, LRU match cache, precompiled
+            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+              Radix tree router with O(1) static lookup, LRU match cache, JIT-compiled
               validation, and pooled request contexts.
             </p>
           </BentoCard>
@@ -260,7 +301,7 @@ export default function Home() {
               </div>
               <h3 className="font-semibold text-slate-900 dark:text-white">Vexor ORM</h3>
             </div>
-            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed mb-3">
+            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-3">
               Type-safe queries, migrations, relations without N+1, savepoints, and pooling.
             </p>
             <Link
@@ -272,14 +313,14 @@ export default function Home() {
           </BentoCard>
 
           {/* Type safety */}
-          <BentoCard className="md:col-span-2">
+          <BentoCard glow className="md:col-span-2">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-9 h-9 rounded-lg bg-sky-100 dark:bg-sky-900/30 flex items-center justify-center">
                 <Shield className="w-4.5 h-4.5 text-sky-600 dark:text-sky-400" />
               </div>
               <h3 className="font-semibold text-slate-900 dark:text-white">End-to-end types</h3>
             </div>
-            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed mb-3">
+            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-3">
               <code className="prose-code">ctx.params</code>,{' '}
               <code className="prose-code">ctx.query</code>, and{' '}
               <code className="prose-code">ctx.body()</code> typed from your routes.
@@ -322,7 +363,7 @@ export default function Home() {
                   </div>
                   <h3 className="font-semibold text-slate-900 dark:text-white">Powerful CLI</h3>
                 </div>
-                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                   Scaffold, generate, migrate, and validate — from one tool.
                 </p>
               </div>
@@ -336,10 +377,78 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Performance, honestly */}
+      <section className="max-w-6xl mx-auto px-6 mt-28">
+        <div className="mb-10 max-w-2xl">
+          <p className="text-[13px] font-semibold uppercase tracking-widest text-primary-600 dark:text-primary-400 mb-3">
+            Performance, honestly
+          </p>
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white mb-3 text-balance">
+            Real numbers, published as they are
+          </h2>
+          <p className="text-slate-600 dark:text-slate-400 text-[15px] leading-relaxed">
+            Reproducible benchmarks, run in the open — including the ones we haven't won yet.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-4">
+          <div className="rounded-3xl ring-1 ring-slate-200 dark:ring-slate-800 bg-white dark:bg-slate-900/50 p-6 transition-all duration-300 hover:ring-primary-300/80 dark:hover:ring-primary-700/80 hover:shadow-lg hover:shadow-primary-500/5">
+            <div className="w-9 h-9 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-4">
+              <Gauge className="w-4.5 h-4.5 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <div className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-1.5">
+              ~48% faster
+            </div>
+            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+              Higher throughput than Express on the Node adapter, averaged across five
+              route scenarios (3,480 vs 2,348 req/s).
+            </p>
+          </div>
+
+          <div className="rounded-3xl ring-1 ring-slate-200 dark:ring-slate-800 bg-white dark:bg-slate-900/50 p-6 transition-all duration-300 hover:ring-primary-300/80 dark:hover:ring-primary-700/80 hover:shadow-lg hover:shadow-primary-500/5">
+            <div className="w-9 h-9 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mb-4">
+              <Zap className="w-4.5 h-4.5 text-amber-600 dark:text-amber-400" />
+            </div>
+            <div className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-1.5">
+              ~30&times; validation
+            </div>
+            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+              Schemas JIT-compile to specialized functions — ~30&times; faster than the
+              interpreter on valid input, with automatic fallback on edge runtimes.
+            </p>
+          </div>
+
+          <div className="rounded-3xl ring-1 ring-slate-200 dark:ring-slate-800 bg-white dark:bg-slate-900/50 p-6 transition-all duration-300 hover:ring-primary-300/80 dark:hover:ring-primary-700/80 hover:shadow-lg hover:shadow-primary-500/5">
+            <div className="w-9 h-9 rounded-lg bg-sky-100 dark:bg-sky-900/30 flex items-center justify-center mb-4">
+              <Scale className="w-4.5 h-4.5 text-sky-600 dark:text-sky-400" />
+            </div>
+            <div className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-1.5">
+              The honest gap
+            </div>
+            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+              Fastify and Hono are currently ahead on raw throughput. Closing that adapter
+              overhead is tracked work — numbers get updated, not massaged.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-6">
+          <a
+            href={BENCHMARKS_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-primary-600 dark:text-primary-400 hover:gap-2.5 transition-all"
+          >
+            Full methodology and results in BENCHMARKS.md
+            <ArrowUpRight className="w-4 h-4" />
+          </a>
+        </div>
+      </section>
+
       {/* Explore the docs */}
-      <section className="max-w-5xl mx-auto px-6 mt-24">
+      <section className="max-w-6xl mx-auto px-6 mt-28">
         <div className="mb-10">
-          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white mb-3">
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white mb-3 text-balance">
             Explore the documentation
           </h2>
           <p className="text-slate-600 dark:text-slate-400 max-w-2xl text-[15px]">
@@ -352,7 +461,7 @@ export default function Home() {
             <Link
               key={section.title}
               to={section.href}
-              className="flex items-start gap-3.5 p-4 rounded-xl ring-1 ring-slate-200 dark:ring-slate-800 hover:ring-primary-300 dark:hover:ring-primary-700 hover:bg-slate-50 dark:hover:bg-slate-900/60 transition-all group"
+              className="flex items-start gap-3.5 p-4 rounded-xl ring-1 ring-slate-200 dark:ring-slate-800 hover:ring-primary-300 dark:hover:ring-primary-700 hover:bg-slate-50 dark:hover:bg-slate-900/60 hover:shadow-md hover:shadow-primary-500/5 transition-all group"
             >
               <div className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-800/80 flex items-center justify-center shrink-0 group-hover:bg-primary-100 dark:group-hover:bg-primary-900/30 transition-colors">
                 <section.icon className="w-4.5 h-4.5 text-slate-500 dark:text-slate-400 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors" />
@@ -371,8 +480,8 @@ export default function Home() {
       </section>
 
       {/* CTA */}
-      <section className="max-w-5xl mx-auto px-6 mt-24">
-        <div className="relative overflow-hidden text-center py-14 px-6 rounded-3xl bg-slate-950 ring-1 ring-slate-800">
+      <section className="max-w-6xl mx-auto px-6 mt-28">
+        <div className="relative overflow-hidden text-center py-16 px-6 rounded-3xl bg-slate-950 ring-1 ring-slate-800">
           <div
             className="absolute inset-0"
             style={{
@@ -382,7 +491,7 @@ export default function Home() {
             aria-hidden="true"
           />
           <div className="relative">
-            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">Ready to build?</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3 text-balance">Ready to build?</h2>
             <p className="text-slate-400 mb-7 max-w-md mx-auto text-[15px] text-balance">
               Install the core package, define your first typed route, and ship it to any runtime.
             </p>

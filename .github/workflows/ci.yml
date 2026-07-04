@@ -60,6 +60,28 @@ jobs:
       - name: Smoke test (Node)
         run: node scripts/smoke.mjs
 
+  perf-gate:
+    name: Performance Gate (vs Fastify)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run benchmark (vexor vs fastify)
+        working-directory: benchmarks
+        run: npx tsx src/runner.ts --suite http --duration 10 --connections 50 --frameworks vexor,fastify
+
+      - name: Check performance ratio
+        run: node scripts/perf-gate.mjs
+
   integration-db:
     name: ORM Integration (Postgres + MySQL)
     runs-on: ubuntu-latest

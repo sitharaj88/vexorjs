@@ -274,6 +274,53 @@ aside:hover::-webkit-scrollbar-thumb,
     radial-gradient(ellipse 40% 45% at 15% 55%, rgb(99 102 241 / 0.1), transparent 70%);
 }
 
+/* Aurora glow behind the hero headline: a slowly rotating, heavily blurred
+   conic gradient. Purely decorative — disabled for reduced-motion users. */
+.hero-aurora {
+  position: absolute;
+  top: -14rem;
+  left: 50%;
+  width: 56rem;
+  height: 56rem;
+  margin-left: -28rem;
+  border-radius: 9999px;
+  pointer-events: none;
+  background: conic-gradient(
+    from 90deg at 50% 50%,
+    rgb(99 102 241 / 0.16),
+    rgb(217 70 239 / 0.1),
+    rgb(56 189 248 / 0.1),
+    rgb(99 102 241 / 0.16)
+  );
+  filter: blur(72px);
+  opacity: 0.8;
+  animation: aurora-spin 18s linear infinite;
+  will-change: transform;
+}
+
+.dark .hero-aurora {
+  background: conic-gradient(
+    from 90deg at 50% 50%,
+    rgb(99 102 241 / 0.28),
+    rgb(217 70 239 / 0.16),
+    rgb(56 189 248 / 0.14),
+    rgb(99 102 241 / 0.28)
+  );
+  opacity: 0.65;
+}
+
+@keyframes aurora-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-aurora {
+    animation: none;
+  }
+}
+
 /* Dot grid: quieter and more modern than line grids */
 .dot-pattern {
   background-image: radial-gradient(rgb(100 116 139 / 0.14) 1px, transparent 1px);

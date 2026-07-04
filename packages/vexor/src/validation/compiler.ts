@@ -37,6 +37,11 @@ import {
   createIssue,
 } from '../schema/standard.js';
 
+import { tryCompileJit, setFormatValidator } from './jit.js';
+
+// Give the generated validators access to the shared format checks
+setFormatValidator(validateFormat);
+
 /**
  * Validation error
  */
@@ -181,9 +186,9 @@ function isValidIPv6(value: string): boolean {
 }
 
 /**
- * Validate string format
+ * Validate string format (shared with the JIT-compiled validators)
  */
-function validateFormat(value: string, format: string): boolean {
+export function validateFormat(value: string, format: string): boolean {
   switch (format) {
     case 'email':
       return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -507,9 +512,11 @@ function validateSchema(data: unknown, schema: TSchema, ctx: ValidationContext):
 }
 
 /**
- * Compile a schema into a validator function
+ * Compile a schema into an interpreted (tree-walking) validator.
+ * Used as the fallback where runtime code generation is unavailable,
+ * and exported for benchmarking against the JIT path.
  */
-export function compile<T>(schema: TSchema): ValidatorFn<T> {
+export function compileInterpreted<T>(schema: TSchema): ValidatorFn<T> {
   return (data: unknown): StandardSchemaResult<T> => {
     const ctx: ValidationContext = { path: [], issues: [] };
     validateSchema(data, schema, ctx);
@@ -520,6 +527,15 @@ export function compile<T>(schema: TSchema): ValidatorFn<T> {
 
     return { value: data as T };
   };
+}
+
+/**
+ * Compile a schema into a validator function.
+ * Uses the JIT code generator where the runtime allows it (Node, Bun,
+ * Deno); falls back to the interpreter elsewhere (e.g. Cloudflare Workers).
+ */
+export function compile<T>(schema: TSchema): ValidatorFn<T> {
+  return tryCompileJit<T>(schema) ?? compileInterpreted<T>(schema);
 }
 
 /**

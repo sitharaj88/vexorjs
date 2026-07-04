@@ -93,7 +93,10 @@ async function saveResults(name: string, data: unknown): Promise<string> {
   const filename = `${name}-${timestamp}.json`;
   const filepath = join(resultsDir, filename);
 
-  await writeFile(filepath, JSON.stringify(data, null, 2));
+  await writeFile(
+    filepath,
+    JSON.stringify(data, (_key, value) => (value instanceof Map ? Object.fromEntries(value) : value), 2)
+  );
 
   return filepath;
 }

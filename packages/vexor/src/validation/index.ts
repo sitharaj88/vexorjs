@@ -4,6 +4,7 @@
 
 export {
   compile,
+  compileInterpreted,
   createValidator,
   validate,
   parse,

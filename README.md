@@ -27,7 +27,7 @@
 
 ## Features
 
-- **High Performance** — Radix tree router with O(1) static route lookup, an LRU match cache, precompiled schema validation, and object-pooled request contexts
+- **High Performance** — Radix tree router with O(1) static route lookup, an LRU match cache, JIT-compiled validation (~30× faster than tree-walking, with automatic fallback on codegen-restricted runtimes), and object-pooled request contexts — see [BENCHMARKS.md](./BENCHMARKS.md)
 - **Multi-Runtime** — Runs on Node.js, Bun, Deno, Cloudflare Workers, Vercel Edge, and AWS Lambda (smoke-tested on Node, Bun, and Deno in CI)
 - **Type-Safe** — End-to-end handler inference without code generation: `ctx.params` is typed from the route path, `ctx.body()` and `ctx.query` from the route schema; Standard Schema interop included
 - **Batteries Included** — Authentication, rate limiting, CORS, static files, caching, logging, observability, real-time support, graceful shutdown, and more

@@ -353,6 +353,17 @@ export default function Validation() {
         </div>
       </section>
 
+      <InfoBlock variant="info" title="JIT-Compiled Validators">
+        Vexor compiles each schema into a specialized validator function via code generation —
+        roughly 30&times; faster than a tree-walking interpreter on valid input. On runtimes that
+        forbid runtime code generation (such as Cloudflare Workers), it transparently falls back
+        to an interpreter that produces identical results. See{' '}
+        <Link to="/advanced/performance" className="underline hover:no-underline">
+          Performance
+        </Link>{' '}
+        for details and benchmarks.
+      </InfoBlock>
+
       {/* Basic Schemas */}
       <section>
         <h2 id="basic-schemas" className="text-2xl font-bold text-slate-900 dark:text-white mb-4">

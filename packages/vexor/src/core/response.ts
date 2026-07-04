@@ -48,6 +48,23 @@ export interface TypedResponse<T = unknown> extends Response {
 }
 
 /**
+ * Adapter fast-path: when a Response is built from an in-memory string,
+ * the raw body is attached under this symbol so the Node adapter can
+ * `res.end(raw)` directly instead of pumping a ReadableStream reader.
+ */
+export const RAW_BODY = Symbol.for('vexor.rawBody');
+
+/** Read the raw in-memory body from a Response, if it was tagged */
+export function getRawBody(response: Response): string | Uint8Array | undefined {
+  return (response as unknown as Record<symbol, string | Uint8Array | undefined>)[RAW_BODY];
+}
+
+/** Tag a Response with its raw in-memory body (used by ResponseBuilder) */
+export function setRawBody(response: Response, body: string | Uint8Array): void {
+  (response as unknown as Record<symbol, string | Uint8Array>)[RAW_BODY] = body;
+}
+
+/**
  * HTTP Status text mapping
  */
 const STATUS_TEXT: Record<number, string> = {
@@ -144,11 +161,18 @@ export class ResponseBuilder {
       this._headers.append('Set-Cookie', cookie);
     }
 
-    return new Response(this._body, {
+    const response = new Response(this._body, {
       status: this._status,
       statusText: STATUS_TEXT[this._status] ?? '',
       headers: this._headers,
     });
+
+    // Enable the adapter's direct-write fast path for in-memory bodies
+    if (typeof this._body === 'string' || this._body instanceof Uint8Array) {
+      setRawBody(response, this._body);
+    }
+
+    return response;
   }
 
   /**

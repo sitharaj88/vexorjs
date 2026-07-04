@@ -5,6 +5,8 @@ import searchIndex from '../data/searchIndex';
 
 interface HeaderProps {
   onMenuClick: () => void;
+  /** Hide the mobile hamburger on pages without a sidebar (e.g. the landing page) */
+  showMenu?: boolean;
 }
 
 const navLinks = [
@@ -14,7 +16,7 @@ const navLinks = [
   { name: 'API', href: '/api' },
 ];
 
-export default function Header({ onMenuClick }: HeaderProps) {
+export default function Header({ onMenuClick, showMenu = true }: HeaderProps) {
   const [darkMode, setDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('darkMode') === 'true' ||
@@ -103,14 +105,16 @@ export default function Header({ onMenuClick }: HeaderProps) {
   return (
     <header className="sticky top-0 z-50 h-14 bg-white/85 dark:bg-slate-950/85 backdrop-blur-xl border-b border-slate-200/70 dark:border-slate-800/70">
       <div className="flex items-center h-full px-4 sm:px-6 gap-2">
-        {/* Mobile menu */}
-        <button
-          onClick={onMenuClick}
-          className="lg:hidden p-2 -ml-2 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-          aria-label="Open navigation"
-        >
-          <Menu className="w-5 h-5" />
-        </button>
+        {/* Mobile menu — only on pages that have a sidebar */}
+        {showMenu && (
+          <button
+            onClick={onMenuClick}
+            className="lg:hidden p-2 -ml-2 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            aria-label="Open navigation"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+        )}
 
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2.5 mr-2">

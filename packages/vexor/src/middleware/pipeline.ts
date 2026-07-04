@@ -17,6 +17,7 @@
 
 import type { VexorContext } from '../core/context.js';
 import type { HookType, HookFunction, ErrorHandler } from '../core/types.js';
+import { getRawBody, setRawBody } from '../core/response.js';
 
 /**
  * Hook registry - stores hooks by type
@@ -230,11 +231,18 @@ export class Pipeline {
         for (const [key, value] of Object.entries(pendingHeaders)) {
           headers.set(key, value);
         }
-        response = new Response(response.body, {
+        // Rebuild from the raw in-memory body when available so the
+        // adapter's direct-write fast path survives the header merge
+        const raw = getRawBody(response);
+        const rebuilt = new Response((raw !== undefined ? raw : response.body) as BodyInit | null, {
           status: response.status,
           statusText: response.statusText,
           headers,
         });
+        if (raw !== undefined) {
+          setRawBody(rebuilt, raw);
+        }
+        response = rebuilt;
       }
 
       // 9. onResponse hooks (fire and forget)

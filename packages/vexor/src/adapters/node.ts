@@ -7,6 +7,7 @@
 
 import { createServer, type IncomingMessage, type ServerResponse, type Server } from 'node:http';
 import { type VexorRequest, createRequest } from '../core/request.js';
+import { getRawBody } from '../core/response.js';
 import type { RuntimeCapabilities, RuntimeType } from '../core/types.js';
 
 /**
@@ -125,6 +126,14 @@ export async function writeResponse(res: ServerResponse, response: Response): Pr
   response.headers.forEach((value, key) => {
     res.setHeader(key, value);
   });
+
+  // Fast path: bodies built from in-memory strings/buffers are written
+  // directly, skipping the ReadableStream reader machinery entirely
+  const raw = getRawBody(response);
+  if (raw !== undefined) {
+    res.end(raw);
+    return;
+  }
 
   // Write body, respecting backpressure
   if (response.body) {

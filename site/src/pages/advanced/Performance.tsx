@@ -294,31 +294,48 @@ app.addHook('onSend', async (ctx, response) => {
   return response;
 });`;
 
-const benchmarkCode = `// Benchmark results: simple JSON response (req/s)
-// Hardware: Apple M2, 16GB RAM, Node.js 22
-// Tool: autocannon -c 100 -d 10
+const jitValidationCode = `import { Type, compileValidator, compileInterpreted } from '@vexorjs/core';
 
-// Framework          | req/s     | Latency (avg) | Latency (p99)
-// -------------------|-----------|---------------|---------------
-// Vexor              | 78,400    | 1.2ms         | 3.1ms
-// Fastify            | 72,100    | 1.4ms         | 3.6ms
-// Koa                | 48,200    | 2.0ms         | 5.4ms
-// Express            | 32,500    | 3.1ms         | 8.2ms
-//
-// Benchmark: JSON serialization with 10 fields
-// Framework          | req/s     | Latency (avg)
-// -------------------|-----------|---------------
-// Vexor (compiled)   | 65,200    | 1.5ms
-// Vexor (standard)   | 54,800    | 1.8ms
-// Fastify            | 58,300    | 1.7ms
-// Express            | 28,900    | 3.4ms
-//
-// Benchmark: Database query + JSON response
-// Framework          | req/s     | Latency (avg)
-// -------------------|-----------|---------------
-// Vexor + ORM        | 18,400    | 5.4ms
-// Fastify + Prisma   | 15,200    | 6.5ms
-// Express + Sequelize| 11,800    | 8.4ms`;
+const UserSchema = Type.Object({
+  name: Type.String({ minLength: 1 }),
+  email: Type.String({ format: 'email' }),
+  age: Type.Optional(Type.Number({ minimum: 0 })),
+});
+
+// Default path: JIT-compiles a specialized function via codegen.
+// On runtimes that forbid runtime code generation (e.g. Cloudflare
+// Workers), it automatically falls back to the interpreter.
+const validate = compileValidator(UserSchema);
+
+const result = validate(input);
+if (result.issues) {
+  // Same issues, messages, and paths on both code paths
+  console.log(result.issues);
+}
+
+// The interpreter is exported separately so you can compare the
+// two paths yourself (identical behavior, ~30x slower on valid input)
+const validateInterpreted = compileInterpreted(UserSchema);`;
+
+const benchmarkCode = `// HTTP throughput vs other frameworks (higher is better)
+// Windows 11 laptop, Node 22, autocannon, 10s runs, 100 connections,
+// averaged across 5 route scenarios: static, JSON, params, POST echo,
+// and POST validated. Preliminary numbers -- treat relative positions
+// as indicative, not absolute.
+
+// Framework | Avg throughput | Avg p99 latency
+// ----------|----------------|----------------
+// Fastify   | 4,831 req/s    | 424 ms
+// Hono      | 4,156 req/s    | 579 ms
+// Vexor     | 3,480 req/s    | 694 ms
+// Express   | 2,348 req/s    | 945 ms
+
+// Validation: JIT compiler vs interpreter (typical 6-field API body)
+// Path                               | Valid input | Invalid input
+// -----------------------------------|-------------|---------------
+// Interpreter (compileInterpreted)   | 260K ops/s  | 203K ops/s
+// JIT (compileValidator, default)    | 7.79M ops/s | 861K ops/s
+// Speedup                            | ~30x        | ~4.2x`;
 
 const benchmarkRunCode = `# Run your own benchmarks
 npm install -g autocannon
@@ -441,7 +458,11 @@ export default function Performance() {
         <p className="text-slate-600 dark:text-slate-400 mb-4">
           Before discussing optimization, it is worth understanding what Vexor does at the framework
           level to minimize overhead. Several design decisions contribute to Vexor's baseline
-          performance advantage over frameworks like Express and Koa.
+          performance advantage over frameworks like Express (see the honest comparison in the{' '}
+          <a href="#benchmarks" className="text-primary-600 dark:text-primary-400 hover:underline">
+            Benchmarks
+          </a>{' '}
+          section below).
         </p>
         <p className="text-slate-600 dark:text-slate-400 mb-4">
           The router uses a radix tree (compressed trie) that is compiled once at startup when routes
@@ -462,10 +483,47 @@ export default function Performance() {
         <p className="text-slate-600 dark:text-slate-400 mb-4">
           Validation schemas are compiled to fast check functions at route registration time, not
           at request time. When you define a <code className="prose-code">body</code> schema on a
-          route, Vexor compiles it into an optimized validation function once, then reuses that
-          function for every incoming request. This amortizes the schema compilation cost over
-          the lifetime of the application, rather than paying it on every request.
+          route, Vexor JIT-compiles it into a specialized validation function once, then reuses
+          that function for every incoming request. This amortizes the schema compilation cost
+          over the lifetime of the application, rather than paying it on every request. The next
+          section covers how the JIT compiler works in detail.
         </p>
+      </section>
+
+      <section>
+        <h2 id="jit-validation" className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
+          JIT-Compiled Validation
+        </h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
+          Vexor's validator does not walk the schema tree at request time. Instead, each schema is
+          compiled via code generation (<code className="prose-code">new Function</code>) into a
+          specialized validator that reads like hand-written checks for exactly that shape: direct
+          property access, inlined type checks, no dispatch, and no path bookkeeping on the happy
+          path. On a typical 6-field API body on Node 22, the JIT path validates valid input at
+          about 7.79M ops/s versus 260K ops/s for the tree-walking interpreter — roughly a 30&times;
+          speedup. Invalid input, which has to construct issue objects, is about 4&times; faster.
+        </p>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
+          Some runtimes forbid runtime code generation — Cloudflare Workers is the most common
+          example. On those platforms <code className="prose-code">new Function</code> throws, and
+          Vexor automatically falls back to the interpreter. The two paths are guaranteed to produce
+          identical output (the same issues, messages, and paths), and that parity is enforced by a
+          dedicated test suite. Your application code does not change either way; the fallback is
+          transparent.
+        </p>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
+          Both compilers are exported. <code className="prose-code">compileValidator</code> is the
+          default (JIT where the runtime allows it, interpreter elsewhere), and{' '}
+          <code className="prose-code">compileInterpreted</code> always uses the interpreter, which
+          is mainly useful for benchmarking one against the other.
+        </p>
+        <CodeBlock code={jitValidationCode} filename="src/validation.ts" showLineNumbers />
+        <InfoBlock variant="info">
+          Route schemas get this behavior automatically — you only need
+          <code className="prose-code">compileValidator</code> or
+          <code className="prose-code">compileInterpreted</code> directly when validating data
+          outside of route handling or when measuring the two paths.
+        </InfoBlock>
       </section>
 
       <section>
@@ -748,30 +806,41 @@ export default function Performance() {
           Benchmarks
         </h2>
         <p className="text-slate-600 dark:text-slate-400 mb-4">
-          Benchmarks provide a controlled comparison of framework overhead, but they should be
-          interpreted carefully. The numbers below measure the maximum throughput each framework
-          can achieve for simple workloads (JSON response, serialization, database query). They
-          demonstrate Vexor's performance characteristics relative to other popular frameworks,
-          but they do not predict the performance of your specific application.
-        </p>
-        <p className="text-slate-600 dark:text-slate-400 mb-4">
-          In the "simple JSON response" benchmark, the workload is minimal: the handler returns
-          a static JSON object with no I/O. This measures pure framework overhead, including
-          routing, context creation, hook execution, and response serialization. Vexor's advantage
-          here comes from its radix tree router and minimal per-request allocation. In the
-          "JSON serialization" benchmark, the handler serializes a 10-field object, which shows
-          the impact of compiled serialization. In the "database query" benchmark, each request
-          executes a real SQL query, which demonstrates that the database dominates latency and
-          the framework's contribution becomes proportionally smaller.
-        </p>
-        <p className="text-slate-600 dark:text-slate-400 mb-4">
-          The key takeaway from these benchmarks is that framework overhead matters most for
-          I/O-light endpoints (health checks, cached responses, static data) and matters least
-          for I/O-heavy endpoints (complex queries, external API calls). If your application
-          is primarily I/O-heavy, optimizing the database queries and caching strategy will have
-          a much larger impact than any framework-level optimization.
+          Vexor publishes honest, reproducible benchmark numbers — including the comparisons it
+          does not win. Where Vexor currently stands on the Node adapter: clearly faster than
+          Express (~48% higher average throughput), but ~16% behind Hono and ~28% behind Fastify
+          on raw throughput. On the schema-validated POST scenario the gap to Hono narrows to
+          about 9% (2,628 vs 2,897 req/s), thanks to JIT-compiled validation. Closing the
+          remaining adapter overhead is tracked, ongoing work — the published numbers get updated
+          as it lands, not massaged.
         </p>
         <CodeBlock code={benchmarkCode} filename="benchmarks/results.txt" />
+        <p className="text-slate-600 dark:text-slate-400 mt-4 mb-4">
+          A few methodology caveats to keep in mind when reading these numbers. Load is generated
+          with autocannon; each framework runs in its own process, measured sequentially on the
+          same machine, and all frameworks serve identical route sets. Vexor is currently measured
+          from TypeScript source via tsx while the competitors run their published builds — a
+          small handicap for Vexor. The numbers come from short runs on a single laptop, so treat
+          the relative positions as indicative rather than absolute. CI runs a relative
+          performance gate (Vexor must stay within a fixed ratio of Fastify) to catch regressions.
+          The full, current tables and instructions to reproduce them yourself are in{' '}
+          <a
+            href="https://github.com/sitharaj88/vexorjs/blob/main/BENCHMARKS.md"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary-600 dark:text-primary-400 hover:underline"
+          >
+            BENCHMARKS.md
+          </a>{' '}
+          on GitHub.
+        </p>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
+          The broader takeaway is unchanged: framework overhead matters most for I/O-light
+          endpoints (health checks, cached responses, static data) and matters least for
+          I/O-heavy endpoints (complex queries, external API calls). If your application is
+          primarily I/O-heavy, optimizing the database queries and caching strategy will have a
+          much larger impact than any framework-level optimization.
+        </p>
         <InfoBlock variant="info">
           Benchmarks measure framework overhead only. Real-world performance depends heavily
           on your application logic, database queries, and network conditions. Always benchmark

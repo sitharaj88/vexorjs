@@ -154,6 +154,7 @@ export type {
 // Validation exports (Phase 2)
 export {
   compile as compileValidator,
+  compileInterpreted,
   createValidator,
   validate,
   parse,

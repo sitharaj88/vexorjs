@@ -33,12 +33,12 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-slate-950">
-      <Header onMenuClick={() => setSidebarOpen(true)} />
+      <Header onMenuClick={() => setSidebarOpen(true)} showMenu={!isHome} />
 
       <div className="flex">
-        <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        {!isHome && <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />}
 
-        <main className="flex-1 min-w-0 lg:pl-72">
+        <main className={`flex-1 min-w-0 ${isHome ? '' : 'lg:pl-72'}`}>
           {isHome ? (
             <>
               <Outlet />
