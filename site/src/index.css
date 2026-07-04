@@ -119,13 +119,23 @@
 /* ============ Code blocks (editor-window style) ============ */
 
 .code-window {
-  @apply my-6 rounded-xl overflow-hidden shadow-2xl shadow-slate-900/10 dark:shadow-black/40;
+  @apply my-6 rounded-xl overflow-hidden shadow-lg shadow-slate-900/5 dark:shadow-2xl dark:shadow-black/40;
+  background: #fafafa;
+  border: 1px solid rgb(226 232 240);
+}
+
+.dark .code-window {
   background: var(--color-code-bg);
-  border: 1px solid var(--color-code-border);
+  border-color: var(--color-code-border);
 }
 
 .code-window-header {
   @apply flex items-center gap-3 px-4 h-10 border-b;
+  background: rgb(15 23 42 / 0.03);
+  border-color: rgb(226 232 240);
+}
+
+.dark .code-window-header {
   background: rgb(255 255 255 / 0.03);
   border-color: var(--color-code-border);
 }
@@ -197,31 +207,55 @@ table {
   @apply text-primary-600 dark:text-primary-400 border-primary-500 font-medium;
 }
 
-/* Scrollbar styling */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+/* ============ Scrollbars ============ */
+/* Chrome/Edge/Firefox all honor the standard scrollbar-width/color props;
+   when set, Chromium ignores ::-webkit-scrollbar styling, so the standard
+   properties are the single source of truth here. */
+
+/* Page scrollbar: thin and subtle */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(148 163 184 / 0.45) transparent;
 }
 
-::-webkit-scrollbar-track {
+html.dark {
+  scrollbar-color: rgb(71 85 105 / 0.6) transparent;
+}
+
+/* Panels (sidebar, TOC, code blocks): scrollbar is invisible until the
+   panel is hovered. Width stays `thin`, so no layout shift on hover. */
+aside,
+.code-window pre {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+aside:hover,
+.code-window pre:hover {
+  scrollbar-color: rgb(148 163 184 / 0.45) transparent;
+}
+
+.dark aside:hover,
+.dark .code-window pre:hover {
+  scrollbar-color: rgb(100 116 139 / 0.6) transparent;
+}
+
+/* Safari fallback (no scrollbar-width support): slim overlay-style bars */
+aside::-webkit-scrollbar,
+.code-window pre::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+aside::-webkit-scrollbar-thumb,
+.code-window pre::-webkit-scrollbar-thumb {
   background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgb(148 163 184 / 0.6);
   border-radius: 9999px;
 }
 
-.dark ::-webkit-scrollbar-thumb {
-  background: rgb(51 65 85);
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgb(100 116 139);
-}
-
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: rgb(71 85 105);
+aside:hover::-webkit-scrollbar-thumb,
+.code-window pre:hover::-webkit-scrollbar-thumb {
+  background: rgb(148 163 184 / 0.45);
 }
 
 /* ============ Hero backdrop ============ */

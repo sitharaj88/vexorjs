@@ -14,7 +14,7 @@ export default function TableOfContents() {
 
   useEffect(() => {
     // Find all headings in the main content
-    const elements = document.querySelectorAll('main h2, main h3');
+    const elements = document.querySelectorAll('main h2[id], main h3[id]');
     const items: TocItem[] = Array.from(elements).map((element) => ({
       id: element.id,
       text: element.textContent || '',
@@ -46,17 +46,17 @@ export default function TableOfContents() {
   if (headings.length === 0) return null;
 
   return (
-    <aside className="hidden xl:block w-64 shrink-0">
-      <div className="sticky top-24 pl-8 pr-4">
-        <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">
+    <aside className="hidden xl:block w-60 shrink-0">
+      <div className="sticky top-20 pr-6 max-h-[calc(100vh-6rem)] overflow-y-auto">
+        <h4 className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-3">
           On this page
         </h4>
-        <nav className="space-y-1">
+        <nav>
           {headings.map((heading) => (
             <a
               key={heading.id}
               href={`#${heading.id}`}
-              className={`toc-link ${heading.level === 3 ? 'pl-6' : ''} ${
+              className={`toc-link ${heading.level === 3 ? 'pl-7' : ''} ${
                 activeId === heading.id ? 'active' : ''
               }`}
             >

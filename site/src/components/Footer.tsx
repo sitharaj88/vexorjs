@@ -46,17 +46,17 @@ const socialLinks = [
 
 export default function Footer() {
   return (
-    <footer className="border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+    <footer className="border-t border-slate-200/70 dark:border-slate-800/70">
+      <div className="max-w-5xl mx-auto px-6 py-12 sm:py-14">
         {/* Top section */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
-            <Link to="/" className="flex items-center gap-3 mb-4">
-              <div className="w-9 h-9 rounded-xl gradient-bg flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-primary-500/20">
+            <Link to="/" className="flex items-center gap-2.5 mb-4">
+              <div className="w-7 h-7 rounded-lg gradient-bg flex items-center justify-center text-white font-bold text-sm shadow-md shadow-primary-500/25">
                 V
               </div>
-              <span className="font-bold text-xl text-slate-900 dark:text-white">
+              <span className="font-bold text-[17px] tracking-tight text-slate-900 dark:text-white">
                 Vexor
               </span>
             </Link>
@@ -102,7 +102,7 @@ export default function Footer() {
         </div>
 
         {/* Divider */}
-        <div className="border-t border-slate-200 dark:border-slate-800 pt-8">
+        <div className="border-t border-slate-200/70 dark:border-slate-800/70 pt-7">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-sm text-slate-500 dark:text-slate-400">
               &copy; {2026} Sitharaj Seenivasan. All rights reserved.
