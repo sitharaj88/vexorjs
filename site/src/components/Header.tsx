@@ -104,7 +104,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
               Vexor
             </span>
             <span className="hidden sm:inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-800">
-              v1.0.0
+              v1.2
             </span>
           </Link>
         </div>

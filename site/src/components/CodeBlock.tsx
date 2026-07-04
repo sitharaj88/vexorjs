@@ -10,6 +10,20 @@ interface CodeBlockProps {
   showLineNumbers?: boolean;
 }
 
+const LANGUAGE_LABELS: Record<string, string> = {
+  typescript: 'TS',
+  tsx: 'TSX',
+  javascript: 'JS',
+  jsx: 'JSX',
+  bash: 'SH',
+  shell: 'SH',
+  json: 'JSON',
+  sql: 'SQL',
+  yaml: 'YAML',
+  html: 'HTML',
+  css: 'CSS',
+};
+
 export default function CodeBlock({
   code,
   language = 'typescript',
@@ -19,43 +33,67 @@ export default function CodeBlock({
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(code);
+    await navigator.clipboard.writeText(code.trim());
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
   return (
-    <div className="code-block group relative my-6">
-      {filename && (
-        <div className="flex items-center justify-between px-4 py-2 bg-slate-800 rounded-t-lg border-b border-slate-700">
-          <span className="text-sm text-slate-400 font-mono">{filename}</span>
+    <div className="code-window group">
+      {/* Window chrome */}
+      <div className="code-window-header">
+        <div className="code-window-dots" aria-hidden="true">
+          <span className="bg-[#ff5f57]" />
+          <span className="bg-[#febc2e]" />
+          <span className="bg-[#28c840]" />
         </div>
-      )}
-      <div className="relative">
-        <SyntaxHighlighter
-          language={language}
-          style={oneDark}
-          showLineNumbers={showLineNumbers}
-          customStyle={{
-            margin: 0,
-            borderRadius: filename ? '0 0 0.5rem 0.5rem' : '0.5rem',
-            padding: '1rem',
-          }}
-        >
-          {code.trim()}
-        </SyntaxHighlighter>
-        <button
-          onClick={handleCopy}
-          className="absolute top-3 right-3 p-2 rounded-md bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-colors sm:opacity-0 sm:group-hover:opacity-100"
-          title="Copy code"
-        >
-          {copied ? (
-            <Check className="w-4 h-4 text-green-400" />
-          ) : (
-            <Copy className="w-4 h-4" />
+
+        {filename ? (
+          <span className="text-xs text-slate-400 font-mono truncate">{filename}</span>
+        ) : (
+          <span className="text-xs text-slate-500 font-mono select-none">
+            {LANGUAGE_LABELS[language] ?? language.toUpperCase()}
+          </span>
+        )}
+
+        <div className="ml-auto flex items-center gap-2">
+          {filename && (
+            <span className="hidden sm:inline-flex px-1.5 py-0.5 rounded text-[10px] font-semibold tracking-wide text-slate-400 bg-white/5 ring-1 ring-white/10 select-none">
+              {LANGUAGE_LABELS[language] ?? language.toUpperCase()}
+            </span>
           )}
-        </button>
+          <button
+            onClick={handleCopy}
+            className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 ring-1 ring-white/10 transition-colors"
+            title="Copy code"
+            aria-label={copied ? 'Copied' : 'Copy code'}
+          >
+            {copied ? (
+              <>
+                <Check className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="hidden sm:inline text-emerald-400">Copied</span>
+              </>
+            ) : (
+              <>
+                <Copy className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Copy</span>
+              </>
+            )}
+          </button>
+        </div>
       </div>
+
+      {/* Code */}
+      <SyntaxHighlighter
+        language={language}
+        style={oneDark}
+        showLineNumbers={showLineNumbers}
+        lineNumberStyle={{ color: 'rgb(71 85 105)', minWidth: '2.25em' }}
+        customStyle={{ margin: 0, background: 'transparent' }}
+        codeTagProps={{ style: { background: 'transparent' } }}
+      >
+        {code.trim()}
+      </SyntaxHighlighter>
     </div>
   );
 }
