@@ -4,7 +4,7 @@
  * Tests for versioning strategies, helpers, and deprecation middleware
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, } from 'vitest';
 import {
   versioning,
   getApiVersion,

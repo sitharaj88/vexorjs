@@ -2,7 +2,7 @@
  * Soft Delete Tests
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, } from 'vitest';
 import {
   softDeletable,
   getSoftDeleteCondition,
@@ -18,7 +18,7 @@ import {
   addSoftDeleteIndex,
   removeSoftDeleteColumn,
 } from '../features/soft-delete.js';
-import type { SoftDeleteOptions, WhereCondition } from '../features/soft-delete.js';
+import type { SoftDeleteOptions, } from '../features/soft-delete.js';
 
 // ---------------------------------------------------------------------------
 // Helpers

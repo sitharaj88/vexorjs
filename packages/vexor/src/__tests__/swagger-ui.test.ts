@@ -2,7 +2,7 @@
  * Swagger UI / ReDoc / Scalar Tests
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, } from 'vitest';
 import {
   swaggerUI,
   registerSwaggerUI,
@@ -11,7 +11,7 @@ import {
   scalar,
   registerScalar,
 } from '../openapi/swagger-ui.js';
-import type { SwaggerUIOptions, ReDocOptions, ScalarOptions, OpenAPISpec } from '../openapi/swagger-ui.js';
+import type { OpenAPISpec } from '../openapi/swagger-ui.js';
 import { Vexor } from '../core/app.js';
 import { createMockContext, createMockRequest } from './helpers.js';
 

@@ -5,9 +5,9 @@
  * Supports interactive mode with prompts.
  */
 
-import { mkdir, writeFile, readdir, access } from 'fs/promises';
-import { join, resolve } from 'path';
-import { execSync } from 'child_process';
+import { mkdir, writeFile, readdir, } from 'node:fs/promises';
+import { join, resolve } from 'node:path';
+import { execSync } from 'node:child_process';
 import prompts from 'prompts';
 import ora from 'ora';
 import { logger } from '../utils/logger.js';

@@ -15,7 +15,6 @@ import {
 import type {
   CloudflareEnv,
   ExecutionContext,
-  CloudflareHandler,
 } from '../adapters/cloudflare.js';
 import type { Vexor } from '../core/app.js';
 

@@ -4,8 +4,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Vexor, createApp } from '../core/app.js';
-import { VexorRequest } from '../core/request.js';
-import { createMockContext, createMockRequest } from './helpers.js';
+import { createMockRequest } from './helpers.js';
 
 describe('Vexor', () => {
   let app: Vexor;
@@ -244,7 +243,7 @@ describe('Vexor', () => {
     });
 
     it('should return this for chaining', () => {
-      const result = app.setErrorHandler(async (err, ctx) => ctx.text('error'));
+      const result = app.setErrorHandler(async (_err, ctx) => ctx.text('error'));
       expect(result).toBe(app);
     });
   });

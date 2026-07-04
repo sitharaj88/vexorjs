@@ -8,8 +8,6 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from 'vitest';
 
-type SpawnOnHandler = (event: string, cb: (...args: any[]) => void) => void;
-
 const mockSpawnOn = vi.fn();
 const mockSpawnInstance = {
   on: mockSpawnOn,
@@ -28,8 +26,8 @@ vi.mock('fs/promises', () => ({
   readFile: vi.fn(),
 }));
 
-import { spawn } from 'child_process';
-import { access, readFile, writeFile } from 'fs/promises';
+import { spawn } from 'node:child_process';
+import { access, readFile, writeFile } from 'node:fs/promises';
 import { buildCommand } from '../commands/build.js';
 
 const mockedSpawn = vi.mocked(spawn);

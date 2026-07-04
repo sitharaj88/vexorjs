@@ -21,7 +21,7 @@ export interface ORMBenchmarkResult {
 /**
  * Measure execution time
  */
-function measure<T>(fn: () => T): { result: T; time: number } {
+function _measure<T>(fn: () => T): { result: T; time: number } {
   const start = performance.now();
   const result = fn();
   const time = performance.now() - start;
@@ -31,7 +31,7 @@ function measure<T>(fn: () => T): { result: T; time: number } {
 /**
  * Measure async execution time
  */
-async function measureAsync<T>(fn: () => Promise<T>): Promise<{ result: T; time: number }> {
+async function _measureAsync<T>(fn: () => Promise<T>): Promise<{ result: T; time: number }> {
   const start = performance.now();
   const result = await fn();
   const time = performance.now() - start;
@@ -106,7 +106,7 @@ export async function runVexorORMBenchmarks(): Promise<ORMBenchmarkResult[]> {
     createdAt: column.timestamp().defaultNow(),
   });
 
-  const posts = table('posts', {
+  const _posts = table('posts', {
     id: column.serial().primaryKey(),
     title: column.varchar(255).notNull(),
     content: column.text(),

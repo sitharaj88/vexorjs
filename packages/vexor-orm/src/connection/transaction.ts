@@ -309,7 +309,7 @@ export class TransactionManager {
 
         // Check if error is retryable (serialization failure, deadlock)
         if (this.isRetryableError(error)) {
-          await this.delay(retryDelay * Math.pow(2, attempt));
+          await this.delay(retryDelay * 2 ** attempt);
           continue;
         }
 

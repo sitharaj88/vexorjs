@@ -377,44 +377,44 @@ describe('info and doctor commands', () => {
 
 describe('template content integrity', () => {
   it('all templates should have non-empty files', () => {
-    for (const [key, template] of Object.entries(templates)) {
+    for (const [_key, template] of Object.entries(templates)) {
       const fileKeys = Object.keys(template.files);
       expect(fileKeys.length).toBeGreaterThan(0);
 
-      for (const [filename, content] of Object.entries(template.files)) {
+      for (const [_filename, content] of Object.entries(template.files)) {
         expect(content.length).toBeGreaterThan(0);
       }
     }
   });
 
   it('all templates should have at least one dependency', () => {
-    for (const [key, template] of Object.entries(templates)) {
+    for (const [_key, template] of Object.entries(templates)) {
       expect(Object.keys(template.dependencies).length).toBeGreaterThan(0);
     }
   });
 
   it('all templates should have a src/index.ts entry point', () => {
-    for (const [key, template] of Object.entries(templates)) {
+    for (const [_key, template] of Object.entries(templates)) {
       expect(template.files).toHaveProperty('src/index.ts');
     }
   });
 
   it('all templates should have a .gitignore', () => {
-    for (const [key, template] of Object.entries(templates)) {
+    for (const [_key, template] of Object.entries(templates)) {
       expect(template.files).toHaveProperty('.gitignore');
       expect(template.files['.gitignore']).toContain('node_modules');
     }
   });
 
   it('all templates should have tsconfig.json with valid JSON', () => {
-    for (const [key, template] of Object.entries(templates)) {
+    for (const [_key, template] of Object.entries(templates)) {
       expect(template.files).toHaveProperty('tsconfig.json');
       expect(() => JSON.parse(template.files['tsconfig.json'])).not.toThrow();
     }
   });
 
   it('all templates should have dev, build, and start scripts', () => {
-    for (const [key, template] of Object.entries(templates)) {
+    for (const [_key, template] of Object.entries(templates)) {
       expect(template.scripts).toHaveProperty('dev');
       expect(template.scripts).toHaveProperty('build');
       expect(template.scripts).toHaveProperty('start');

@@ -4,7 +4,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { PluginRegistry, definePlugin } from '../plugins/system.js';
-import type { VexorPlugin, PluginMeta, PluginOptions } from '../plugins/system.js';
+import type { VexorPlugin, PluginMeta, } from '../plugins/system.js';
 import type { Vexor } from '../core/app.js';
 
 // ---------------------------------------------------------------------------
@@ -120,7 +120,7 @@ describe('PluginRegistry', () => {
   describe('plugin state transitions', () => {
     it('should transition through pending -> loading -> loaded', async () => {
       let stateInsideRegister: string | undefined;
-      const plugin = createPlugin('stateful', (ctx) => {
+      const plugin = createPlugin('stateful', (_ctx) => {
         stateInsideRegister = registry.get('stateful')?.state;
       });
 

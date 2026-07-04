@@ -4,9 +4,9 @@
  * Adds integrations, plugins, and features to Vexor projects.
  */
 
-import { readFile, writeFile, mkdir, access } from 'fs/promises';
-import { resolve, join } from 'path';
-import { execSync } from 'child_process';
+import { readFile, writeFile, mkdir, access } from 'node:fs/promises';
+import { resolve, join } from 'node:path';
+import { execSync } from 'node:child_process';
 import ora from 'ora';
 import prompts from 'prompts';
 import { logger } from '../utils/logger.js';
@@ -658,7 +658,7 @@ export async function addCommand(name?: string): Promise<void> {
   if (integration.scripts) {
     logger.blank();
     logger.info('New scripts available:');
-    logger.list(Object.entries(integration.scripts).map(([k, v]) => `${pm} run ${k}`));
+    logger.list(Object.entries(integration.scripts).map(([k, _v]) => `${pm} run ${k}`));
   }
 }
 

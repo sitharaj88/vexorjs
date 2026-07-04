@@ -268,6 +268,12 @@ export interface Transaction {
   execute<T = unknown>(sql: string, params?: unknown[]): Promise<T[]>;
   commit(): Promise<void>;
   rollback(): Promise<void>;
+  /** Create a savepoint (nested transaction); returns its name */
+  savepoint(name?: string): Promise<string>;
+  /** Roll back to a savepoint, discarding it and any later ones */
+  rollbackTo(savepoint: string): Promise<void>;
+  /** Release a savepoint, keeping its effects */
+  releaseSavepoint(savepoint: string): Promise<void>;
 }
 
 // ============ Migration Types ============

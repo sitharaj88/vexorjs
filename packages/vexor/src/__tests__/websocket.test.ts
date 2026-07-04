@@ -9,7 +9,7 @@ import {
   createUpgradeResponse,
   isWebSocketUpgrade,
 } from '../realtime/websocket.js';
-import type { VexorWebSocket, WSMessage } from '../realtime/websocket.js';
+import type { VexorWebSocket, } from '../realtime/websocket.js';
 
 // ---------------------------------------------------------------------------
 // Helpers

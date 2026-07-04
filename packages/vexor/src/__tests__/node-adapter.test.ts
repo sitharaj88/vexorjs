@@ -2,8 +2,8 @@
  * Node.js Adapter Tests
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { EventEmitter } from 'events';
+import { describe, it, expect, vi } from 'vitest';
+import { EventEmitter } from 'node:events';
 import {
   incomingMessageToRequest,
   readBody,
@@ -12,7 +12,7 @@ import {
   nodeCapabilities,
   runtimeType,
 } from '../adapters/node.js';
-import type { IncomingMessage, ServerResponse } from 'http';
+import type { IncomingMessage, ServerResponse } from 'node:http';
 
 // ---------------------------------------------------------------------------
 // Helpers – lightweight mocks for Node http objects
@@ -83,7 +83,8 @@ describe('Node Adapter', () => {
   describe('nodeCapabilities', () => {
     it('should expose expected runtime capabilities', () => {
       expect(nodeCapabilities.streaming).toBe(true);
-      expect(nodeCapabilities.http2).toBe(true);
+      // The Node adapter serves HTTP/1.1 only (http.createServer)
+      expect(nodeCapabilities.http2).toBe(false);
       expect(nodeCapabilities.websocket).toBe(true);
       expect(nodeCapabilities.workerThreads).toBe(true);
       expect(nodeCapabilities.fileSystem).toBe(true);

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from 'vitest';
-import { mkdir, writeFile, readdir, access } from 'fs/promises';
-import { execSync } from 'child_process';
+import { mkdir, writeFile, readdir, } from 'node:fs/promises';
+import { execSync } from 'node:child_process';
 
 vi.mock('fs/promises', () => ({
   mkdir: vi.fn().mockResolvedValue(undefined),
@@ -150,7 +150,7 @@ describe('newCommand', () => {
     it('should write template files to correct paths', async () => {
       await newCommand('my-app', { yes: true });
 
-      const writtenPaths = mockWriteFile.mock.calls.map((call) => String(call[0]));
+      const writtenPaths = mockWriteFile.mock.calls.map((call) => String(call[0]).replace(/\\/g, '/'));
       expect(writtenPaths.some((p) => p.includes('src/index.ts'))).toBe(true);
       expect(writtenPaths.some((p) => p.includes('.gitignore'))).toBe(true);
       expect(writtenPaths.some((p) => p.includes('tsconfig.json'))).toBe(true);
@@ -160,7 +160,7 @@ describe('newCommand', () => {
       await newCommand('my-app', { yes: true, template: 'minimal' });
 
       const indexWrite = mockWriteFile.mock.calls.find((call) =>
-        String(call[0]).includes('src/index.ts')
+        String(call[0]).replace(/\\/g, '/').includes('src/index.ts')
       );
       expect(indexWrite).toBeDefined();
       expect(indexWrite![1]).toBe('hello my-app');

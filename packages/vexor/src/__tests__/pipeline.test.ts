@@ -191,15 +191,15 @@ describe('Pipeline', () => {
       expect(body.code).toBe('INTERNAL_ERROR');
     });
 
-    it('should apply CORS headers from context._corsHeaders to response', async () => {
+    it('should apply queued response headers (e.g. CORS) to response', async () => {
       const ctx = createMockContext('http://localhost/test');
 
-      // Simulate CORS middleware setting _corsHeaders on context
-      pipeline.addHook('onRequest', async (c: any) => {
-        c._corsHeaders = {
+      // Simulate CORS middleware queueing headers on the context
+      pipeline.addHook('onRequest', async (c) => {
+        c.mergeResponseHeaders({
           'Access-Control-Allow-Origin': 'http://example.com',
           'Access-Control-Allow-Credentials': 'true',
-        };
+        });
       });
 
       const handler = async () => new Response('ok');

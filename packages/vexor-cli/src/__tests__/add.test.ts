@@ -7,6 +7,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from 'vitest';
+import { join } from 'node:path';
 
 vi.mock('fs/promises', () => ({
   readFile: vi.fn(),
@@ -52,8 +53,8 @@ vi.mock('../utils/logger.js', () => ({
   },
 }));
 
-import { readFile, writeFile, mkdir, access } from 'fs/promises';
-import { execSync } from 'child_process';
+import { readFile, writeFile, access } from 'node:fs/promises';
+import { execSync } from 'node:child_process';
 import prompts from 'prompts';
 import { logger } from '../utils/logger.js';
 import { addCommand, listIntegrationsCommand } from '../commands/add.js';
@@ -198,7 +199,7 @@ describe('addCommand - prisma', () => {
 
     // Should create the prisma schema file
     expect(mockedWriteFile).toHaveBeenCalledWith(
-      expect.stringContaining('prisma/schema.prisma'),
+      expect.stringContaining(join('prisma', 'schema.prisma')),
       expect.stringContaining('generator client')
     );
 

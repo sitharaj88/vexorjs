@@ -16,16 +16,20 @@ import type {
 // ============ SQL Expressions ============
 
 /**
- * SQL parameter placeholder
+ * Per-query parameter numbering.
+ * Each query render owns its own context, so building queries concurrently
+ * (or nesting fragments) can never corrupt placeholder numbering.
  */
-let paramCounter = 0;
+export class ParamContext {
+  private counter = 0;
 
-function resetParamCounter(): void {
-  paramCounter = 0;
-}
+  next(): string {
+    return `$${++this.counter}`;
+  }
 
-function nextParam(): string {
-  return `$${++paramCounter}`;
+  get count(): number {
+    return this.counter;
+  }
 }
 
 /**
@@ -48,16 +52,20 @@ export class SQLRaw {
 export function sql(strings: TemplateStringsArray, ...values: unknown[]): SQLRaw {
   const sqlParts: string[] = [];
   const sqlValues: unknown[] = [];
+  let counter = 0;
 
   for (let i = 0; i < strings.length; i++) {
     sqlParts.push(strings[i]);
     if (i < values.length) {
       if (values[i] instanceof SQLRaw) {
         const raw = values[i] as SQLRaw;
-        sqlParts.push(raw.sql);
+        // Renumber the nested fragment's placeholders so they continue ours
+        const offset = counter;
+        sqlParts.push(raw.sql.replace(/\$(\d+)/g, (_, n: string) => `$${Number(n) + offset}`));
         sqlValues.push(...raw.values);
+        counter += raw.values.length;
       } else {
-        sqlParts.push(nextParam());
+        sqlParts.push(`$${++counter}`);
         sqlValues.push(values[i]);
       }
     }
@@ -72,7 +80,8 @@ export function sql(strings: TemplateStringsArray, ...values: unknown[]): SQLRaw
  * WHERE condition
  */
 export interface WhereCondition {
-  toSQL(): string;
+  /** Render to SQL; placeholders come from the given per-query context */
+  toSQL(params?: ParamContext): string;
   getValues(): unknown[];
 }
 
@@ -86,16 +95,16 @@ class ColumnComparison implements WhereCondition {
     private value: unknown
   ) {}
 
-  toSQL(): string {
+  toSQL(params: ParamContext = new ParamContext()): string {
     if (this.op === 'IS NULL' || this.op === 'IS NOT NULL') {
       return `${this.column} ${this.op}`;
     }
     if (this.op === 'IN' || this.op === 'NOT IN') {
       const values = this.value as unknown[];
-      const placeholders = values.map(() => nextParam()).join(', ');
+      const placeholders = values.map(() => params.next()).join(', ');
       return `${this.column} ${this.op} (${placeholders})`;
     }
-    return `${this.column} ${this.op} ${nextParam()}`;
+    return `${this.column} ${this.op} ${params.next()}`;
   }
 
   getValues(): unknown[] {
@@ -118,8 +127,8 @@ class CombinedCondition implements WhereCondition {
     private operator: 'AND' | 'OR'
   ) {}
 
-  toSQL(): string {
-    const parts = this.conditions.map((c) => `(${c.toSQL()})`);
+  toSQL(params: ParamContext = new ParamContext()): string {
+    const parts = this.conditions.map((c) => `(${c.toSQL(params)})`);
     return parts.join(` ${this.operator} `);
   }
 
@@ -202,7 +211,6 @@ abstract class BaseQueryBuilder {
   }
 
   async execute<T>(driver: DatabaseDriver): Promise<QueryResult<T>> {
-    resetParamCounter();
     const sql = this.toSQL();
     return driver.query<T>(sql, this.getValues());
   }
@@ -242,6 +250,19 @@ export class SelectBuilder<T extends TableDef, TResult = InferSelectType<T['colu
   selectAll(): SelectBuilder<T, InferSelectType<T['columns']>> {
     this._columns = ['*'];
     return this as unknown as SelectBuilder<T, InferSelectType<T['columns']>>;
+  }
+
+  /**
+   * Select raw SQL expressions (aggregates, computed columns, aliases).
+   * Pass the result row shape as the type argument:
+   *
+   *   db.select(users).selectRaw<{ total: number }>(count()).first();
+   */
+  selectRaw<TRaw extends Record<string, unknown> = Record<string, unknown>>(
+    ...expressions: string[]
+  ): SelectBuilder<T, TRaw> {
+    this._columns = expressions;
+    return this as unknown as SelectBuilder<T, TRaw>;
   }
 
   /**
@@ -334,7 +355,7 @@ export class SelectBuilder<T extends TableDef, TResult = InferSelectType<T['colu
    * Build SQL string
    */
   toSQL(): string {
-    resetParamCounter();
+    const params = new ParamContext();
     this._values = [];
 
     const parts: string[] = [];
@@ -357,7 +378,7 @@ export class SelectBuilder<T extends TableDef, TResult = InferSelectType<T['colu
     if (this._where.length > 0) {
       const conditions = this._where.map((w) => {
         this._values.push(...w.getValues());
-        return w.toSQL();
+        return w.toSQL(params);
       });
       parts.push(`WHERE ${conditions.join(' AND ')}`);
     }
@@ -371,7 +392,7 @@ export class SelectBuilder<T extends TableDef, TResult = InferSelectType<T['colu
     if (this._having.length > 0) {
       const conditions = this._having.map((h) => {
         this._values.push(...h.getValues());
-        return h.toSQL();
+        return h.toSQL(params);
       });
       parts.push(`HAVING ${conditions.join(' AND ')}`);
     }
@@ -498,7 +519,7 @@ export class InsertBuilder<T extends TableDef> extends BaseQueryBuilder {
    * Build SQL string
    */
   toSQL(): string {
-    resetParamCounter();
+    const params = new ParamContext();
 
     if (this._insertValues.length === 0) {
       throw new Error('No values provided for INSERT');
@@ -510,7 +531,7 @@ export class InsertBuilder<T extends TableDef> extends BaseQueryBuilder {
 
     // Build value placeholders
     const valueRows = this._insertValues.map(() => {
-      const placeholders = columns.map(() => nextParam());
+      const placeholders = columns.map(() => params.next());
       return `(${placeholders.join(', ')})`;
     });
 
@@ -523,7 +544,7 @@ export class InsertBuilder<T extends TableDef> extends BaseQueryBuilder {
 
       if (this._onConflict.action === 'DO UPDATE' && this._onConflict.update) {
         const updates = Object.entries(this._onConflict.update)
-          .map(([col]) => `${col} = ${nextParam()}`)
+          .map(([col]) => `${col} = ${params.next()}`)
           .join(', ');
         sql += ` SET ${updates}`;
       }
@@ -604,20 +625,20 @@ export class UpdateBuilder<T extends TableDef> extends BaseQueryBuilder {
    * Build SQL string
    */
   toSQL(): string {
-    resetParamCounter();
+    const params = new ParamContext();
 
     const columns = Object.keys(this._set);
     if (columns.length === 0) {
       throw new Error('No values provided for UPDATE');
     }
 
-    const setParts = columns.map((col) => `${col} = ${nextParam()}`);
+    const setParts = columns.map((col) => `${col} = ${params.next()}`);
 
     let sql = `UPDATE ${this._table.tableName} SET ${setParts.join(', ')}`;
 
     // WHERE
     if (this._where.length > 0) {
-      const conditions = this._where.map((w) => w.toSQL());
+      const conditions = this._where.map((w) => w.toSQL(params));
       sql += ` WHERE ${conditions.join(' AND ')}`;
     }
 
@@ -679,13 +700,13 @@ export class DeleteBuilder<T extends TableDef> extends BaseQueryBuilder {
    * Build SQL string
    */
   toSQL(): string {
-    resetParamCounter();
+    const params = new ParamContext();
 
     let sql = `DELETE FROM ${this._table.tableName}`;
 
     // WHERE
     if (this._where.length > 0) {
-      const conditions = this._where.map((w) => w.toSQL());
+      const conditions = this._where.map((w) => w.toSQL(params));
       sql += ` WHERE ${conditions.join(' AND ')}`;
     }
 
@@ -745,3 +766,51 @@ export function deleteFrom<T extends TableDef>(table: T): DeleteBuilder<T> {
  * Alias for delete
  */
 export { deleteFrom as del };
+
+// ============ Aggregate Expressions ============
+// Use with selectRaw():
+//   db.select(orders).selectRaw<{ total: number }>(count()).first()
+//   db.select(orders).selectRaw<{ revenue: number }>(sum('amount', 'revenue'))
+//     .groupBy('status')
+
+/**
+ * COUNT(column) AS alias (defaults to COUNT(*) AS count)
+ */
+export function count(column = '*', alias = 'count'): string {
+  return `COUNT(${column}) AS ${alias}`;
+}
+
+/**
+ * COUNT(DISTINCT column) AS alias
+ */
+export function countDistinct(column: string, alias = 'count'): string {
+  return `COUNT(DISTINCT ${column}) AS ${alias}`;
+}
+
+/**
+ * SUM(column) AS alias
+ */
+export function sum(column: string, alias = 'sum'): string {
+  return `SUM(${column}) AS ${alias}`;
+}
+
+/**
+ * AVG(column) AS alias
+ */
+export function avg(column: string, alias = 'avg'): string {
+  return `AVG(${column}) AS ${alias}`;
+}
+
+/**
+ * MIN(column) AS alias
+ */
+export function min(column: string, alias = 'min'): string {
+  return `MIN(${column}) AS ${alias}`;
+}
+
+/**
+ * MAX(column) AS alias
+ */
+export function max(column: string, alias = 'max'): string {
+  return `MAX(${column}) AS ${alias}`;
+}

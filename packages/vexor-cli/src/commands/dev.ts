@@ -4,9 +4,9 @@
  * Starts a development server with hot reload.
  */
 
-import { spawn } from 'child_process';
-import { resolve } from 'path';
-import { access } from 'fs/promises';
+import { spawn } from 'node:child_process';
+import { resolve } from 'node:path';
+import { access } from 'node:fs/promises';
 
 interface DevOptions {
   port: number;
@@ -105,7 +105,7 @@ async function findRunner(): Promise<{ name: string; path: string } | null> {
     try {
       if (runner.name === 'bun') {
         // Check if bun is available globally
-        const { execSync } = await import('child_process');
+        const { execSync } = await import('node:child_process');
         execSync('bun --version', { stdio: 'ignore' });
         return { name: 'bun', path: 'bun run' };
       } else {
@@ -113,7 +113,6 @@ async function findRunner(): Promise<{ name: string; path: string } | null> {
         return runner;
       }
     } catch {
-      continue;
     }
   }
 

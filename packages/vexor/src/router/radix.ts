@@ -6,15 +6,14 @@
  *
  * Features:
  * - Static route short-circuit (O(1) for static routes)
- * - Parametric route caching
- * - Wildcard support
- * - Constraint support
+ * - Parametric route caching (LRU)
+ * - Trailing wildcard support (catch-all `*` as the last segment)
  */
 
 import type { HTTPMethod, RouteParams, Handler, RouteSchema, RouteHooks, MatchedRoute } from '../core/types.js';
 
 // Node types in the radix tree
-const enum NodeType {
+enum NodeType {
   STATIC = 0,    // Normal static path segment
   PARAM = 1,     // Path parameter (e.g., :id)
   CATCHALL = 2,  // Wildcard/catch-all (e.g., *)
@@ -128,6 +127,10 @@ export class RadixRouter {
     // Normalize path
     const normalizedPath = this.normalizePath(path);
 
+    // Invalidate the match cache: it may hold negative entries (or matches
+    // to less specific routes) that this new route would change
+    this.paramCache.clear();
+
     // Extract parameter names
     const paramNames: string[] = [];
     const isStatic = !normalizedPath.includes(':') && !normalizedPath.includes('*');
@@ -189,6 +192,9 @@ export class RadixRouter {
     const cacheKey = staticKey;
     const cachedResult = this.paramCache.get(cacheKey);
     if (cachedResult !== undefined) {
+      // Touch the entry so eviction is least-recently-used, not FIFO
+      this.paramCache.delete(cacheKey);
+      this.paramCache.set(cacheKey, cachedResult);
       return cachedResult ? { route: cachedResult.route, params: { ...cachedResult.params } } : null;
     }
 
@@ -225,7 +231,16 @@ export class RadixRouter {
   ): RouteData | null {
     // If we've consumed all segments
     if (index === segments.length) {
-      return node.route ?? null;
+      if (node.route) {
+        return node.route;
+      }
+      // A trailing wildcard also matches the bare prefix (e.g. `/assets/*`
+      // matches `/assets`) with an empty catch-all param
+      if (node.wildcardChild?.route) {
+        params['*'] = '';
+        return node.wildcardChild.route;
+      }
+      return null;
     }
 
     const segment = segments[index];
@@ -256,17 +271,42 @@ export class RadixRouter {
   }
 
   /**
-   * Cache a match result with LRU eviction
+   * Cache a match result with LRU eviction.
+   * Entries are re-inserted on read (see find()), so the first key
+   * is always the least recently used.
    */
   private cacheResult(key: string, result: MatchResult | null): void {
     if (this.paramCache.size >= this.paramCacheMaxSize) {
-      // Simple LRU: delete first key
-      const firstKey = this.paramCache.keys().next().value;
-      if (firstKey !== undefined) {
-        this.paramCache.delete(firstKey);
+      const lruKey = this.paramCache.keys().next().value;
+      if (lruKey !== undefined) {
+        this.paramCache.delete(lruKey);
       }
     }
     this.paramCache.set(key, result);
+  }
+
+  /**
+   * Find all methods that have a route matching the given path.
+   * Used to build 405 Method Not Allowed responses with an Allow header.
+   */
+  findMethods(path: string): HTTPMethod[] {
+    const normalizedPath = this.normalizePath(path);
+    const allMethods: HTTPMethod[] = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'];
+    const methods: HTTPMethod[] = [];
+
+    const segments = normalizedPath.split('/').filter(Boolean);
+    for (const method of allMethods) {
+      if (this.staticRoutes.has(`${method}:${normalizedPath}`)) {
+        methods.push(method);
+        continue;
+      }
+      const tree = this.trees.get(method);
+      if (tree && this.traverse(tree, segments, 0, {})) {
+        methods.push(method);
+      }
+    }
+
+    return methods;
   }
 
   /**

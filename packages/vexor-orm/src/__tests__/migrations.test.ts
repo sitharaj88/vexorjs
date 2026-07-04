@@ -6,7 +6,6 @@ import { describe, it, expect } from 'vitest';
 import { table } from '../core/table.js';
 import { column } from '../core/column.js';
 import {
-  MigrationGenerator,
   createMigrationGenerator,
   generateMigrationFileContent,
 } from '../migrations/generator.js';

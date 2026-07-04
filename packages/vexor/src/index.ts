@@ -42,6 +42,11 @@ export type {
   VexorHandler,
   ServerInstance,
   ContextState,
+  ContextFor,
+  InferParams,
+  InferQuery,
+  InferBody,
+  PathParams,
   HTTPMethod,
   ParsedQuery,
   RouteParams,
@@ -443,6 +448,17 @@ export type {
   CorsOptions,
   CorsOrigin,
 } from './middleware/cors.js';
+
+// Static file serving exports
+export {
+  serveStatic,
+  sendFile,
+  getMimeType,
+} from './middleware/static.js';
+
+export type {
+  StaticOptions,
+} from './middleware/static.js';
 
 // Compression exports
 export {

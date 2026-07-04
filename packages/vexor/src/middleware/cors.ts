@@ -152,7 +152,7 @@ const defaultOptions: Required<CorsOptions> = {
 export function cors(options: CorsOptions = {}) {
   const opts = { ...defaultOptions, ...options };
 
-  return async (ctx: VexorContext): Promise<Response | void> => {
+  return async (ctx: VexorContext): Promise<Response | undefined> => {
     const origin = ctx.header('origin') || '';
     const method = ctx.method;
 
@@ -223,7 +223,7 @@ export function cors(options: CorsOptions = {}) {
       }
 
       // Store headers in context for later use
-      (ctx as any)._corsHeaders = headers;
+      ctx.mergeResponseHeaders(headers);
 
       // Handle preflight
       if (!opts.preflightContinue) {
@@ -241,8 +241,10 @@ export function cors(options: CorsOptions = {}) {
       }
     } else {
       // Store headers in context for actual requests
-      (ctx as any)._corsHeaders = headers;
+      ctx.mergeResponseHeaders(headers);
     }
+
+    return undefined;
   };
 }
 
@@ -260,7 +262,7 @@ export function simpleCors() {
  * Get CORS headers from context
  */
 export function getCorsHeaders(ctx: VexorContext): Record<string, string> | undefined {
-  return (ctx as any)._corsHeaders;
+  return ctx.responseHeaders;
 }
 
 /**

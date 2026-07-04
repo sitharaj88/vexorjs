@@ -419,15 +419,15 @@ export function cacheMiddleware(options: CacheOptions = {}) {
 
   const keyGenerator = options.keyGenerator ?? defaultKeyGenerator;
 
-  return async (ctx: VexorContext): Promise<Response | void> => {
+  return async (ctx: VexorContext): Promise<Response | undefined> => {
     // Only cache GET requests by default
     if (ctx.method !== 'GET') {
-      return;
+      return undefined;
     }
 
     // Check skip condition
     if (options.skip && await options.skip(ctx)) {
-      return;
+      return undefined;
     }
 
     const key = prefix + keyGenerator(ctx);
@@ -468,6 +468,8 @@ export function cacheMiddleware(options: CacheOptions = {}) {
     // Store key for caching the response later
     (ctx as any)._cacheKey = key;
     (ctx as any)._cacheOptions = { ttl, store, staleWhileRevalidate };
+
+    return undefined;
   };
 }
 

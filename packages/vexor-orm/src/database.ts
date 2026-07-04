@@ -18,16 +18,16 @@ import type {
   ColumnBuilder,
 } from './core/types.js';
 
-import { ConnectionPool, createPool, type PoolOptions } from './connection/pool.js';
+import { type ConnectionPool, createPool, type PoolOptions } from './connection/pool.js';
 import { TransactionManager, type TransactionOptions } from './connection/transaction.js';
 import { createPostgresDriverFactory, type PostgresConfig } from './drivers/postgres.js';
 import { createSQLiteDriverFactory, type SQLiteConfig } from './drivers/sqlite.js';
 import { createMySQLDriverFactory, type MySQLConfig } from './drivers/mysql.js';
 import {
-  SelectBuilder,
-  InsertBuilder,
-  UpdateBuilder,
-  DeleteBuilder,
+  type SelectBuilder,
+  type InsertBuilder,
+  type UpdateBuilder,
+  type DeleteBuilder,
   select as selectBuilder,
   insert as insertBuilder,
   update as updateBuilder,
@@ -37,7 +37,7 @@ import {
 import { MigrationRunner, type MigrationFile, type MigrationRunnerOptions } from './migrations/runner.js';
 import { MigrationGenerator } from './migrations/generator.js';
 import { loadRelations, type RelationMap } from './relations/index.js';
-import { QueryCache, buildCacheKey } from './cache/index.js';
+import { type QueryCache, buildCacheKey } from './cache/index.js';
 
 /**
  * Database options

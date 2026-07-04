@@ -81,6 +81,13 @@ export {
   isNotNull,
   and,
   or,
+  count,
+  countDistinct,
+  sum,
+  avg,
+  min,
+  max,
+  ParamContext,
   type WhereCondition,
 } from './query/builder.js';
 

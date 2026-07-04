@@ -4,10 +4,10 @@
  * Displays system information and diagnoses common issues.
  */
 
-import { readFile, access, readdir } from 'fs/promises';
-import { resolve, join } from 'path';
-import { execSync } from 'child_process';
-import { platform, arch, release, cpus, totalmem, freemem } from 'os';
+import { readFile, access, } from 'node:fs/promises';
+import { resolve, join } from 'node:path';
+import { execSync } from 'node:child_process';
+import { platform, arch, release, cpus, totalmem, freemem } from 'node:os';
 import { logger } from '../utils/logger.js';
 
 interface PackageJson {
@@ -155,7 +155,7 @@ export async function doctorCommand(): Promise<void> {
     {
       name: 'Node.js version',
       check: async () => {
-        const version = parseInt(process.version.slice(1).split('.')[0]);
+        const version = parseInt(process.version.slice(1).split('.')[0], 10);
         return {
           ok: version >= 20,
           message: version >= 20

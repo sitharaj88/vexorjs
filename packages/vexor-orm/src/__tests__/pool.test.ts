@@ -4,7 +4,6 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { ConnectionPool } from '../connection/pool.js';
-import type { PoolConnection } from '../connection/pool.js';
 
 // ---------------------------------------------------------------------------
 // Mock types (matching DatabaseDriver & DatabaseConfig interfaces)

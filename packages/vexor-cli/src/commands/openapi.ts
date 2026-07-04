@@ -4,8 +4,8 @@
  * Generates OpenAPI/Swagger documentation from Vexor routes.
  */
 
-import { readFile, writeFile, readdir } from 'fs/promises';
-import { resolve, join, basename, extname } from 'path';
+import { readFile, writeFile, readdir } from 'node:fs/promises';
+import { resolve, join, basename, extname } from 'node:path';
 import ora from 'ora';
 import { logger } from '../utils/logger.js';
 
@@ -64,7 +64,7 @@ async function parseRouteFiles(srcDir: string): Promise<OpenAPISpec['paths']> {
 
       methods.forEach((method, index) => {
         const pattern = routePatterns[index];
-        let match;
+        let match: RegExpExecArray | null;
 
         while ((match = pattern.exec(content)) !== null) {
           const path = match[1];

@@ -31,7 +31,7 @@ vi.mock('../utils/logger.js', () => ({
   },
 }));
 
-import { readdir } from 'fs/promises';
+import { readdir } from 'node:fs/promises';
 import { dbCommand } from '../commands/db.js';
 
 const mockedReaddir = vi.mocked(readdir);

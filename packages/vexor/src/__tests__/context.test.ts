@@ -2,10 +2,10 @@
  * VexorContext and ContextPool Tests
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, } from 'vitest';
 import { VexorContext, ContextPool } from '../core/context.js';
-import { VexorRequest } from '../core/request.js';
-import { createMockContext, createMockRequest } from './helpers.js';
+import type { VexorRequest } from '../core/request.js';
+import { createMockRequest } from './helpers.js';
 
 describe('VexorContext', () => {
   let ctx: VexorContext;

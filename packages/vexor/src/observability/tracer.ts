@@ -499,7 +499,7 @@ export class Tracer {
       addEvent: function () { return this; },
       setStatus: function () { return this; },
       recordException: function () { return this; },
-      end: function () {},
+      end: () => {},
       isEnded: () => true,
     };
   }

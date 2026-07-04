@@ -4,7 +4,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { MigrationRunner, createMigrationRunner } from '../migrations/runner.js';
-import type { MigrationFile, MigrationRunnerOptions } from '../migrations/runner.js';
+import type { MigrationFile, } from '../migrations/runner.js';
 
 // ---------------------------------------------------------------------------
 // Mock Database Driver

@@ -61,7 +61,10 @@ export type HookType =
 export type Handler<TContext = unknown> = (ctx: TContext) => Response | Promise<Response>;
 
 // Hook function
-export type HookFunction<TContext = unknown> = (ctx: TContext) => void | Promise<void>;
+// Returning a Response short-circuits the pipeline (e.g. CORS preflight, auth rejection)
+export type HookFunction<TContext = unknown> = (
+  ctx: TContext
+) => void | Response | Promise<void | Response>;
 
 // Error handler function
 export type ErrorHandler<TContext = unknown> = (
@@ -103,6 +106,11 @@ export interface VexorOptions {
   trustProxy?: boolean;
   maxBodySize?: number;
   requestTimeout?: number;
+  /**
+   * Handle SIGTERM/SIGINT by draining in-flight requests before exiting.
+   * Pass an object to customize the signals or the drain timeout (ms).
+   */
+  gracefulShutdown?: boolean | { signals?: string[]; timeout?: number };
 }
 
 // Logging options

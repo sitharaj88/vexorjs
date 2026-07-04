@@ -470,7 +470,7 @@ export function swaggerUI(options: SwaggerUIOptions = {}) {
     ...options,
   };
 
-  return async (ctx: VexorContext): Promise<Response | void> => {
+  return async (ctx: VexorContext): Promise<Response | undefined> => {
     const path = ctx.path;
 
     // Serve Swagger UI HTML
@@ -712,7 +712,7 @@ export function reDoc(options: ReDocOptions = {}) {
     ...options,
   };
 
-  return async (ctx: VexorContext): Promise<Response | void> => {
+  return async (ctx: VexorContext): Promise<Response | undefined> => {
     if (ctx.path === fullOptions.path || ctx.path === fullOptions.path + '/') {
       const html = generateReDocHTML(fullOptions);
       return new Response(html, {
@@ -907,7 +907,7 @@ export function scalar(options: ScalarOptions = {}) {
     ...options,
   };
 
-  return async (ctx: VexorContext): Promise<Response | void> => {
+  return async (ctx: VexorContext): Promise<Response | undefined> => {
     if (ctx.path === fullOptions.path || ctx.path === fullOptions.path + '/') {
       const html = generateScalarHTML(fullOptions);
       return new Response(html, {

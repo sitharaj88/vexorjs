@@ -4,8 +4,8 @@
  * Code generation for modules, models, and migrations.
  */
 
-import { mkdir, writeFile, access } from 'fs/promises';
-import { join, resolve } from 'path';
+import { mkdir, writeFile, } from 'node:fs/promises';
+import { join, resolve } from 'node:path';
 
 interface GenerateOptions {
   fields?: string;

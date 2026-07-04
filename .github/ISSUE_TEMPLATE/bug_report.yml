@@ -1,0 +1,57 @@
+name: Bug Report
+description: Something isn't working as documented
+labels: [bug]
+body:
+  - type: dropdown
+    id: package
+    attributes:
+      label: Package
+      options:
+        - "@vexorjs/core"
+        - "@vexorjs/orm"
+        - "@vexorjs/cli"
+        - documentation
+        - other
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      placeholder: "1.1.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: runtime
+    attributes:
+      label: Runtime
+      options:
+        - Node.js
+        - Bun
+        - Deno
+        - Cloudflare Workers
+        - Vercel Edge
+        - AWS Lambda
+        - other
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: What did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: A few lines of code or a link to a repo that reproduces the issue.
+      render: typescript
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      render: shell

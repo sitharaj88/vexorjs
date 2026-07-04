@@ -23,8 +23,8 @@ vi.mock('fs/promises', () => ({
   access: vi.fn(),
 }));
 
-import { spawn } from 'child_process';
-import { access } from 'fs/promises';
+import { spawn } from 'node:child_process';
+import { access } from 'node:fs/promises';
 import { devCommand } from '../commands/dev.js';
 
 const mockedSpawn = vi.mocked(spawn);
@@ -93,7 +93,7 @@ describe('devCommand - runner detection', () => {
     // Then all runner checks fail
     mockedAccess.mockRejectedValue(new Error('ENOENT'));
     // Also execSync for bun --version should fail
-    const { execSync } = await import('child_process');
+    const { execSync } = await import('node:child_process');
     vi.mocked(execSync).mockImplementation(() => {
       throw new Error('not found');
     });

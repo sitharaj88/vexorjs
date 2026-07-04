@@ -5,15 +5,16 @@
  * and Response to http.ServerResponse.
  */
 
-import { createServer, type IncomingMessage, type ServerResponse, type Server } from 'http';
-import { VexorRequest, createRequest } from '../core/request.js';
+import { createServer, type IncomingMessage, type ServerResponse, type Server } from 'node:http';
+import { type VexorRequest, createRequest } from '../core/request.js';
 import type { RuntimeCapabilities, RuntimeType } from '../core/types.js';
 
 /**
  * Node.js runtime adapter capabilities
  */
 export const nodeCapabilities: RuntimeCapabilities = {
-  http2: true,
+  // The adapter currently serves HTTP/1.1 only (http.createServer)
+  http2: false,
   streaming: true,
   websocket: true,
   workerThreads: true,
@@ -125,7 +126,7 @@ export async function writeResponse(res: ServerResponse, response: Response): Pr
     res.setHeader(key, value);
   });
 
-  // Write body
+  // Write body, respecting backpressure
   if (response.body) {
     const reader = response.body.getReader();
 
@@ -133,7 +134,10 @@ export async function writeResponse(res: ServerResponse, response: Response): Pr
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        res.write(value);
+        const canContinue = res.write(value);
+        if (canContinue === false) {
+          await new Promise<void>((resolve) => res.once('drain', resolve));
+        }
       }
     } finally {
       reader.releaseLock();
@@ -246,19 +250,36 @@ export class NodeAdapter {
   }
 
   /**
-   * Stop the server
+   * Stop the server gracefully:
+   * 1. Stop accepting new connections
+   * 2. Close idle keep-alive connections immediately
+   * 3. Wait for in-flight requests to finish
+   * 4. After `timeout` ms (default 10s), force-close remaining connections
    */
-  async close(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      if (!this.server) {
-        resolve();
-        return;
-      }
+  async close(options: { timeout?: number } = {}): Promise<void> {
+    const server = this.server;
+    if (!server) {
+      return;
+    }
+    this.server = undefined;
 
-      this.server.close((err) => {
+    const timeout = options.timeout ?? 10_000;
+
+    return new Promise((resolve, reject) => {
+      const forceTimer = setTimeout(() => {
+        server.closeAllConnections();
+      }, timeout);
+      forceTimer.unref();
+
+      server.close((err) => {
+        clearTimeout(forceTimer);
         if (err) reject(err);
         else resolve();
       });
+
+      // Keep-alive connections with no active request would otherwise
+      // hold close() open until they time out
+      server.closeIdleConnections();
     });
   }
 

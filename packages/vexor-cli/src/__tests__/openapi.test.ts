@@ -7,8 +7,8 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from 'vitest';
-import { readFile, writeFile, readdir } from 'fs/promises';
-import { resolve } from 'path';
+import { readFile, writeFile, readdir } from 'node:fs/promises';
+import { resolve } from 'node:path';
 
 // ---------------------------------------------------------------------------
 // Mocks

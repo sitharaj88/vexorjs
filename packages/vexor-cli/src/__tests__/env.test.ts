@@ -7,8 +7,8 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from 'vitest';
-import { readFile, writeFile, access, copyFile } from 'fs/promises';
-import { resolve } from 'path';
+import { readFile, writeFile, access, copyFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -89,7 +89,7 @@ function mockFileContent(path: string | RegExp, content: string) {
 /**
  * Helper: make access resolve for specific paths, reject for the rest.
  */
-function mockAccessForPaths(existingPaths: string[]) {
+function _mockAccessForPaths(existingPaths: string[]) {
   mockedAccess.mockImplementation(async (p) => {
     if (existingPaths.includes(String(p))) return undefined;
     throw new Error('ENOENT');

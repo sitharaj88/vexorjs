@@ -94,8 +94,6 @@ export function planRunner(runner: Runner, options: TestOptions): RunnerPlan {
       else args.push('test/', 'tests/', 'src/');
       return { runner, command: 'node', args };
     }
-
-    case 'npm-script':
     default:
       return { runner, command: 'npm', args: ['test'] };
   }

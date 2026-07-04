@@ -161,7 +161,7 @@ export class SQLiteDriver implements DatabaseDriver {
       }
       const Database = mod.default || mod;
       this.db = new Database(this.config.filename) as unknown as BetterSQLite3Database;
-    } catch (err) {
+    } catch (_err) {
       throw new Error(
         'SQLite driver (better-sqlite3) not installed. Run: npm install better-sqlite3'
       );
@@ -403,7 +403,7 @@ export class SQLiteDriver implements DatabaseDriver {
       // Try to parse ISO date strings
       if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value)) {
         const date = new Date(value);
-        if (!isNaN(date.getTime())) {
+        if (!Number.isNaN(date.getTime())) {
           return date;
         }
       }

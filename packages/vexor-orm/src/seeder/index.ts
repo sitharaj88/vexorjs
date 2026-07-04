@@ -327,7 +327,7 @@ export function createFactory<T extends Record<string, unknown>>(
   const states: Record<string, Partial<T> | (() => Partial<T>)> = {
     ...definition.states,
   };
-  let activeStates: string[] = [];
+  const activeStates: string[] = [];
 
   const factory: Factory<T> = {
     make(overrides?: Partial<T>): T {
@@ -514,7 +514,7 @@ export function createSeederRunner(options: SeederOptions): SeederRunner {
     async revert(names: string[]): Promise<void> {
       for (const name of names.reverse()) {
         const seeder = seeders.find((s) => s.name === name);
-        if (!seeder || !seeder.revert) {
+        if (!seeder?.revert) {
           continue;
         }
 

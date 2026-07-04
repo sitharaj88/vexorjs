@@ -5,7 +5,7 @@
  * Uses object pooling for zero-allocation performance.
  */
 
-import { VexorRequest } from './request.js';
+import type { VexorRequest } from './request.js';
 import { ResponseBuilder, VexorResponse } from './response.js';
 import type {
   RouteParams,
@@ -28,9 +28,17 @@ function generateRequestId(): string {
 export type ContextState = Record<string, unknown>;
 
 /**
- * VexorContext - The request context passed to handlers
+ * VexorContext - The request context passed to handlers.
+ *
+ * The type parameters narrow `params`, `query`, and `body()` for a specific
+ * route; they are inferred from the route path and schema by the Vexor route
+ * methods. The defaults keep untyped usage working exactly as before.
  */
-export class VexorContext {
+export class VexorContext<
+  TParams extends RouteParams = RouteParams,
+  TQuery = ParsedQuery,
+  TBody = unknown,
+> {
   // Core request/response
   private _vexorRequest!: VexorRequest;
   private _route?: MatchedRoute;
@@ -42,6 +50,10 @@ export class VexorContext {
 
   // Custom state (for middleware/plugins to store data)
   private _state!: ContextState;
+
+  // Headers that middleware wants applied to the final response,
+  // even when the handler returns a raw Response object
+  private _responseHeaders?: Record<string, string>;
 
   // Flag to track if context has been initialized
   private _initialized = false;
@@ -57,6 +69,7 @@ export class VexorContext {
     this._requestId = generateRequestId();
     this._startTime = performance.now();
     this._state = {};
+    this._responseHeaders = undefined;
     this._initialized = true;
 
     // Set route params if available
@@ -72,6 +85,7 @@ export class VexorContext {
     this._initialized = false;
     this._route = undefined;
     this._state = {};
+    this._responseHeaders = undefined;
   }
 
   /**
@@ -133,17 +147,17 @@ export class VexorContext {
   }
 
   /**
-   * Route parameters
+   * Route parameters (typed from the route path/schema when available)
    */
-  get params(): RouteParams {
-    return this._vexorRequest.params;
+  get params(): TParams {
+    return this._vexorRequest.params as TParams;
   }
 
   /**
-   * Parsed query string
+   * Parsed query string (typed from the route schema when available)
    */
-  get query(): ParsedQuery {
-    return this._vexorRequest.query;
+  get query(): TQuery {
+    return this._vexorRequest.query as TQuery;
   }
 
   /**
@@ -205,16 +219,16 @@ export class VexorContext {
   // ============ Body Parsing ============
 
   /**
-   * Parse request body as JSON
+   * Parse request body as JSON (typed from the route schema when available)
    */
-  async readJson<T = unknown>(): Promise<T> {
+  async readJson<T = TBody>(): Promise<T> {
     return this._vexorRequest.json<T>();
   }
 
   /**
    * Alias for readJson (backwards compatibility)
    */
-  async body<T = unknown>(): Promise<T> {
+  async body<T = TBody>(): Promise<T> {
     return this._vexorRequest.json<T>();
   }
 
@@ -269,6 +283,31 @@ export class VexorContext {
   clearCookie(name: string, options?: Omit<CookieOptions, 'maxAge' | 'expires'>): this {
     this._responseBuilder.clearCookie(name, options);
     return this;
+  }
+
+  /**
+   * Set a header on the final response.
+   * Unlike `ctx.res.header()`, this is applied by the pipeline even when
+   * the handler returns a raw Response (used by CORS, security headers, etc.)
+   */
+  setResponseHeader(name: string, value: string): this {
+    (this._responseHeaders ??= {})[name] = value;
+    return this;
+  }
+
+  /**
+   * Merge multiple headers into the final response
+   */
+  mergeResponseHeaders(headers: Record<string, string>): this {
+    this._responseHeaders = { ...this._responseHeaders, ...headers };
+    return this;
+  }
+
+  /**
+   * Headers queued for the final response (undefined if none set)
+   */
+  get responseHeaders(): Record<string, string> | undefined {
+    return this._responseHeaders;
   }
 
   // ============ Response Shortcuts ============

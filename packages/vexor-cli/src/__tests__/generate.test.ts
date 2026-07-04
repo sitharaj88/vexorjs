@@ -7,7 +7,8 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from 'vitest';
-import { mkdir, writeFile, access } from 'fs/promises';
+import { mkdir, writeFile, } from 'node:fs/promises';
+import { join } from 'node:path';
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -88,7 +89,7 @@ describe('generateCommand - module', () => {
     await generateCommand('module', 'user', {});
 
     expect(mockedMkdir).toHaveBeenCalledWith(
-      expect.stringContaining('src/modules/user'),
+      expect.stringContaining(join('src', 'modules', 'user')),
       { recursive: true },
     );
   });
@@ -142,7 +143,7 @@ describe('generateCommand - module', () => {
     await generateCommand('module', 'auth', { directory: 'lib/mods' });
 
     expect(mockedMkdir).toHaveBeenCalledWith(
-      expect.stringContaining('lib/mods/auth'),
+      expect.stringContaining(join('lib', 'mods', 'auth')),
       { recursive: true },
     );
   });
@@ -331,7 +332,7 @@ describe('generateCommand - migration', () => {
     await generateCommand('migration', 'init', {});
 
     expect(mockedMkdir).toHaveBeenCalledWith(
-      expect.stringContaining('src/db/migrations'),
+      expect.stringContaining(join('src', 'db', 'migrations')),
       { recursive: true },
     );
   });
@@ -340,7 +341,7 @@ describe('generateCommand - migration', () => {
     await generateCommand('migration', 'init', { directory: 'db/migrate' });
 
     expect(mockedMkdir).toHaveBeenCalledWith(
-      expect.stringContaining('db/migrate'),
+      expect.stringContaining(join('db', 'migrate')),
       { recursive: true },
     );
   });
@@ -355,7 +356,7 @@ describe('generateCommand - route', () => {
     await generateCommand('route', 'health', {});
 
     expect(mockedMkdir).toHaveBeenCalledWith(
-      expect.stringContaining('src/routes'),
+      expect.stringContaining(join('src', 'routes')),
       { recursive: true },
     );
     const paths = getWrittenPaths();
@@ -388,7 +389,7 @@ describe('generateCommand - service', () => {
     await generateCommand('service', 'payment', {});
 
     expect(mockedMkdir).toHaveBeenCalledWith(
-      expect.stringContaining('src/services'),
+      expect.stringContaining(join('src', 'services')),
       { recursive: true },
     );
     const paths = getWrittenPaths();

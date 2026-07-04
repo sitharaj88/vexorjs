@@ -4,9 +4,9 @@
  * Manages Vexor CLI and project configuration.
  */
 
-import { readFile, writeFile, access } from 'fs/promises';
-import { resolve, join } from 'path';
-import { execSync } from 'child_process';
+import { readFile, writeFile, access } from 'node:fs/promises';
+import { resolve, join } from 'node:path';
+import { execSync } from 'node:child_process';
 import { logger } from '../utils/logger.js';
 
 interface VexorConfig {
@@ -132,7 +132,7 @@ export async function configCommand(
       let parsedValue: unknown = value;
       if (value === 'true') parsedValue = true;
       else if (value === 'false') parsedValue = false;
-      else if (!isNaN(Number(value))) parsedValue = Number(value);
+      else if (!Number.isNaN(Number(value))) parsedValue = Number(value);
 
       config[key] = parsedValue;
       await saveConfig(configPath, config);

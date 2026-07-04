@@ -1,0 +1,30 @@
+{
+  "name": "vexor-benchmarks",
+  "version": "1.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Performance benchmarks for Vexor against Fastify, Hono, Express, and raw Node.js",
+  "scripts": {
+    "bench": "tsx src/runner.ts",
+    "bench:quick": "tsx src/quick-bench.ts",
+    "bench:compare": "tsx src/runner.ts --suite http --compare",
+    "bench:http": "tsx src/runner.ts --suite http",
+    "bench:orm": "tsx src/runner.ts --suite orm",
+    "report": "tsx src/report.ts"
+  },
+  "dependencies": {
+    "@vexorjs/core": "file:../packages/vexor"
+  },
+  "devDependencies": {
+    "@hono/node-server": "^1.13.0",
+    "autocannon": "^7.15.0",
+    "express": "^4.21.0",
+    "fastify": "^5.0.0",
+    "hono": "^4.6.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

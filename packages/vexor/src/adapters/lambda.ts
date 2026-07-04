@@ -598,7 +598,7 @@ export function createLambdaHandler(
         method: request.method,
         headers: modifiedHeaders,
         body: request.body,
-        // @ts-ignore - duplex is needed for Node.js
+        // @ts-expect-error - duplex is needed for Node.js
         duplex: 'half',
       });
     }
@@ -633,13 +633,10 @@ export interface StreamingLambdaContext extends LambdaContext {
   responseStream?: NodeJS.WritableStream;
 }
 
-export interface StreamingHandler {
-  (
+export type StreamingHandler = (
     event: LambdaEvent,
     responseStream: NodeJS.WritableStream,
-    context: LambdaContext
-  ): Promise<void>;
-}
+    context: LambdaContext) => Promise<void>
 
 /**
  * Create a streaming Lambda handler (for Lambda response streaming)
@@ -675,7 +672,7 @@ export function createStreamingLambdaHandler(
         method: request.method,
         headers: modifiedHeaders,
         body: request.body,
-        // @ts-ignore
+        // @ts-expect-error
         duplex: 'half',
       });
     }

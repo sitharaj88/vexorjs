@@ -9,7 +9,7 @@ import { SSEStream } from '../realtime/sse.js';
  * Helper: collect all chunks written by an SSEStream by
  * consuming its underlying ReadableStream.
  */
-async function collectStream(stream: SSEStream): Promise<string> {
+async function _collectStream(stream: SSEStream): Promise<string> {
   const response = stream.getResponse();
   const reader = response.body!.getReader();
   const decoder = new TextDecoder();

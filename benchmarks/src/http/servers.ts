@@ -10,7 +10,7 @@
  * Note: Uses relative paths for local development. Run with tsx.
  */
 export async function createVexorServer(port: number) {
-  // @ts-ignore - relative import for local development
+  // @ts-expect-error - relative import for local development
   const { Vexor } = await import('../../../packages/vexor/src/index.js');
 
   const app = new Vexor();
@@ -215,7 +215,7 @@ export async function createExpressServer(port: number) {
  * Native Node.js HTTP server (baseline)
  */
 export async function createNodeServer(port: number) {
-  const http = await import('http');
+  const http = await import('node:http');
 
   const server = http.createServer((req, res) => {
     const url = new URL(req.url ?? '/', `http://localhost:${port}`);

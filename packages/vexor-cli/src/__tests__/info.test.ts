@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { readFile, access, readdir } from 'fs/promises';
-import { execSync } from 'child_process';
+import { readFile, access, } from 'node:fs/promises';
+import { execSync } from 'node:child_process';
 
 vi.mock('fs/promises', () => ({
   readFile: vi.fn(),
@@ -262,7 +262,7 @@ describe('info and doctor commands', () => {
         String(call[0]).includes('Node.js version')
       );
       // If running on Node >= 20, this should pass
-      const nodeVersion = parseInt(process.version.slice(1).split('.')[0]);
+      const nodeVersion = parseInt(process.version.slice(1).split('.')[0], 10);
       if (nodeVersion >= 20) {
         expect(nodeCheck).toBeDefined();
         expect(String(nodeCheck![0])).toContain(process.version);

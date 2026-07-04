@@ -4,7 +4,7 @@
  * Common utilities for running and measuring benchmarks.
  */
 
-import { spawn, ChildProcess } from 'child_process';
+import { spawn, type ChildProcess } from 'node:child_process';
 
 /**
  * Benchmark result

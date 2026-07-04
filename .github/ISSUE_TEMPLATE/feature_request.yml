@@ -1,0 +1,33 @@
+name: Feature Request
+description: Suggest an idea or improvement
+labels: [enhancement]
+body:
+  - type: dropdown
+    id: package
+    attributes:
+      label: Package
+      options:
+        - "@vexorjs/core"
+        - "@vexorjs/orm"
+        - "@vexorjs/cli"
+        - other
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Describe the use case, not just the solution.
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed API or behavior
+      description: Sketch what using the feature would look like.
+      render: typescript
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Other approaches, or how you work around this today.

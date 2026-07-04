@@ -5,8 +5,8 @@
  * project). We test the pure detection and plan logic.
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdtemp, writeFile, rm, mkdir } from 'node:fs/promises';
+import { describe, it, expect, afterEach } from 'vitest';
+import { mkdtemp, writeFile, rm, } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { detectRunner, planRunner } from '../commands/test.js';

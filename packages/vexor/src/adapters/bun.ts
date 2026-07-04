@@ -5,7 +5,7 @@
  * Bun natively supports Web Standards Request/Response.
  */
 
-import { VexorRequest, createRequest } from '../core/request.js';
+import { type VexorRequest, createRequest } from '../core/request.js';
 import type { RuntimeCapabilities, RuntimeType } from '../core/types.js';
 
 /**

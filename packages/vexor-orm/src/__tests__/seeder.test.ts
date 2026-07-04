@@ -11,7 +11,7 @@ import {
   truncate,
   fake,
 } from '../seeder/index.js';
-import type { FactoryDefinition, Seeder, SeederOptions } from '../seeder/index.js';
+import type { FactoryDefinition, Seeder, } from '../seeder/index.js';
 
 // ---------------------------------------------------------------------------
 // Mock Database

@@ -10,9 +10,11 @@
 
 import { VexorRequest } from './request.js';
 import { VexorResponse } from './response.js';
-import { VexorContext, ContextPool } from './context.js';
+import { type VexorContext, ContextPool } from './context.js';
 import { RadixRouter, toMatchedRoute } from '../router/radix.js';
 import { Pipeline } from '../middleware/pipeline.js';
+import { PluginRegistry, type PluginInput, type PluginOptions } from '../plugins/system.js';
+import type { ContextFor } from './infer.js';
 import { NodeAdapter, isBun, BunAdapter } from '../adapters/index.js';
 import {
   createValidationMiddleware,
@@ -31,12 +33,19 @@ import type {
 } from './types.js';
 
 /**
- * Route options for defining routes with schema and hooks
+ * Route options for defining routes with schema and hooks.
+ * The schema type parameter flows into the handler's context type.
  */
-export interface RouteOptions {
-  schema?: RouteSchema;
+export interface RouteOptions<S extends RouteSchema = RouteSchema> {
+  schema?: S;
   hooks?: RouteHooks<VexorContext>;
 }
+
+/**
+ * A RouteSchema passed directly as route options, without the `schema`
+ * wrapper: `app.post('/x', { body: ... }, handler)`
+ */
+export type BareRouteSchema<S extends RouteSchema> = S & { schema?: never; hooks?: never };
 
 /**
  * Handler type with context
@@ -61,6 +70,9 @@ export class Vexor {
   private adapter?: NodeAdapter | BunAdapter;
   private _config: VexorOptions;
 
+  // Plugin registry (created lazily on first use)
+  private _plugins?: PluginRegistry;
+
   // Prefix for scoped routes
   private prefix = '';
 
@@ -76,64 +88,170 @@ export class Vexor {
   /**
    * Register a GET route
    */
-  get(path: string, handler: VexorHandler): this;
-  get(path: string, options: RouteOptions, handler: VexorHandler): this;
-  get(path: string, optionsOrHandler: RouteOptions | VexorHandler, handler?: VexorHandler): this {
-    return this.route('GET', path, optionsOrHandler, handler);
+  get<Path extends string>(path: Path, handler: Handler<ContextFor<Path>>): this;
+  get<Path extends string, S extends RouteSchema>(
+    path: Path,
+    schema: BareRouteSchema<S>,
+    handler: Handler<ContextFor<Path, S>>
+  ): this;
+  get<Path extends string, S extends RouteSchema>(
+    path: Path,
+    options: RouteOptions<S>,
+    handler: Handler<ContextFor<Path, S>>
+  ): this;
+  get(path: string, optionsOrHandler: RouteOptions | RouteSchema | Handler<any>, handler?: Handler<any>): this {
+    return this.route(
+      'GET',
+      path,
+      optionsOrHandler as RouteOptions | VexorHandler,
+      handler as VexorHandler
+    );
   }
 
   /**
    * Register a POST route
    */
-  post(path: string, handler: VexorHandler): this;
-  post(path: string, options: RouteOptions, handler: VexorHandler): this;
-  post(path: string, optionsOrHandler: RouteOptions | VexorHandler, handler?: VexorHandler): this {
-    return this.route('POST', path, optionsOrHandler, handler);
+  post<Path extends string>(path: Path, handler: Handler<ContextFor<Path>>): this;
+  post<Path extends string, S extends RouteSchema>(
+    path: Path,
+    schema: BareRouteSchema<S>,
+    handler: Handler<ContextFor<Path, S>>
+  ): this;
+  post<Path extends string, S extends RouteSchema>(
+    path: Path,
+    options: RouteOptions<S>,
+    handler: Handler<ContextFor<Path, S>>
+  ): this;
+  post(path: string, optionsOrHandler: RouteOptions | RouteSchema | Handler<any>, handler?: Handler<any>): this {
+    return this.route(
+      'POST',
+      path,
+      optionsOrHandler as RouteOptions | VexorHandler,
+      handler as VexorHandler
+    );
   }
 
   /**
    * Register a PUT route
    */
-  put(path: string, handler: VexorHandler): this;
-  put(path: string, options: RouteOptions, handler: VexorHandler): this;
-  put(path: string, optionsOrHandler: RouteOptions | VexorHandler, handler?: VexorHandler): this {
-    return this.route('PUT', path, optionsOrHandler, handler);
+  put<Path extends string>(path: Path, handler: Handler<ContextFor<Path>>): this;
+  put<Path extends string, S extends RouteSchema>(
+    path: Path,
+    schema: BareRouteSchema<S>,
+    handler: Handler<ContextFor<Path, S>>
+  ): this;
+  put<Path extends string, S extends RouteSchema>(
+    path: Path,
+    options: RouteOptions<S>,
+    handler: Handler<ContextFor<Path, S>>
+  ): this;
+  put(path: string, optionsOrHandler: RouteOptions | RouteSchema | Handler<any>, handler?: Handler<any>): this {
+    return this.route(
+      'PUT',
+      path,
+      optionsOrHandler as RouteOptions | VexorHandler,
+      handler as VexorHandler
+    );
   }
 
   /**
    * Register a DELETE route
    */
-  delete(path: string, handler: VexorHandler): this;
-  delete(path: string, options: RouteOptions, handler: VexorHandler): this;
-  delete(path: string, optionsOrHandler: RouteOptions | VexorHandler, handler?: VexorHandler): this {
-    return this.route('DELETE', path, optionsOrHandler, handler);
+  delete<Path extends string>(path: Path, handler: Handler<ContextFor<Path>>): this;
+  delete<Path extends string, S extends RouteSchema>(
+    path: Path,
+    schema: BareRouteSchema<S>,
+    handler: Handler<ContextFor<Path, S>>
+  ): this;
+  delete<Path extends string, S extends RouteSchema>(
+    path: Path,
+    options: RouteOptions<S>,
+    handler: Handler<ContextFor<Path, S>>
+  ): this;
+  delete(
+    path: string,
+    optionsOrHandler: RouteOptions | RouteSchema | Handler<any>,
+    handler?: Handler<any>
+  ): this {
+    return this.route(
+      'DELETE',
+      path,
+      optionsOrHandler as RouteOptions | VexorHandler,
+      handler as VexorHandler
+    );
   }
 
   /**
    * Register a PATCH route
    */
-  patch(path: string, handler: VexorHandler): this;
-  patch(path: string, options: RouteOptions, handler: VexorHandler): this;
-  patch(path: string, optionsOrHandler: RouteOptions | VexorHandler, handler?: VexorHandler): this {
-    return this.route('PATCH', path, optionsOrHandler, handler);
+  patch<Path extends string>(path: Path, handler: Handler<ContextFor<Path>>): this;
+  patch<Path extends string, S extends RouteSchema>(
+    path: Path,
+    schema: BareRouteSchema<S>,
+    handler: Handler<ContextFor<Path, S>>
+  ): this;
+  patch<Path extends string, S extends RouteSchema>(
+    path: Path,
+    options: RouteOptions<S>,
+    handler: Handler<ContextFor<Path, S>>
+  ): this;
+  patch(path: string, optionsOrHandler: RouteOptions | RouteSchema | Handler<any>, handler?: Handler<any>): this {
+    return this.route(
+      'PATCH',
+      path,
+      optionsOrHandler as RouteOptions | VexorHandler,
+      handler as VexorHandler
+    );
   }
 
   /**
    * Register a HEAD route
    */
-  head(path: string, handler: VexorHandler): this;
-  head(path: string, options: RouteOptions, handler: VexorHandler): this;
-  head(path: string, optionsOrHandler: RouteOptions | VexorHandler, handler?: VexorHandler): this {
-    return this.route('HEAD', path, optionsOrHandler, handler);
+  head<Path extends string>(path: Path, handler: Handler<ContextFor<Path>>): this;
+  head<Path extends string, S extends RouteSchema>(
+    path: Path,
+    schema: BareRouteSchema<S>,
+    handler: Handler<ContextFor<Path, S>>
+  ): this;
+  head<Path extends string, S extends RouteSchema>(
+    path: Path,
+    options: RouteOptions<S>,
+    handler: Handler<ContextFor<Path, S>>
+  ): this;
+  head(path: string, optionsOrHandler: RouteOptions | RouteSchema | Handler<any>, handler?: Handler<any>): this {
+    return this.route(
+      'HEAD',
+      path,
+      optionsOrHandler as RouteOptions | VexorHandler,
+      handler as VexorHandler
+    );
   }
 
   /**
    * Register an OPTIONS route
    */
-  options(path: string, handler: VexorHandler): this;
-  options(path: string, options: RouteOptions, handler: VexorHandler): this;
-  options(path: string, optionsOrHandler: RouteOptions | VexorHandler, handler?: VexorHandler): this {
-    return this.route('OPTIONS', path, optionsOrHandler, handler);
+  options<Path extends string>(path: Path, handler: Handler<ContextFor<Path>>): this;
+  options<Path extends string, S extends RouteSchema>(
+    path: Path,
+    schema: BareRouteSchema<S>,
+    handler: Handler<ContextFor<Path, S>>
+  ): this;
+  options<Path extends string, S extends RouteSchema>(
+    path: Path,
+    options: RouteOptions<S>,
+    handler: Handler<ContextFor<Path, S>>
+  ): this;
+  options(
+    path: string,
+    optionsOrHandler: RouteOptions | RouteSchema | Handler<any>,
+    handler?: Handler<any>
+  ): this {
+    return this.route(
+      'OPTIONS',
+      path,
+      optionsOrHandler as RouteOptions | VexorHandler,
+      handler as VexorHandler
+    );
   }
 
   /**
@@ -169,17 +287,27 @@ export class Vexor {
       routeHandler = handler!;
     }
 
+    // Accept a bare RouteSchema as options ({ body: ... } instead of
+    // { schema: { body: ... } }) for convenience
+    let schema = routeOptions?.schema;
+    if (!schema && routeOptions && !routeOptions.hooks) {
+      const maybeSchema = routeOptions as RouteSchema;
+      if (
+        maybeSchema.params ||
+        maybeSchema.query ||
+        maybeSchema.body ||
+        maybeSchema.headers ||
+        maybeSchema.response
+      ) {
+        schema = maybeSchema;
+      }
+    }
+
     // Apply prefix
     const fullPath = this.prefix + path;
 
     // Register with router
-    this.router.add(
-      method,
-      fullPath,
-      routeHandler,
-      routeOptions?.schema,
-      routeOptions?.hooks
-    );
+    this.router.add(method, fullPath, routeHandler, schema, routeOptions?.hooks);
 
     return this;
   }
@@ -229,6 +357,42 @@ export class Vexor {
     return this.group(prefix, plugin);
   }
 
+  // ============ Plugins ============
+
+  /**
+   * The plugin registry for this app
+   */
+  get plugins(): PluginRegistry {
+    if (!this._plugins) {
+      this._plugins = new PluginRegistry(this);
+    }
+    return this._plugins;
+  }
+
+  /**
+   * Register a Vexor plugin (with metadata, dependency resolution,
+   * decorators, and lifecycle hooks)
+   */
+  async registerPlugin(plugin: PluginInput, options?: PluginOptions): Promise<this> {
+    await this.plugins.register(plugin, options);
+    return this;
+  }
+
+  /**
+   * Run a callback with a route prefix applied.
+   * Unlike group(), this awaits async callbacks before restoring the prefix,
+   * so async plugin register functions can add prefixed routes safely.
+   */
+  async withPrefix(prefix: string, callback: () => void | Promise<void>): Promise<void> {
+    const originalPrefix = this.prefix;
+    this.prefix = originalPrefix + prefix;
+    try {
+      await callback();
+    } finally {
+      this.prefix = originalPrefix;
+    }
+  }
+
   // ============ Request Handling ============
 
   /**
@@ -240,17 +404,30 @@ export class Vexor {
     const path = request.path;
 
     // Find matching route
-    const match = this.router.find(method, path);
+    let match = this.router.find(method, path);
+
+    // HEAD falls back to the GET handler (the body is stripped below)
+    let stripBody = false;
+    if (!match && method === 'HEAD') {
+      match = this.router.find('GET', path);
+      stripBody = match !== null;
+    }
 
     if (!match) {
-      return VexorResponse.notFound(`Route not found: ${method} ${path}`);
+      return this.handleUnmatched(request, method, path);
     }
 
     // Convert to MatchedRoute
+    const routeData = match.route;
     const matchedRoute = toMatchedRoute(match);
 
     // Acquire context from pool
     const ctx = this.contextPool.acquire(request, matchedRoute);
+
+    // Apply plugin request decorations (no-op unless plugins registered them)
+    if (this._plugins?.hasRequestDecorations) {
+      this._plugins.applyRequestDecorations(ctx);
+    }
 
     try {
       // Build hooks with validation middleware if schema is present
@@ -270,9 +447,18 @@ export class Vexor {
       // Execute pipeline
       const response = await this.pipeline.execute(
         ctx,
-        async (c) => match.route.handler(c),
+        async (c) => routeData.handler(c),
         hooks
       );
+
+      // HEAD served by a GET handler: keep status/headers, drop the body
+      if (stripBody) {
+        return new Response(null, {
+          status: response.status,
+          statusText: response.statusText,
+          headers: response.headers,
+        });
+      }
 
       return response;
     } catch (error) {
@@ -283,6 +469,71 @@ export class Vexor {
       throw error;
     } finally {
       // Release context back to pool
+      this.contextPool.release(ctx);
+    }
+  }
+
+  /**
+   * Handle a request that matched no route.
+   * Global onRequest hooks still run so middleware like CORS can answer
+   * preflight requests; otherwise responds 405 (path exists under another
+   * method, with an Allow header) or 404.
+   */
+  private async handleUnmatched(
+    request: VexorRequest,
+    method: HTTPMethod,
+    path: string
+  ): Promise<Response> {
+    const ctx = this.contextPool.acquire(request, undefined);
+
+    try {
+      let response: Response | undefined;
+      try {
+        response = await this.pipeline.runHooks('onRequest', ctx);
+      } catch (error) {
+        return this.pipeline.handleError(error as Error, ctx);
+      }
+
+      if (!response) {
+        const allowed = this.router.findMethods(path);
+        if (allowed.length > 0) {
+          if (allowed.includes('GET') && !allowed.includes('HEAD')) {
+            allowed.push('HEAD');
+          }
+          response = new Response(
+            JSON.stringify({
+              error: `Method ${method} not allowed for ${path}`,
+              code: 'METHOD_NOT_ALLOWED',
+            }),
+            {
+              status: 405,
+              headers: {
+                'Content-Type': 'application/json; charset=utf-8',
+                Allow: allowed.join(', '),
+              },
+            }
+          );
+        } else {
+          response = VexorResponse.notFound(`Route not found: ${method} ${path}`);
+        }
+      }
+
+      // Headers queued by hooks (e.g. CORS) apply to 404/405s too
+      const pendingHeaders = ctx.responseHeaders;
+      if (pendingHeaders) {
+        const headers = new Headers(response.headers);
+        for (const [key, value] of Object.entries(pendingHeaders)) {
+          headers.set(key, value);
+        }
+        response = new Response(response.body, {
+          status: response.status,
+          statusText: response.statusText,
+          headers,
+        });
+      }
+
+      return response;
+    } finally {
       this.contextPool.release(ctx);
     }
   }
@@ -310,35 +561,62 @@ export class Vexor {
     };
 
     // Choose adapter based on runtime
+    let server: ServerInstance;
     if (isBun()) {
       this.adapter = new BunAdapter(handler);
-      const server = await this.adapter.listen(resolvedPort, resolvedHost);
+      server = await this.adapter.listen(resolvedPort, resolvedHost);
 
       if (this._config.logging !== false) {
         console.log(`🚀 Vexor server running on http://${resolvedHost}:${resolvedPort} (Bun)`);
       }
-
-      return server as ServerInstance;
     } else {
       this.adapter = new NodeAdapter(handler, {
         maxBodySize: this._config.maxBodySize,
       });
-      const server = await this.adapter.listen(resolvedPort, resolvedHost);
+      server = await this.adapter.listen(resolvedPort, resolvedHost);
 
       if (this._config.logging !== false) {
         console.log(`🚀 Vexor server running on http://${resolvedHost}:${resolvedPort} (Node.js)`);
       }
+    }
 
-      return server as ServerInstance;
+    this.setupGracefulShutdown();
+    return server;
+  }
+
+  /**
+   * Register SIGTERM/SIGINT handlers when gracefulShutdown is enabled
+   */
+  private setupGracefulShutdown(): void {
+    const config = this._config.gracefulShutdown;
+    if (!config || typeof process === 'undefined' || typeof process.once !== 'function') {
+      return;
+    }
+
+    const signals = (typeof config === 'object' && config.signals) || ['SIGTERM', 'SIGINT'];
+    const timeout = typeof config === 'object' ? config.timeout : undefined;
+
+    for (const signal of signals) {
+      process.once(signal as NodeJS.Signals, () => {
+        if (this._config.logging !== false) {
+          console.log(`\n${signal} received, draining connections...`);
+        }
+        void this.close({ timeout }).finally(() => process.exit(0));
+      });
     }
   }
 
   /**
-   * Stop the server
+   * Stop the server, draining in-flight requests.
+   * `timeout` (ms) bounds the drain before remaining connections are force-closed.
    */
-  async close(): Promise<void> {
+  async close(options: { timeout?: number } = {}): Promise<void> {
     if (this.adapter) {
-      await this.adapter.close();
+      if (this.adapter instanceof NodeAdapter) {
+        await this.adapter.close(options);
+      } else {
+        await this.adapter.close();
+      }
       this.adapter = undefined;
     }
   }

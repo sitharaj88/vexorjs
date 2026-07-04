@@ -196,7 +196,7 @@ export function healthCheck(options: HealthOptions = {}) {
   const opts = { ...defaultOptions, ...options };
   const checks = opts.checks || [];
 
-  return async (ctx: VexorContext): Promise<Response | void> => {
+  return async (ctx: VexorContext): Promise<Response | undefined> => {
     const path = ctx.path;
 
     // Check if this is a health endpoint

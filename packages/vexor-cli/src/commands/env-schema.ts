@@ -261,7 +261,7 @@ export async function envCheckCommand(
   let schema: EnvSchema;
   try {
     schema = JSON.parse(schemaRaw) as EnvSchema;
-  } catch (e) {
+  } catch (_e) {
     console.error(`✖ env schema at ${schemaPath} is not valid JSON`);
     process.exit(1);
     return;

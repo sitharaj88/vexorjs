@@ -1,8 +1,9 @@
 /**
- * JIT Validation Compiler
+ * Validation Compiler
  *
- * Generates optimized validation functions from schema definitions.
- * Uses code generation for maximum performance.
+ * Compiles schema definitions into reusable validation functions.
+ * The current implementation is an optimized tree-walking validator;
+ * code generation (JIT) is a planned optimization.
  */
 
 import type {
@@ -153,7 +154,7 @@ function isValidIPv6(value: string): boolean {
     const ipv6Part = value.substring(0, lastColon + 1);
     // Validate IPv4 portion
     const ipv4Regex = /^(\d{1,3}\.){3}\d{1,3}$/;
-    if (!ipv4Regex.test(ipv4Part) || !ipv4Part.split('.').every(n => parseInt(n) <= 255)) {
+    if (!ipv4Regex.test(ipv4Part) || !ipv4Part.split('.').every(n => parseInt(n, 10) <= 255)) {
       return false;
     }
     // Validate prefix (simplified check)
@@ -196,14 +197,14 @@ function validateFormat(value: string, format: string): boolean {
     case 'uuid':
       return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
     case 'date':
-      return /^\d{4}-\d{2}-\d{2}$/.test(value) && !isNaN(Date.parse(value));
+      return /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value));
     case 'date-time':
-      return !isNaN(Date.parse(value));
+      return !Number.isNaN(Date.parse(value));
     case 'time':
       return /^\d{2}:\d{2}(:\d{2})?$/.test(value);
     case 'ipv4':
       return /^(\d{1,3}\.){3}\d{1,3}$/.test(value) &&
-        value.split('.').every((n) => parseInt(n) <= 255);
+        value.split('.').every((n) => parseInt(n, 10) <= 255);
     case 'ipv6':
       return isValidIPv6(value);
     default:
@@ -219,7 +220,7 @@ function validateNumber(
   schema: TNumber,
   ctx: ValidationContext
 ): data is number {
-  if (typeof data !== 'number' || isNaN(data)) {
+  if (typeof data !== 'number' || Number.isNaN(data)) {
     addIssue(ctx, `Expected number, got ${typeof data}`);
     return false;
   }

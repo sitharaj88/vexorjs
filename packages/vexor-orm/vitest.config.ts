@@ -15,6 +15,13 @@ export default defineConfig({
         '**/*.test.ts',
         '**/index.ts',
       ],
+      // Ratchet: raise these as coverage improves, never lower them
+      thresholds: {
+        lines: 82,
+        functions: 82,
+        branches: 85,
+        statements: 82,
+      },
     },
   },
 });

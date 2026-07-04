@@ -53,7 +53,7 @@ describe('Database', () => {
   let db: Database;
 
   afterEach(async () => {
-    if (db && db.connected) {
+    if (db?.connected) {
       await db.close();
     }
   });

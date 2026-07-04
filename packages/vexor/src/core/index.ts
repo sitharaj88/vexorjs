@@ -8,6 +8,7 @@ export { VexorContext, ContextPool, contextPool } from './context.js';
 export type { ContextState } from './context.js';
 export { Vexor, createApp } from './app.js';
 export type { RouteOptions, VexorHandler, ServerInstance } from './app.js';
+export type { ContextFor, InferParams, InferQuery, InferBody, PathParams } from './infer.js';
 
 // Re-export types
 export type {

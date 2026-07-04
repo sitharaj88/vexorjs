@@ -4,9 +4,9 @@
  * Builds the application for production deployment.
  */
 
-import { spawn } from 'child_process';
-import { resolve } from 'path';
-import { access, mkdir, writeFile, readFile } from 'fs/promises';
+import { spawn } from 'node:child_process';
+import { resolve } from 'node:path';
+import { access, writeFile, readFile } from 'node:fs/promises';
 
 interface BuildOptions {
   output: string;
@@ -66,7 +66,6 @@ async function detectBuildTool(): Promise<{ name: string; config?: string } | nu
       await access(resolve(cwd, cfg.config));
       return cfg;
     } catch {
-      continue;
     }
   }
 
@@ -188,7 +187,7 @@ export default defineConfig({
     child.on('exit', async (code) => {
       // Clean up temp config
       try {
-        const { unlink } = await import('fs/promises');
+        const { unlink } = await import('node:fs/promises');
         await unlink(configPath);
       } catch {}
 

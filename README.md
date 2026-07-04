@@ -27,10 +27,10 @@
 
 ## Features
 
-- **High Performance** — Radix tree router with O(1) static route lookup, JIT-compiled validation, and zero-allocation request handling
-- **Multi-Runtime** — Runs on Node.js, Bun, Deno, Cloudflare Workers, and Vercel Edge
-- **Type-Safe** — End-to-end TypeScript inference without code generation
-- **Batteries Included** — Authentication, rate limiting, CORS, caching, logging, observability, real-time support, and more
+- **High Performance** — Radix tree router with O(1) static route lookup, an LRU match cache, precompiled schema validation, and object-pooled request contexts
+- **Multi-Runtime** — Runs on Node.js, Bun, Deno, Cloudflare Workers, Vercel Edge, and AWS Lambda (smoke-tested on Node, Bun, and Deno in CI)
+- **Type-Safe** — End-to-end handler inference without code generation: `ctx.params` is typed from the route path, `ctx.body()` and `ctx.query` from the route schema; Standard Schema interop included
+- **Batteries Included** — Authentication, rate limiting, CORS, static files, caching, logging, observability, real-time support, graceful shutdown, and more
 - **Vexor ORM** — Built-in type-safe ORM with query builder, migrations, relations, and connection pooling
 - **Powerful CLI** — Scaffold projects, generate modules, run migrations, and manage environments
 
@@ -67,15 +67,21 @@ app.get('/', async (ctx) => {
   return ctx.json({ message: 'Hello, Vexor!' });
 });
 
-// Route with validation
+// Route with validation — the handler is fully typed from the schema
 app.post('/users', {
   body: Type.Object({
     name: Type.String({ minLength: 1 }),
     email: Type.String({ format: 'email' })
   })
 }, async (ctx) => {
-  const user = await createUser(ctx.body);
+  const body = await ctx.body(); // { name: string; email: string }
+  const user = await createUser(body);
   return ctx.status(201).json(user);
+});
+
+// Path params are inferred from the route string
+app.get('/users/:id', async (ctx) => {
+  return ctx.json({ id: ctx.params.id }); // ctx.params: { id: string }
 });
 
 app.listen(3000);
@@ -167,6 +173,10 @@ vexor dev
   ```
 - **OAuth state stores**: `RedisStateStore` and `RedisSessionStore` for multi-instance deployments. Compatible with `ioredis`, `node-redis` v4+, `@upstash/redis`, or any client conforming to `RedisLike`.
 - **Edge runtimes**: First-class adapters for **Cloudflare Workers** (`createCloudflareWorker`) and **Vercel Edge** (`createVercelEdgeHandler`) — see [examples/cloudflare-workers](./examples/cloudflare-workers) and [examples/vercel-edge](./examples/vercel-edge).
+- **HTTP semantics**: automatic `405 Method Not Allowed` with an `Allow` header, `HEAD` served from `GET` handlers, and hook short-circuiting (return a `Response` from any hook to end the request — CORS preflight uses this).
+- **Static files**: `serveStatic({ root })` on a wildcard route — ETag/304, Cache-Control, index files, dotfile policy, and path-traversal protection.
+- **Graceful shutdown**: `new Vexor({ gracefulShutdown: true })` drains in-flight requests on SIGTERM/SIGINT with a configurable timeout.
+- **Plugins**: `app.registerPlugin(plugin, { prefix })` with dependency resolution, decorators, and lifecycle hooks wired into the request pipeline.
 
 ### CLI
 

@@ -262,7 +262,7 @@ export class MigrationRunner {
     for (const appliedMigration of [...applied].reverse()) {
       const migration = this.migrations.find((m) => m.version === appliedMigration.version);
 
-      if (!migration || !migration.down) {
+      if (!migration?.down) {
         continue;
       }
 

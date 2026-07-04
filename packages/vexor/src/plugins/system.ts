@@ -6,6 +6,20 @@
  */
 
 import type { Vexor } from '../core/app.js';
+import type { VexorContext } from '../core/context.js';
+import type { HookType, HookFunction } from '../core/types.js';
+
+/** The lifecycle hooks that are forwarded to the app's middleware pipeline */
+const LIFECYCLE_HOOKS: ReadonlySet<string> = new Set([
+  'onRequest',
+  'preParsing',
+  'preValidation',
+  'preHandler',
+  'preSerialization',
+  'onSend',
+  'onResponse',
+  'onError',
+]);
 
 /**
  * Plugin metadata
@@ -49,8 +63,13 @@ export interface PluginContext {
   decorate(name: string, value: unknown): void;
   /** Decorate request context */
   decorateRequest(name: string, getter: () => unknown): void;
-  /** Add hook */
-  addHook(name: string, handler: (...args: unknown[]) => void | Promise<void>): void;
+  /**
+   * Add a hook. Lifecycle hook names (onRequest, preHandler, onSend, ...)
+   * are registered on the app's middleware pipeline and run per request;
+   * any other name is a custom event runnable via `plugins.runHooks(name)`.
+   */
+  addHook(name: HookType, handler: HookFunction<VexorContext>): void;
+  addHook(name: string, handler: (...args: unknown[]) => unknown): void;
   /** Register sub-plugin */
   register(plugin: VexorPlugin, options?: PluginOptions): Promise<void>;
 }
@@ -104,7 +123,7 @@ export class PluginRegistry {
   private app: Vexor;
   private decorations: Map<string, unknown> = new Map();
   private requestDecorations: Map<string, () => unknown> = new Map();
-  private hooks: Map<string, Array<(...args: unknown[]) => void | Promise<void>>> = new Map();
+  private hooks: Map<string, Array<(...args: unknown[]) => unknown>> = new Map();
 
   constructor(app: Vexor) {
     this.app = app;
@@ -163,10 +182,14 @@ export class PluginRegistry {
     // Create plugin context
     const context = this.createContext(name, options);
 
-    // Load plugin
+    // Load plugin — routes added inside get the plugin's prefix
     registered.state = 'loading';
     try {
-      await plugin.register(context);
+      if (options.prefix) {
+        await this.app.withPrefix(options.prefix, () => plugin.register(context));
+      } else {
+        await plugin.register(context);
+      }
       registered.state = 'loaded';
     } catch (error) {
       registered.state = 'error';
@@ -211,6 +234,22 @@ export class PluginRegistry {
   }
 
   /**
+   * Whether any request decorations are registered
+   */
+  get hasRequestDecorations(): boolean {
+    return this.requestDecorations.size > 0;
+  }
+
+  /**
+   * Apply registered request decorations to a context (called per request)
+   */
+  applyRequestDecorations(ctx: VexorContext): void {
+    for (const [name, getter] of this.requestDecorations) {
+      ctx.set(name, getter());
+    }
+  }
+
+  /**
    * Run hooks
    */
   async runHooks(name: string, ...args: unknown[]): Promise<void> {
@@ -252,14 +291,20 @@ export class PluginRegistry {
         registered.decorations.push(`request.${name}`);
       },
 
-      addHook: (name: string, handler: (...args: unknown[]) => void | Promise<void>) => {
+      addHook: ((name: string, handler: (...args: unknown[]) => unknown) => {
+        // Lifecycle hooks run per request via the app's pipeline
+        // (guarded so the registry also works with partial app doubles)
+        if (LIFECYCLE_HOOKS.has(name) && typeof this.app?.addHook === 'function') {
+          this.app.addHook(name as HookType, handler as HookFunction<VexorContext>);
+        }
+        // Also track in the registry (custom events + introspection)
         let handlers = this.hooks.get(name);
         if (!handlers) {
           handlers = [];
           this.hooks.set(name, handlers);
         }
         handlers.push(handler);
-      },
+      }) as PluginContext['addHook'],
 
       register: async (plugin: VexorPlugin, opts?: PluginOptions) => {
         // Apply parent prefix
@@ -364,33 +409,40 @@ export const plugins = {
       maxAge: 86400,
     },
     (ctx, config) => {
-      ctx.addHook('onRequest', (async (...args: unknown[]) => {
-        const req = args[0] as { method: string };
-        const res = args[1] as { headers: Headers };
-        // Set CORS headers
-        res.headers.set('Access-Control-Allow-Origin', config.origin as string);
-        res.headers.set('Access-Control-Allow-Methods', (config.methods as string[]).join(', '));
-        res.headers.set('Access-Control-Allow-Headers', (config.allowedHeaders as string[]).join(', '));
+      ctx.addHook('onRequest', (reqCtx: VexorContext) => {
+        // Queue CORS headers for the final response
+        reqCtx.setResponseHeader('Access-Control-Allow-Origin', config.origin as string);
+        reqCtx.setResponseHeader(
+          'Access-Control-Allow-Methods',
+          (config.methods as string[]).join(', ')
+        );
+        reqCtx.setResponseHeader(
+          'Access-Control-Allow-Headers',
+          (config.allowedHeaders as string[]).join(', ')
+        );
 
         if ((config.exposedHeaders as string[]).length > 0) {
-          res.headers.set('Access-Control-Expose-Headers', (config.exposedHeaders as string[]).join(', '));
+          reqCtx.setResponseHeader(
+            'Access-Control-Expose-Headers',
+            (config.exposedHeaders as string[]).join(', ')
+          );
         }
 
         if (config.credentials) {
-          res.headers.set('Access-Control-Allow-Credentials', 'true');
+          reqCtx.setResponseHeader('Access-Control-Allow-Credentials', 'true');
         }
 
         if (config.maxAge) {
-          res.headers.set('Access-Control-Max-Age', String(config.maxAge));
+          reqCtx.setResponseHeader('Access-Control-Max-Age', String(config.maxAge));
         }
 
-        // Handle preflight
-        if (req.method === 'OPTIONS') {
+        // Short-circuit preflight requests
+        if (reqCtx.method === 'OPTIONS') {
           return new Response(null, { status: 204 });
         }
 
         return undefined;
-      }) as (...args: unknown[]) => Promise<void>);
+      });
     }
   ),
 
@@ -404,18 +456,12 @@ export const plugins = {
       generator: () => `${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 9)}`,
     },
     (ctx, config) => {
-      ctx.decorateRequest('requestId', () => {
-        // Would get from request or generate
-        return (config.generator as () => string)();
-      });
-
-      ctx.addHook('onRequest', (async (...args: unknown[]) => {
-        const req = args[0] as { headers: Headers };
-        const res = args[1] as { headers: Headers };
-        const existingId = req.headers.get(config.header as string);
+      ctx.addHook('onRequest', (reqCtx: VexorContext) => {
+        const existingId = reqCtx.header(config.header as string);
         const requestId = existingId ?? (config.generator as () => string)();
-        res.headers.set(config.header as string, requestId);
-      }) as (...args: unknown[]) => Promise<void>);
+        reqCtx.set('requestId', requestId);
+        reqCtx.setResponseHeader(config.header as string, requestId);
+      });
     }
   ),
 
@@ -433,32 +479,34 @@ export const plugins = {
       frameguard: 'deny' as 'deny' | 'sameorigin' | false,
     },
     (ctx, config) => {
-      ctx.addHook('onSend', (async (...args: unknown[]) => {
-        const res = args[1] as { headers: Headers };
+      ctx.addHook('onSend', (reqCtx: VexorContext) => {
         if (config.xssFilter) {
-          res.headers.set('X-XSS-Protection', '1; mode=block');
+          reqCtx.setResponseHeader('X-XSS-Protection', '1; mode=block');
         }
 
         if (config.noSniff) {
-          res.headers.set('X-Content-Type-Options', 'nosniff');
+          reqCtx.setResponseHeader('X-Content-Type-Options', 'nosniff');
         }
 
         if (config.ieNoOpen) {
-          res.headers.set('X-Download-Options', 'noopen');
+          reqCtx.setResponseHeader('X-Download-Options', 'noopen');
         }
 
         if (config.hsts) {
-          res.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+          reqCtx.setResponseHeader(
+            'Strict-Transport-Security',
+            'max-age=31536000; includeSubDomains'
+          );
         }
 
         if (config.frameguard) {
-          res.headers.set('X-Frame-Options', (config.frameguard as string).toUpperCase());
+          reqCtx.setResponseHeader('X-Frame-Options', (config.frameguard as string).toUpperCase());
         }
 
         if (config.contentSecurityPolicy) {
-          res.headers.set('Content-Security-Policy', "default-src 'self'");
+          reqCtx.setResponseHeader('Content-Security-Policy', "default-src 'self'");
         }
-      }) as (...args: unknown[]) => Promise<void>);
+      });
     }
   ),
 };

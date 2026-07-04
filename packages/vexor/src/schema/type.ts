@@ -137,10 +137,17 @@ export const Type = {
     options: ObjectOptions & { required?: readonly (keyof T)[] } = {}
   ): TObject<T> {
     const { required, ...rest } = options;
+    // Match TypeBox semantics (and Static<T> inference): every property that
+    // is not Type.Optional(...) is required unless overridden explicitly
+    const derivedRequired =
+      required ??
+      (Object.keys(properties).filter(
+        (key) => !(OptionalKind in properties[key])
+      ) as readonly string[]);
     return {
       type: 'object',
       properties,
-      ...(required && { required: required as readonly string[] }),
+      ...(derivedRequired.length > 0 && { required: derivedRequired as readonly string[] }),
       ...rest,
     } as TObject<T>;
   },

@@ -92,13 +92,15 @@ export class Pipeline {
   }
 
   /**
-   * Run hooks of a specific type
+   * Run hooks of a specific type.
+   * If a hook returns a Response, execution stops and that response is
+   * returned so the pipeline can short-circuit (e.g. CORS preflight).
    */
   async runHooks(
     type: HookType,
     ctx: VexorContext,
     additionalHooks?: HookFunction<VexorContext>[]
-  ): Promise<void> {
+  ): Promise<Response | undefined> {
     // Get global hooks
     const globalHooks = this.hooks.get(type) ?? [];
 
@@ -109,8 +111,13 @@ export class Pipeline {
 
     // Run all hooks in sequence
     for (const hook of allHooks) {
-      await hook(ctx);
+      const result = await hook(ctx);
+      if (result instanceof Response) {
+        return result;
+      }
     }
+
+    return undefined;
   }
 
   /**
@@ -139,19 +146,44 @@ export class Pipeline {
   }
 
   /**
-   * Default error response
+   * Default error response.
+   * Validation errors map to 400 with their issues; errors carrying a
+   * numeric `statusCode` keep it; everything else is a 500.
    */
   private defaultErrorResponse(error: Error): Response {
     const isDev = process.env.NODE_ENV !== 'production';
 
+    const maybeTyped = error as Error & { issues?: unknown; statusCode?: unknown };
+
+    if (maybeTyped.name === 'ValidationError' && maybeTyped.issues !== undefined) {
+      return new Response(
+        JSON.stringify({
+          error: error.message || 'Validation failed',
+          code: 'VALIDATION_ERROR',
+          issues: maybeTyped.issues,
+        }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json; charset=utf-8' },
+        }
+      );
+    }
+
+    const status =
+      typeof maybeTyped.statusCode === 'number' &&
+      maybeTyped.statusCode >= 400 &&
+      maybeTyped.statusCode <= 599
+        ? maybeTyped.statusCode
+        : 500;
+
     const body = JSON.stringify({
       error: error.message || 'Internal Server Error',
-      code: 'INTERNAL_ERROR',
-      ...(isDev && { stack: error.stack }),
+      code: status === 500 ? 'INTERNAL_ERROR' : 'HTTP_ERROR',
+      ...(isDev && status === 500 && { stack: error.stack }),
     });
 
     return new Response(body, {
-      status: 500,
+      status,
       headers: {
         'Content-Type': 'application/json; charset=utf-8',
       },
@@ -172,29 +204,27 @@ export class Pipeline {
     }
   ): Promise<Response> {
     try {
-      // 1. onRequest hooks
-      await this.runHooks('onRequest', ctx, routeHooks?.onRequest);
+      // 1-4. Pre-handler phases; a hook returning a Response short-circuits
+      // the remaining phases and the handler (e.g. CORS preflight, auth denial)
+      let response =
+        (await this.runHooks('onRequest', ctx, routeHooks?.onRequest)) ??
+        (await this.runHooks('preParsing', ctx)) ??
+        (await this.runHooks('preValidation', ctx, routeHooks?.preValidation)) ??
+        (await this.runHooks('preHandler', ctx, routeHooks?.preHandler));
 
-      // 2. preParsing hooks
-      await this.runHooks('preParsing', ctx);
+      if (!response) {
+        // 5. Execute the route handler
+        response = await handler(ctx);
 
-      // 3. preValidation hooks
-      await this.runHooks('preValidation', ctx, routeHooks?.preValidation);
+        // 6. preSerialization hooks (may replace the response)
+        response = (await this.runHooks('preSerialization', ctx)) ?? response;
+      }
 
-      // 4. preHandler hooks
-      await this.runHooks('preHandler', ctx, routeHooks?.preHandler);
+      // 7. onSend hooks run for every response, including short-circuits
+      response = (await this.runHooks('onSend', ctx, routeHooks?.onSend)) ?? response;
 
-      // 5. Execute the route handler
-      let response = await handler(ctx);
-
-      // 6. preSerialization hooks
-      await this.runHooks('preSerialization', ctx);
-
-      // 7. onSend hooks
-      await this.runHooks('onSend', ctx, routeHooks?.onSend);
-
-      // 8. Apply any headers stored in context (e.g., CORS headers)
-      const pendingHeaders = (ctx as any)._corsHeaders as Record<string, string> | undefined;
+      // 8. Apply headers queued on the context (CORS, security headers, etc.)
+      const pendingHeaders = ctx.responseHeaders;
       if (pendingHeaders) {
         const headers = new Headers(response.headers);
         for (const [key, value] of Object.entries(pendingHeaders)) {
@@ -208,7 +238,7 @@ export class Pipeline {
       }
 
       // 9. onResponse hooks (fire and forget)
-      this.runHooks('onResponse', ctx).catch(() => {
+      void Promise.resolve(this.runHooks('onResponse', ctx)).catch(() => {
         // Ignore errors in onResponse hooks
       });
 

@@ -7,9 +7,9 @@
 
 import { runHttpBenchmarks, compareResults, generateSummary } from './http/benchmark.js';
 import { runAllORMBenchmarks, generateORMSummary } from './orm/benchmark.js';
-import { writeFile, mkdir } from 'fs/promises';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { writeFile, mkdir } from 'node:fs/promises';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const resultsDir = join(__dirname, '..', 'results');

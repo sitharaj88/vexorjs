@@ -11,7 +11,7 @@ import {
   oauthMiddleware,
   getOAuthUser,
 } from '../auth/oauth.js';
-import type { OAuthProvider, OAuthConfig, OAuthStateData } from '../auth/oauth.js';
+import type { OAuthProvider, OAuthStateData } from '../auth/oauth.js';
 import { createMockContext } from './helpers.js';
 
 // ============================================================================

@@ -5,6 +5,7 @@ export default defineConfig({
     'src/index.ts',
     'src/drivers/postgres.ts',
     'src/drivers/sqlite.ts',
+    'src/drivers/mysql.ts',
   ],
   format: ['esm'],
   dts: true,

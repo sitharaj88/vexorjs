@@ -45,6 +45,7 @@ lerna-debug.log*
 # Benchmark results
 benchmarks/results/
 benchmarks/*.json
+!benchmarks/package.json
 
 # Temporary files
 *.tmp

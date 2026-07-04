@@ -6,7 +6,7 @@
  * indirectly through the exported command functions by mocking dependencies.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, } from 'vitest';
 
 vi.mock('child_process', () => ({
   execSync: vi.fn(),
@@ -41,7 +41,7 @@ vi.mock('../utils/logger.js', () => ({
   },
 }));
 
-import { execSync } from 'child_process';
+import { execSync } from 'node:child_process';
 import ora from 'ora';
 import { logger } from '../utils/logger.js';
 import {

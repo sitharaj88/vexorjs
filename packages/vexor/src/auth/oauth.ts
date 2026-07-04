@@ -718,7 +718,7 @@ function parseProfile(
         raw: data,
       };
 
-    case 'facebook':
+    case 'facebook': {
       const picture = data.picture as { data?: { url?: string } } | undefined;
       return {
         id: String(data.id),
@@ -727,6 +727,7 @@ function parseProfile(
         picture: picture?.data?.url,
         raw: data,
       };
+    }
 
     default:
       return {
@@ -776,7 +777,7 @@ export class OAuthError extends Error {
  * Create OAuth middleware that handles auth routes
  */
 export function oauthMiddleware(oauth: OAuth) {
-  return async (ctx: VexorContext): Promise<Response | void> => {
+  return async (ctx: VexorContext): Promise<Response | undefined> => {
     const path = ctx.path;
 
     // Check if this is an OAuth route
@@ -828,6 +829,8 @@ export function oauthMiddleware(oauth: OAuth) {
         throw error;
       }
     }
+
+    return undefined;
   };
 }
 

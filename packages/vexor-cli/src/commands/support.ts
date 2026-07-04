@@ -4,8 +4,8 @@
  * Help, upgrade, docs, and feedback commands for CLI support.
  */
 
-import { execSync } from 'child_process';
-import { platform } from 'os';
+import { execSync } from 'node:child_process';
+import { platform } from 'node:os';
 import ora from 'ora';
 import { logger } from '../utils/logger.js';
 

@@ -4,8 +4,8 @@
  * Migration, seeding, and database management.
  */
 
-import { resolve } from 'path';
-import { readdir } from 'fs/promises';
+import { resolve } from 'node:path';
+import { readdir } from 'node:fs/promises';
 
 interface DbOptions {
   steps?: number;
@@ -227,7 +227,6 @@ async function loadProjectModule(...paths: string[]): Promise<{ db?: { getMigrat
       const module = await import(fullPath);
       return module;
     } catch {
-      continue;
     }
   }
   return null;

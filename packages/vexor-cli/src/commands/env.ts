@@ -4,8 +4,8 @@
  * Manages environment variables and .env files.
  */
 
-import { readFile, writeFile, access, copyFile } from 'fs/promises';
-import { resolve } from 'path';
+import { readFile, writeFile, access, copyFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
 import prompts from 'prompts';
 import { logger } from '../utils/logger.js';
 

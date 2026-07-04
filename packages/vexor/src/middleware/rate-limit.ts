@@ -420,10 +420,10 @@ export function rateLimit(options: RateLimitOptions = {}) {
     max: opts.max,
   });
 
-  return async (ctx: VexorContext): Promise<Response | void> => {
+  return async (ctx: VexorContext): Promise<Response | undefined> => {
     // Check if we should skip
     if (await opts.skip(ctx)) {
-      return;
+      return undefined;
     }
 
     // Generate key
@@ -461,6 +461,8 @@ export function rateLimit(options: RateLimitOptions = {}) {
     if (info.limited) {
       return opts.handler(ctx, info);
     }
+
+    return undefined;
   };
 }
 

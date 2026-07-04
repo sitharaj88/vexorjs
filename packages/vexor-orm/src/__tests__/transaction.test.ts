@@ -4,7 +4,6 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { TransactionImpl, TransactionManager, createTransactionManager } from '../connection/transaction.js';
-import type { IsolationLevel, TransactionOptions } from '../connection/transaction.js';
 import type { PoolConnection } from '../connection/pool.js';
 
 // ---------------------------------------------------------------------------

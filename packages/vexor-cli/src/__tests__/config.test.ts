@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from 'vitest';
-import { readFile, writeFile, access } from 'fs/promises';
-import { execSync } from 'child_process';
+import { readFile, writeFile, access } from 'node:fs/promises';
+import { execSync } from 'node:child_process';
+import { join } from 'node:path';
 
 vi.mock('fs/promises', () => ({
   readFile: vi.fn(),
@@ -267,7 +268,7 @@ describe('configCommand', () => {
       await configCommand('set', 'editor', 'nano', { global: true });
 
       const writePath = mockWriteFile.mock.calls[0][0] as string;
-      expect(writePath).toContain('/home/testuser/.vexorrc');
+      expect(writePath).toContain(join('/home/testuser', '.vexorrc'));
       expect(writePath).not.toContain('.vexorrc.json');
     });
 
@@ -397,7 +398,7 @@ describe('configCommand', () => {
       await configCommand('path', undefined, undefined, { global: true });
 
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('/home/testuser/.vexorrc')
+        expect.stringContaining(join('/home/testuser', '.vexorrc'))
       );
     });
 
@@ -406,7 +407,7 @@ describe('configCommand', () => {
 
       await configCommand('path', undefined, undefined, { global: true });
 
-      expect(consoleSpy).toHaveBeenCalledWith('/custom/home/.vexorrc');
+      expect(consoleSpy).toHaveBeenCalledWith(join('/custom/home', '.vexorrc'));
     });
 
     it('should fall back to USERPROFILE when HOME is not set', async () => {

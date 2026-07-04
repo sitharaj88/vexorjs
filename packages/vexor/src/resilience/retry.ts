@@ -68,7 +68,7 @@ function calculateDelay(
   options: Required<RetryOptions>
 ): number {
   // Exponential backoff
-  let delay = options.delay * Math.pow(options.backoffFactor, attempt - 1);
+  let delay = options.delay * options.backoffFactor ** (attempt - 1);
 
   // Cap at max delay
   delay = Math.min(delay, options.maxDelay);
@@ -216,11 +216,11 @@ export function retryable<T extends (...args: unknown[]) => Promise<unknown>>(
  * Retry decorator for class methods
  */
 export function Retry(options: RetryOptions = {}): MethodDecorator {
-  return function (
+  return (
     _target: unknown,
     _propertyKey: string | symbol,
     descriptor: PropertyDescriptor
-  ) {
+  ) => {
     const originalMethod = descriptor.value;
 
     descriptor.value = async function (...args: unknown[]) {

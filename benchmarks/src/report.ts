@@ -5,9 +5,9 @@
  * Generates formatted reports from benchmark results.
  */
 
-import { readdir, readFile } from 'fs/promises';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { readdir, readFile } from 'node:fs/promises';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const resultsDir = join(__dirname, '..', 'results');

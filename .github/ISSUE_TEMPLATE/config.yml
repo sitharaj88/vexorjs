@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/sitharaj88/vexorjs/security/advisories/new
+    about: Please report security issues privately, never as public issues.
+  - name: Documentation
+    url: https://sitharaj88.github.io/vexorjs/
+    about: Guides, API reference, and examples.

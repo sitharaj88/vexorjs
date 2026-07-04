@@ -2,7 +2,7 @@
  * Configuration Loader Tests
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, } from 'vitest';
 import { Config, ConfigLoader, env } from '../config/loader.js';
 import type { ConfigSource } from '../config/loader.js';
 

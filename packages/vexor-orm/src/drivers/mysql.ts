@@ -145,7 +145,7 @@ export function createMySQLDriverFactory(config: MySQLConfig) {
       const url = new URL(config.connectionString);
       connectionConfig = {
         host: url.hostname,
-        port: parseInt(url.port) || 3306,
+        port: parseInt(url.port, 10) || 3306,
         user: url.username,
         password: url.password,
         database: url.pathname.slice(1),
@@ -237,6 +237,7 @@ export async function createMySQLTransaction(
   connection: any
 ): Promise<Transaction> {
   await connection.beginTransaction();
+  let savepointCounter = 0;
 
   return {
     async query<T = unknown>(
@@ -281,6 +282,20 @@ export async function createMySQLTransaction(
     async rollback(): Promise<void> {
       await connection.rollback();
     },
+
+    async savepoint(name?: string): Promise<string> {
+      const savepointName = name || `sp_${++savepointCounter}`;
+      await connection.query(`SAVEPOINT ${savepointName}`);
+      return savepointName;
+    },
+
+    async rollbackTo(savepoint: string): Promise<void> {
+      await connection.query(`ROLLBACK TO SAVEPOINT ${savepoint}`);
+    },
+
+    async releaseSavepoint(savepoint: string): Promise<void> {
+      await connection.query(`RELEASE SAVEPOINT ${savepoint}`);
+    },
   };
 }
 
@@ -320,7 +335,7 @@ export function createMySQLPool(config: MySQLPoolConfig) {
       const url = new URL(config.connectionString);
       poolConfig = {
         host: url.hostname,
-        port: parseInt(url.port) || 3306,
+        port: parseInt(url.port, 10) || 3306,
         user: url.username,
         password: url.password,
         database: url.pathname.slice(1),
@@ -440,9 +455,9 @@ export function createMySQLPool(config: MySQLPoolConfig) {
  * Convert PostgreSQL-style $1, $2 placeholders to MySQL ? placeholders
  */
 export function convertPlaceholders(sql: string): string {
-  let index = 0;
+  let _index = 0;
   return sql.replace(/\$\d+/g, () => {
-    index++;
+    _index++;
     return '?';
   });
 }

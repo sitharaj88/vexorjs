@@ -5,7 +5,7 @@
  * and factory functions
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, } from 'vitest';
 import {
   upload,
   UploadError,

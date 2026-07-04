@@ -129,7 +129,7 @@ function parseValue(value: string): unknown {
 
   // Number
   const num = Number(value);
-  if (!isNaN(num) && value.trim() !== '') return num;
+  if (!Number.isNaN(num) && value.trim() !== '') return num;
 
   // JSON (arrays, objects)
   if ((value.startsWith('{') && value.endsWith('}')) ||
@@ -517,7 +517,7 @@ export const env = {
     const value = process.env[key];
     if (value === undefined) return undefined;
     const num = Number(value);
-    return isNaN(num) ? undefined : num;
+    return Number.isNaN(num) ? undefined : num;
   },
 
   /**
