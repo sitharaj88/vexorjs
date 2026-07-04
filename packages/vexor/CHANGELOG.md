@@ -1,5 +1,43 @@
 # @vexorjs/core
 
+## 1.3.0
+
+### Minor Changes
+
+- f25366f: Feature sprint: typed RPC client, first-class WebSockets, ORM auto-migrations, and `npm create vexor`.
+
+  **@vexorjs/core**
+
+  - **Typed RPC client** (`@vexorjs/core/client`): `createClient<typeof app>()` gives a fetch client with end-to-end types and zero codegen — paths constrained per HTTP method, `params`/`body` required and typed when the route needs them, and `res.data` typed from what the handler passed to `ctx.json()`. Pass `{ fetch: app.fetch }` to call an app in-process (tests, workers).
+  - **Route type accumulation**: `Vexor` is now generic over its registered routes; verb methods accumulate `"METHOD /path"` entries at the type level (zero runtime cost).
+  - **`ctx.json()` returns `TypedResponse<T>`** carrying the payload type for the client.
+  - **First-class WebSockets**: `app.ws(path, handlers)` with `:params`/wildcards, per-connection context (params, query, headers), topics/pub-sub via `ws.subscribe()`/`ws.publish()`, and `app.websockets.broadcast()`. Served on Node.js through the optional `ws` package; connections drain on `app.close()`.
+
+  **@vexorjs/orm**
+
+  - **Auto-migrations (schema diffing)**: `snapshotSchema()`, `diffSchemas()`, `generateMigrationFromDiff()`, and the one-call `generateAutoMigration()` — compare a JSON schema snapshot against your `table()` definitions and get executable up/down SQL, with warnings for hand-review cases (SQLite column alters, NOT NULL without default).
+
+  **@vexorjs/cli**
+
+  - **`vexor db:diff`**: loads your schema module, diffs it against `schema.snapshot.json`, writes a timestamped migration file, and updates the snapshot. Options: `--schema`, `--out`, `--dialect`, `--name`.
+
+  **create-vexor**
+
+  - New package: `npm create vexor@latest my-app` scaffolds a project via the Vexor CLI's templates (api, minimal, microservice, websocket).
+
+- 037e68e: Performance: JIT-compiled validation and a direct-write response fast path.
+
+  - **JIT validation compiler**: schemas now compile to specialized functions via
+    code generation — ~30× faster than the tree-walking interpreter on typical
+    request bodies (measured 7.8M validations/sec vs 260K), with byte-identical
+    issue output (verified by a parity test suite). Runtimes that forbid codegen
+    (e.g. Cloudflare Workers) automatically fall back to the interpreter.
+    The interpreter remains exported as `compileInterpreted`.
+  - **Node adapter fast path**: responses built from in-memory bodies
+    (`ctx.json()`, `ctx.text()`, `ctx.html()`) are written with a single
+    `res.end(raw)` instead of pumping a ReadableStream reader per request.
+    Streaming responses (SSE, static files) keep the streaming path.
+
 ## 1.2.0
 
 ### Minor Changes
