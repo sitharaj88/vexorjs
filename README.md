@@ -41,17 +41,19 @@
 | [@vexorjs/core](./packages/vexor) | ![npm](https://img.shields.io/npm/v/@vexorjs/core?style=flat-square&color=6366f1) | Core framework — routing, middleware, validation, adapters |
 | [@vexorjs/orm](./packages/vexor-orm) | ![npm](https://img.shields.io/npm/v/@vexorjs/orm?style=flat-square&color=6366f1) | Type-safe ORM — queries, migrations, pooling |
 | [@vexorjs/cli](./packages/vexor-cli) | ![npm](https://img.shields.io/npm/v/@vexorjs/cli?style=flat-square&color=6366f1) | CLI tool — scaffolding, code generation, dev tools |
+| [create-vexor](./packages/create-vexor) | ![npm](https://img.shields.io/npm/v/create-vexor?style=flat-square&color=6366f1) | Project initializer — `npm create vexor@latest` |
 
 ## Quick Start
 
 ```bash
-# Install the core framework
+# Scaffold a new project (interactive)
+npm create vexor@latest my-app
+
+# Or add to an existing project
 npm install @vexorjs/core
 
-# Install the ORM (optional)
+# ORM and CLI (optional)
 npm install @vexorjs/orm
-
-# Install the CLI globally (optional)
 npm install -g @vexorjs/cli
 ```
 
@@ -86,6 +88,34 @@ app.get('/users/:id', async (ctx) => {
 
 app.listen(3000);
 console.log('Server running on http://localhost:3000');
+```
+
+### Typed RPC Client
+
+Full end-to-end types from server to client — no code generation:
+
+```typescript
+// server.ts
+const app = new Vexor()
+  .get('/users/:id', (ctx) => ctx.json({ id: ctx.params.id, name: 'Ada' }));
+export type App = typeof app;
+
+// client.ts
+import { createClient } from '@vexorjs/core/client';
+
+const api = createClient<App>({ baseUrl: 'http://localhost:3000' });
+const res = await api.get('/users/:id', { params: { id: '42' } });
+res.data; // { id: string; name: string } — typed!
+```
+
+### WebSockets
+
+```typescript
+app.ws('/chat/:room', {
+  open(ws, ctx) { ws.subscribe(ctx.params.room); },
+  message(ws, data, ctx) { ws.publish(ctx.params.room, JSON.stringify(data)); },
+});
+// Node.js: npm install ws
 ```
 
 ### Using Vexor ORM
@@ -132,6 +162,9 @@ vexor generate model User name:string email:string:unique
 
 # Run migrations
 vexor db:migrate
+
+# Auto-generate a migration from schema changes (diff against snapshot)
+vexor db:diff --schema src/db/schema.ts --dialect postgres
 
 # Run the test suite (auto-detects vitest / jest / mocha / node:test)
 vexor test

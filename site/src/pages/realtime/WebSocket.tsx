@@ -3,273 +3,169 @@ import { ArrowRight } from 'lucide-react';
 import CodeBlock from '../../components/CodeBlock';
 import InfoBlock from '../../components/InfoBlock';
 
-const basicUsageCode = `import { Vexor, WebSocketServer } from '@vexorjs/core';
-import type { VexorWebSocket } from '@vexorjs/core';
+const basicUsageCode = `import { Vexor } from '@vexorjs/core';
 
 const app = new Vexor();
-const wss = new WebSocketServer();
 
-// Define a WebSocket route
-wss.route('/ws/chat', {
-  handlers: {
-    open(ws: VexorWebSocket) {
-      console.log('Client connected:', ws.id);
-      ws.send('Welcome to the chat!');
-    },
+// First-class WebSocket routes, registered on the app itself
+app.ws('/chat/:room', {
+  open(ws, ctx) {
+    console.log('Client connected:', ws.id);
+    ws.subscribe(ctx.params.room);
+    ws.json({ type: 'welcome', room: ctx.params.room });
+  },
 
-    message(ws: VexorWebSocket, message: string) {
-      console.log(\`Message from \${ws.id}:\`, message);
+  message(ws, data, ctx) {
+    // Text frames arrive JSON-parsed; if the payload is not
+    // valid JSON, \`data\` is the raw string
+    ws.publish(ctx.params.room, JSON.stringify(data));
+  },
 
-      // Echo message back to the sender
-      ws.send(\`You said: \${message}\`);
-    },
+  close(ws, code, reason, ctx) {
+    console.log(\`Client \${ws.id} left \${ctx.params.room}: \${code} \${reason}\`);
+  },
 
-    close(ws: VexorWebSocket, code: number, reason: string) {
-      console.log(\`Client \${ws.id} disconnected: \${code} \${reason}\`);
-    },
-
-    error(ws: VexorWebSocket, error: Error) {
-      console.error(\`WebSocket error for \${ws.id}:\`, error);
-    },
+  error(ws, error, ctx) {
+    console.error(\`WebSocket error for \${ws.id}:\`, error);
   },
 });
 
-// Attach WebSocket server to the Vexor app
-app.listen(3000, { websocket: wss });`;
+// On Node.js, WebSocket routes are served through the optional
+// \`ws\` package: npm install ws
+app.listen(3000);`;
 
-const messageHandlingCode = `import { WebSocketServer, Type } from '@vexorjs/core';
-import type { VexorWebSocket } from '@vexorjs/core';
-
-const wss = new WebSocketServer();
-
-// Validate incoming messages with a schema
-wss.route('/ws/api', {
-  messageSchema: Type.Object({
-    type: Type.String(),
-    payload: Type.Unknown(),
-  }),
-
-  handlers: {
-    message(ws: VexorWebSocket, message: { type: string; payload: unknown }) {
-      switch (message.type) {
-        case 'ping':
-          ws.json({ type: 'pong', timestamp: Date.now() });
-          break;
-
-        case 'subscribe':
-          const { channel } = message.payload as { channel: string };
-          ws.subscribe(channel);
-          ws.json({ type: 'subscribed', channel });
-          break;
-
-        case 'unsubscribe':
-          const { channel: ch } = message.payload as { channel: string };
-          ws.unsubscribe(ch);
-          ws.json({ type: 'unsubscribed', channel: ch });
-          break;
-
-        default:
-          ws.json({ type: 'error', message: \`Unknown type: \${message.type}\` });
-      }
-    },
+const routeParamsCode = `// :params and trailing wildcards use the same radix router
+// as your HTTP routes
+app.ws('/games/:gameId/players/:playerId', {
+  open(ws, ctx) {
+    const { gameId, playerId } = ctx.params;
+    ws.subscribe(\`game:\${gameId}\`);
+    ws.json({ joined: gameId, as: playerId });
   },
 });
 
-// Route with payload limits and compression
-wss.route('/ws/uploads', {
-  maxPayloadLength: 16 * 1024 * 1024, // 16 MB
-  idleTimeout: 120, // seconds
-  compression: true,
+app.ws('/streams/*', {
+  open(ws, ctx) {
+    // ctx is built from the HTTP upgrade request, so params,
+    // query, headers, and cookies read like any HTTP handler
+    const token = ctx.query.token;
+    const origin = ctx.header('origin');
 
-  handlers: {
-    message(ws, message) {
-      // Handle large payloads
-      ws.json({ received: true, size: message.length });
-    },
+    if (!token) {
+      ws.close(1008, 'Missing token');
+      return;
+    }
+
+    console.log(\`Stream opened from \${origin}\`);
   },
 });`;
 
-const topicsCode = `import { WebSocketServer } from '@vexorjs/core';
-import type { VexorWebSocket } from '@vexorjs/core';
+const messagesCode = `app.ws('/api', {
+  message(ws, data, ctx) {
+    // Payloads that are not valid JSON arrive as the raw string
+    if (typeof data === 'string') {
+      ws.send(\`echo: \${data}\`);
+      return;
+    }
 
-const wss = new WebSocketServer();
+    // JSON payloads arrive already parsed — narrow the shape yourself
+    const msg = data as { type: string; channel?: string };
 
-wss.route('/ws/realtime', {
-  handlers: {
-    open(ws: VexorWebSocket) {
-      // Subscribe the client to topics
-      ws.subscribe('global-announcements');
-      ws.json({ type: 'connected', topics: ['global-announcements'] });
-    },
+    switch (msg.type) {
+      case 'ping':
+        ws.json({ type: 'pong', timestamp: Date.now() });
+        break;
 
-    message(ws: VexorWebSocket, message: string) {
-      const data = JSON.parse(message);
+      case 'subscribe':
+        if (msg.channel) {
+          ws.subscribe(msg.channel);
+          ws.json({ type: 'subscribed', channel: msg.channel });
+        }
+        break;
 
-      switch (data.action) {
-        case 'join-room':
-          ws.subscribe(\`room:\${data.roomId}\`);
-          // Notify others in the room
-          ws.publish(\`room:\${data.roomId}\`, JSON.stringify({
-            type: 'user-joined',
-            userId: data.userId,
-          }));
-          break;
+      default:
+        ws.json({ type: 'error', message: \`Unknown type: \${msg.type}\` });
+    }
+  },
 
-        case 'leave-room':
-          ws.unsubscribe(\`room:\${data.roomId}\`);
-          ws.publish(\`room:\${data.roomId}\`, JSON.stringify({
-            type: 'user-left',
-            userId: data.userId,
-          }));
-          break;
-
-        case 'send-message':
-          // Publish to room topic (all subscribers except sender)
-          ws.publish(\`room:\${data.roomId}\`, JSON.stringify({
-            type: 'new-message',
-            userId: data.userId,
-            content: data.content,
-            timestamp: Date.now(),
-          }));
-          break;
-      }
-    },
-
-    close(ws: VexorWebSocket) {
-      // Subscriptions are automatically cleaned up on disconnect
-    },
+  // Heartbeat frames have their own handlers
+  ping(ws, data) {
+    console.log('ping received from', ws.id);
+  },
+  pong(ws, data) {
+    console.log('pong received from', ws.id);
   },
 });`;
 
-const broadcastCode = `import { WebSocketServer } from '@vexorjs/core';
+const topicsCode = `app.ws('/rooms/:roomId', {
+  open(ws, ctx) {
+    // Subscribe this connection to the room's topic
+    ws.subscribe(\`room:\${ctx.params.roomId}\`);
 
-const wss = new WebSocketServer();
-
-wss.route('/ws/dashboard', {
-  handlers: {
-    open(ws) {
-      // Track the client on the server
-      wss.addClient('dashboard', ws);
-      ws.subscribe('dashboard-updates');
-    },
-
-    close(ws) {
-      wss.removeClient('dashboard', ws);
-    },
+    // Notify everyone else in the room (publish excludes the sender)
+    ws.publish(\`room:\${ctx.params.roomId}\`, JSON.stringify({
+      type: 'user-joined',
+      userId: ws.id,
+    }));
   },
-});
 
-// Broadcast to all connected dashboard clients
-function broadcastMetrics(metrics: Record<string, number>) {
-  wss.broadcast('dashboard-updates', JSON.stringify({
-    type: 'metrics',
-    data: metrics,
-    timestamp: Date.now(),
+  message(ws, data, ctx) {
+    const topic = \`room:\${ctx.params.roomId}\`;
+
+    // Relay chat messages to every other subscriber
+    ws.publish(topic, JSON.stringify({
+      type: 'new-message',
+      from: ws.id,
+      payload: data,
+      timestamp: Date.now(),
+    }));
+  },
+
+  close(ws) {
+    // Subscriptions are cleaned up automatically on disconnect —
+    // no manual unsubscribe needed here
+  },
+});`;
+
+const hubCode = `// The connection hub is available as app.websockets from
+// anywhere in your application
+const hub = app.websockets;
+
+// Broadcast to every connected client, across all ws routes
+hub.broadcast(JSON.stringify({ type: 'announcement', text: 'Deploy at 5pm' }));
+
+// Publish to all subscribers of a topic (unlike ws.publish(),
+// this does not exclude anyone)
+hub.publish('dashboard-updates', JSON.stringify({ type: 'metrics', cpu: 42 }));
+
+// Inspect subscribers and connections
+const dashboards = hub.getSubscribers('dashboard-updates');
+console.log(\`\${dashboards.length} dashboards connected\`);
+console.log(\`\${hub.clients.size} total connections\`);
+
+// Push real-time updates from ordinary HTTP handlers
+app.post('/orders', async (ctx) => {
+  const order = await createOrder(await ctx.body());
+
+  app.websockets.publish('orders', JSON.stringify({
+    type: 'order-created',
+    order,
   }));
-}
 
-// Publish to a specific topic
-wss.publish('dashboard-updates', JSON.stringify({
-  type: 'alert',
-  message: 'CPU usage above 90%',
-}));
-
-// Close all connections gracefully
-process.on('SIGTERM', () => {
-  wss.closeAll(1001, 'Server shutting down');
-});`;
-
-const jsonMessagesCode = `import { createWebSocketHandler, Type } from '@vexorjs/core';
-import type { VexorWebSocket } from '@vexorjs/core';
-
-// Type-safe JSON messaging
-interface ChatMessage {
-  type: 'message';
-  room: string;
-  content: string;
-  sender: string;
-}
-
-interface TypingEvent {
-  type: 'typing';
-  room: string;
-  sender: string;
-  isTyping: boolean;
-}
-
-type ClientMessage = ChatMessage | TypingEvent;
-
-const handler = createWebSocketHandler({
-  messageSchema: Type.Union([
-    Type.Object({
-      type: Type.Literal('message'),
-      room: Type.String(),
-      content: Type.String({ minLength: 1, maxLength: 5000 }),
-      sender: Type.String(),
-    }),
-    Type.Object({
-      type: Type.Literal('typing'),
-      room: Type.String(),
-      sender: Type.String(),
-      isTyping: Type.Boolean(),
-    }),
-  ]),
-
-  handlers: {
-    open(ws: VexorWebSocket) {
-      ws.json({ type: 'ready', serverTime: Date.now() });
-    },
-
-    message(ws: VexorWebSocket, msg: ClientMessage) {
-      if (msg.type === 'message') {
-        ws.publish(\`room:\${msg.room}\`, JSON.stringify({
-          type: 'message',
-          content: msg.content,
-          sender: msg.sender,
-          timestamp: Date.now(),
-        }));
-      }
-
-      if (msg.type === 'typing') {
-        ws.publish(\`room:\${msg.room}\`, JSON.stringify({
-          type: 'typing',
-          sender: msg.sender,
-          isTyping: msg.isTyping,
-        }));
-      }
-    },
-  },
-});`;
-
-const statsCode = `// Get WebSocket server statistics
-const stats = wss.getStats();
-
-console.log({
-  totalConnections: stats.totalConnections,
-  activeConnections: stats.activeConnections,
-  messagesReceived: stats.messagesReceived,
-  messagesSent: stats.messagesSent,
-  topics: stats.topics,           // Number of active topics
-  uptime: stats.uptime,           // Server uptime in ms
+  return ctx.status(201).json(order);
 });
 
-// Expose stats via HTTP endpoint
-app.get('/ws/stats', async (ctx) => {
-  return ctx.json(wss.getStats());
-});
+// Stats snapshot
+const stats = hub.getStats();
+// { clients: number, topics: number, subscriptions: Map<string, number> }`;
 
-// Per-client information
-wss.route('/ws/chat', {
-  handlers: {
-    open(ws) {
-      console.log('Client ID:', ws.id);
-      console.log('Remote address:', ws.remoteAddress);
+const shutdownCode = `// With gracefulShutdown enabled, SIGTERM/SIGINT trigger a clean close
+const app = new Vexor({ gracefulShutdown: true });
 
-      // Ping the client to measure latency
-      ws.ping();
-    },
-  },
-});`;
+// app.close() closes every WebSocket connection first with
+// code 1001 ("Server shutting down"), then drains in-flight
+// HTTP requests before stopping the server
+await app.close({ timeout: 10_000 });`;
 
 export default function WebSocket() {
   return (
@@ -284,11 +180,13 @@ export default function WebSocket() {
         <p className="text-lg text-slate-600 dark:text-slate-400 mb-4">
           A WebSocket connection begins its life as a standard HTTP request. The client sends an HTTP GET with an <code className="prose-code">Upgrade: websocket</code> header, and the server responds with a <code className="prose-code">101 Switching Protocols</code> status. After this handshake, the HTTP connection is "upgraded" to the WebSocket protocol, and both sides switch to a binary framing format. From this point forward, data flows in small frames rather than HTTP messages, eliminating the per-message overhead of HTTP headers and enabling sub-millisecond message delivery.
         </p>
-        <p className="text-lg text-slate-600 dark:text-slate-400 mb-4">
-          The WebSocket protocol defines several frame types: text frames carry UTF-8 string data, binary frames carry arbitrary bytes, ping and pong frames serve as heartbeat mechanisms, and close frames initiate connection shutdown. The ping/pong mechanism is particularly important for production deployments: the server periodically sends ping frames, and the client is expected to respond with pong frames. If no pong is received within a timeout, the server considers the client disconnected and cleans up resources.
-        </p>
         <p className="text-slate-600 dark:text-slate-400">
-          Vexor's <code className="prose-code">WebSocketServer</code> provides a high-level API built on top of the raw WebSocket protocol. It adds route-based organization (different paths handle different features), topic-based pub/sub for efficient message fan-out, JSON message validation with schema checking, per-route configuration for payload limits and compression, and server-level broadcast and publish capabilities. This layered architecture lets you build complex real-time features without managing raw frames, connection tracking, or subscription lists manually.
+          Vexor makes WebSockets a first-class part of the app: <code className="prose-code">app.ws(path, handlers)</code>{' '}
+          registers a WebSocket route right next to your HTTP routes, with the same{' '}
+          <code className="prose-code">:param</code> and wildcard path matching. Each connection is
+          wrapped in a <code className="prose-code">VexorWebSocket</code> with topic-based pub/sub
+          built in, and the app-wide hub at <code className="prose-code">app.websockets</code> lets
+          any part of your application broadcast or publish to connected clients.
         </p>
       </div>
 
@@ -297,16 +195,37 @@ export default function WebSocket() {
           How It Works
         </h2>
         <p className="text-slate-600 dark:text-slate-400 mb-4">
-          When the Vexor server receives an HTTP request with an <code className="prose-code">Upgrade: websocket</code> header, it matches the request path against registered WebSocket routes. If a matching route is found, the server completes the HTTP upgrade handshake and creates a <code className="prose-code">VexorWebSocket</code> instance that wraps the raw connection. Each instance is assigned a unique <code className="prose-code">ws.id</code> for identification and tracking.
+          When you call <code className="prose-code">app.ws()</code>, the route is stored in a
+          registry backed by the same radix router that serves HTTP routes, so{' '}
+          <code className="prose-code">:params</code> and trailing wildcards behave identically.
+          On <code className="prose-code">app.listen()</code>, Vexor hooks the HTTP server's{' '}
+          <code className="prose-code">upgrade</code> event: incoming upgrade requests are matched
+          against the registry, unmatched paths receive a 404 and the socket is closed, and
+          matched paths complete the handshake through the <code className="prose-code">ws</code>{' '}
+          package.
         </p>
         <p className="text-slate-600 dark:text-slate-400 mb-4">
-          The route's handler callbacks are invoked at key points in the connection lifecycle. The <code className="prose-code">open</code> handler fires immediately after the connection is established, giving you a chance to perform initial setup like subscribing the client to topics, sending a welcome message, or recording the connection in an external tracking system. The <code className="prose-code">message</code> handler fires each time the client sends a message. If a <code className="prose-code">messageSchema</code> is configured, the incoming message is parsed and validated against the schema before reaching your handler; invalid messages are rejected automatically with an error response.
+          For every accepted connection, Vexor builds a <code className="prose-code">VexorContext</code>{' '}
+          from the upgrade request. Your handlers receive it alongside the socket, so route
+          params, query string, headers, and cookies are read exactly like in an HTTP handler.
+          The connection itself is wrapped in a <code className="prose-code">VexorWebSocket</code>{' '}
+          with a unique <code className="prose-code">ws.id</code>, and registered with the
+          app-wide hub.
         </p>
         <p className="text-slate-600 dark:text-slate-400 mb-4">
-          Topic-based routing is the backbone of Vexor's WebSocket architecture. When a client calls <code className="prose-code">ws.subscribe('room:123')</code>, the server adds that connection to an in-memory set of subscribers for that topic. When any connection calls <code className="prose-code">ws.publish('room:123', data)</code>, the message is delivered to every subscriber of that topic except the sender. This pub/sub mechanism is implemented at the server level with O(1) per-subscriber delivery, making it efficient even with thousands of active topics and connections.
+          Incoming text frames are parsed as JSON before reaching your{' '}
+          <code className="prose-code">message</code> handler; payloads that are not valid JSON
+          fall back to the raw string. Binary frames are delivered as-is. Topic-based routing is
+          the backbone of fan-out: <code className="prose-code">ws.subscribe(topic)</code> adds the
+          connection to an in-memory subscriber set, and{' '}
+          <code className="prose-code">ws.publish(topic, message)</code> delivers to every
+          subscriber except the sender.
         </p>
         <p className="text-slate-600 dark:text-slate-400">
-          When a client disconnects, either voluntarily or due to a network failure, the <code className="prose-code">close</code> handler fires with a status code and reason string. The server automatically removes the connection from all topic subscriptions, preventing stale references and ensuring that subsequent publish operations do not attempt to write to closed connections. This automatic cleanup means you rarely need to manage subscriptions manually in the close handler.
+          When a client disconnects — voluntarily or through a network failure — the{' '}
+          <code className="prose-code">close</code> handler fires with a status code and reason,
+          and the server automatically removes the connection from the hub and from all topic
+          subscriptions. You rarely need to manage subscriptions manually in the close handler.
         </p>
       </section>
 
@@ -333,19 +252,51 @@ export default function WebSocket() {
           Basic Usage
         </h2>
         <p className="text-slate-600 dark:text-slate-400 mb-4">
-          Create a <code className="prose-code">WebSocketServer</code> instance and define routes using the <code className="prose-code">route()</code> method. Each route maps a URL path to a set of handler callbacks that respond to connection lifecycle events. The four available handlers are <code className="prose-code">open</code> (connection established), <code className="prose-code">message</code> (data received from client), <code className="prose-code">close</code> (connection terminated), and <code className="prose-code">error</code> (an error occurred).
+          Register a WebSocket route with <code className="prose-code">app.ws(path, handlers)</code>.
+          The handlers object accepts callbacks for the connection lifecycle:{' '}
+          <code className="prose-code">open(ws, ctx)</code> fires when a connection is established,{' '}
+          <code className="prose-code">message(ws, data, ctx)</code> fires for each incoming frame,{' '}
+          <code className="prose-code">close(ws, code, reason, ctx)</code> fires on disconnect,{' '}
+          <code className="prose-code">error(ws, error, ctx)</code> fires on connection errors, and{' '}
+          <code className="prose-code">ping(ws, data)</code> / <code className="prose-code">pong(ws, data)</code>{' '}
+          fire for heartbeat frames. All handlers are optional.
         </p>
         <p className="text-slate-600 dark:text-slate-400 mb-4">
-          Attach the WebSocket server to your Vexor application by passing it to <code className="prose-code">app.listen()</code> in the options object. Vexor handles the HTTP upgrade negotiation internally, routing incoming WebSocket connections to the correct handler based on the request path. You can define multiple routes on the same server, each serving a different real-time feature at a different path.
-        </p>
-        <p className="text-slate-600 dark:text-slate-400 mb-4">
-          Every WebSocket connection receives a unique <code className="prose-code">ws.id</code> string that persists for the lifetime of the connection. Use this ID for logging, debugging, and correlating messages across handlers. The <code className="prose-code">ws.send()</code> method sends raw text or binary data, while <code className="prose-code">ws.json()</code> serializes a JavaScript object as JSON and sends it as a text frame. For most applications, <code className="prose-code">ws.json()</code> is the preferred method because it handles serialization automatically.
+          Every connection receives a unique <code className="prose-code">ws.id</code> string that
+          persists for its lifetime — use it for logging, debugging, and correlating messages
+          across handlers. The <code className="prose-code">ws.send()</code> method sends raw text
+          or binary data, while <code className="prose-code">ws.json()</code> serializes a
+          JavaScript value as JSON and sends it as a text frame; for structured data,{' '}
+          <code className="prose-code">ws.json()</code> is the preferred method.
         </p>
         <CodeBlock code={basicUsageCode} filename="src/server.ts" showLineNumbers />
-        <InfoBlock variant="info">
-          Each WebSocket connection is assigned a unique <code className="prose-code">ws.id</code> that
-          you can use for tracking, logging, and targeted messaging.
+        <InfoBlock variant="warning" title="Runtime Support">
+          <code className="prose-code">app.ws()</code> currently runs on the <strong>Node.js</strong>{' '}
+          runtime via the optional <code className="prose-code">ws</code> package — install it with{' '}
+          <code className="prose-code">npm install ws</code>. Other runtimes are not wired up yet:
+          calling <code className="prose-code">app.listen()</code> on Bun with WebSocket routes
+          registered throws a clear error (use <code className="prose-code">Bun.serve({'{ websocket }'})</code>{' '}
+          directly for now).
         </InfoBlock>
+      </section>
+
+      <section>
+        <h2 id="route-params" className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
+          Route Params and the Upgrade Context
+        </h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
+          WebSocket paths support <code className="prose-code">:params</code> and trailing
+          wildcards through the same radix router as HTTP routes. Every handler receives a{' '}
+          <code className="prose-code">ctx</code> built from the HTTP upgrade request:{' '}
+          <code className="prose-code">ctx.params</code> holds the matched path parameters,{' '}
+          <code className="prose-code">ctx.query</code> the parsed query string, and{' '}
+          <code className="prose-code">ctx.header(name)</code> / <code className="prose-code">ctx.cookie(name)</code>{' '}
+          expose the upgrade request's headers and cookies. This is the natural place for
+          connection-time authentication: read a token from the query string or a cookie in{' '}
+          <code className="prose-code">open</code>, and call{' '}
+          <code className="prose-code">ws.close(1008, ...)</code> to reject the connection.
+        </p>
+        <CodeBlock code={routeParamsCode} filename="src/ws/routes.ts" showLineNumbers />
       </section>
 
       <section>
@@ -353,19 +304,20 @@ export default function WebSocket() {
           Handling Messages
         </h2>
         <p className="text-slate-600 dark:text-slate-400 mb-4">
-          In production WebSocket applications, you cannot trust the shape or content of incoming messages. Clients may send malformed JSON, missing fields, or payloads that exceed expected sizes. The <code className="prose-code">messageSchema</code> option lets you define a schema that incoming messages must conform to. Messages that fail validation are rejected before they reach your handler, preventing your application code from operating on invalid data.
+          Incoming text frames are automatically parsed as JSON before your{' '}
+          <code className="prose-code">message</code> handler runs. If the payload is not valid
+          JSON, the handler receives the raw string instead, so a quick{' '}
+          <code className="prose-code">typeof data === 'string'</code> check distinguishes plain
+          text from structured messages. Binary frames are passed through untouched.
         </p>
         <p className="text-slate-600 dark:text-slate-400 mb-4">
-          Schema validation uses the same <code className="prose-code">Type</code> builder used throughout Vexor for HTTP request validation. You can define exact object shapes, union types for messages with different structures, and constraints like minimum and maximum string lengths. When validation is enabled, the <code className="prose-code">message</code> handler receives the parsed and typed object rather than a raw string, giving you type safety throughout your handler logic.
+          Because clients can send anything, treat <code className="prose-code">data</code> as{' '}
+          <code className="prose-code">unknown</code> and validate or narrow it at the top of the
+          handler before acting on it. A discriminated union with a{' '}
+          <code className="prose-code">type</code> field is the standard pattern — it keeps the
+          protocol extensible and works naturally with TypeScript narrowing.
         </p>
-        <p className="text-slate-600 dark:text-slate-400 mb-4">
-          Per-route configuration lets you tune resource limits for different use cases. The <code className="prose-code">maxPayloadLength</code> option caps the maximum size of a single message in bytes, protecting the server from memory exhaustion attacks. The <code className="prose-code">idleTimeout</code> option closes connections that have not sent or received any data within the specified number of seconds, freeing up resources held by abandoned connections. The <code className="prose-code">compression</code> option enables per-message deflate compression, which reduces bandwidth for text-heavy payloads at the cost of additional CPU usage.
-        </p>
-        <CodeBlock code={messageHandlingCode} filename="src/ws/api.ts" showLineNumbers />
-        <InfoBlock variant="warning">
-          Always set <code className="prose-code">maxPayloadLength</code> to prevent clients from
-          sending excessively large messages that could consume server memory.
-        </InfoBlock>
+        <CodeBlock code={messagesCode} filename="src/ws/api.ts" showLineNumbers />
       </section>
 
       <section>
@@ -376,15 +328,12 @@ export default function WebSocket() {
           Topic-based pub/sub is the mechanism that makes WebSocket applications scalable. Without topics, sending a message to a specific group of clients requires the server to maintain manual lists of connections and iterate over them. With topics, clients subscribe to named channels, and the server handles fan-out delivery transparently. This decouples message routing from your application logic and makes it trivial to implement features like chat rooms, per-user notifications, and real-time collaboration.
         </p>
         <p className="text-slate-600 dark:text-slate-400 mb-4">
-          When a client calls <code className="prose-code">ws.subscribe('room:123')</code>, the server adds that connection to an internal subscriber set for the topic <code className="prose-code">room:123</code>. The client can subscribe to any number of topics simultaneously. When any client calls <code className="prose-code">ws.publish('room:123', data)</code>, the server iterates over all subscribers of that topic and sends the message to each one, excluding the publisher itself. This "exclude sender" behavior is the convention for chat-like applications where the sender already has its own copy of the message.
+          When a client calls <code className="prose-code">ws.subscribe('room:123')</code>, the server adds that connection to an internal subscriber set for the topic <code className="prose-code">room:123</code>. The client can subscribe to any number of topics simultaneously. When any connection calls <code className="prose-code">ws.publish('room:123', data)</code>, the server sends the message to every subscriber of that topic <strong>excluding the sender</strong> — the convention for chat-like applications where the sender already has its own copy of the message.
         </p>
         <p className="text-slate-600 dark:text-slate-400 mb-4">
-          Topic names are arbitrary strings, and a common pattern is to use colon-separated namespaces: <code className="prose-code">room:general</code>, <code className="prose-code">user:123:notifications</code>, <code className="prose-code">game:abc:moves</code>. This naming convention makes it easy to reason about topic scopes and implement access control by checking the topic name in the message handler before allowing a subscribe or publish operation.
+          Topic names are arbitrary strings, and a common pattern is to use colon-separated namespaces: <code className="prose-code">room:general</code>, <code className="prose-code">user:123:notifications</code>, <code className="prose-code">game:abc:moves</code>. This naming convention makes it easy to reason about topic scopes and implement access control by checking the topic name before allowing a subscribe or publish operation.
         </p>
-        <p className="text-slate-600 dark:text-slate-400 mb-4">
-          When a client disconnects, all of its topic subscriptions are automatically removed. You do not need to manually unsubscribe in the <code className="prose-code">close</code> handler. This automatic cleanup prevents dead connections from accumulating in subscriber sets and ensures that publish operations never attempt to write to closed connections.
-        </p>
-        <CodeBlock code={topicsCode} filename="src/ws/realtime.ts" showLineNumbers />
+        <CodeBlock code={topicsCode} filename="src/ws/rooms.ts" showLineNumbers />
         <InfoBlock variant="tip">
           Topic subscriptions are automatically cleaned up when a client disconnects. You do not
           need to manually unsubscribe in the close handler.
@@ -392,51 +341,45 @@ export default function WebSocket() {
       </section>
 
       <section>
-        <h2 id="broadcasting" className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
-          Broadcasting
+        <h2 id="connection-hub" className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
+          The Connection Hub: app.websockets
         </h2>
         <p className="text-slate-600 dark:text-slate-400 mb-4">
-          While <code className="prose-code">ws.publish()</code> sends messages from within a WebSocket handler (in the context of a connected client), server-level broadcast and publish methods let you push messages from anywhere in your application. This is essential for integrating WebSocket updates with the rest of your system: an HTTP endpoint that creates a new order can publish a "new order" event to all connected dashboard clients, a cron job can broadcast system maintenance notifications, and a database change listener can push real-time updates.
+          While <code className="prose-code">ws.publish()</code> sends messages from within a
+          handler in the context of a connected client, the hub at{' '}
+          <code className="prose-code">app.websockets</code> lets you push messages from anywhere
+          in your application. This is essential for integrating real-time updates with the rest
+          of your system: an HTTP endpoint that creates an order can publish an event to all
+          connected dashboards, a cron job can broadcast maintenance notices, and a database
+          change listener can push live updates.
         </p>
         <p className="text-slate-600 dark:text-slate-400 mb-4">
-          The <code className="prose-code">wss.broadcast()</code> method sends a message to all subscribers of a topic, including any connection that initiated the broadcast (unlike <code className="prose-code">ws.publish()</code>, which excludes the sender). The <code className="prose-code">wss.publish()</code> method works identically at the server level. The <code className="prose-code">wss.addClient()</code> and <code className="prose-code">wss.removeClient()</code> methods let you maintain named client groups for manual tracking, though topic subscriptions are usually sufficient for message routing.
+          <code className="prose-code">broadcast(message)</code> sends to every connected client
+          across all WebSocket routes. <code className="prose-code">publish(topic, message)</code>{' '}
+          sends to all subscribers of a topic — unlike <code className="prose-code">ws.publish()</code>,
+          it does not exclude anyone. <code className="prose-code">getSubscribers(topic)</code>{' '}
+          returns the <code className="prose-code">VexorWebSocket</code> instances subscribed to a
+          topic, and <code className="prose-code">clients</code> is a{' '}
+          <code className="prose-code">Map</code> of connection IDs to sockets for direct,
+          targeted messaging. <code className="prose-code">getStats()</code> returns a snapshot
+          with the client count, topic count, and per-topic subscription counts.
         </p>
-        <p className="text-slate-600 dark:text-slate-400 mb-4">
-          For graceful shutdown, the <code className="prose-code">wss.closeAll()</code> method closes every active WebSocket connection with a specified close code and reason string. This should be called during the application shutdown sequence so that clients receive a clean close frame and can reconnect to another server instance in a load-balanced deployment, rather than experiencing an abrupt TCP reset.
-        </p>
-        <CodeBlock code={broadcastCode} filename="src/ws/dashboard.ts" showLineNumbers />
+        <CodeBlock code={hubCode} filename="src/ws/hub.ts" showLineNumbers />
       </section>
 
       <section>
-        <h2 id="json-messages" className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
-          Type-Safe JSON Messages
+        <h2 id="graceful-shutdown" className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
+          Graceful Shutdown
         </h2>
         <p className="text-slate-600 dark:text-slate-400 mb-4">
-          Real-world WebSocket applications typically communicate using structured JSON messages. A chat application might have message, typing indicator, presence update, and room management events, each with a different payload shape. The <code className="prose-code">createWebSocketHandler()</code> function combined with schema validation provides end-to-end type safety for this pattern.
+          WebSocket connections don't "finish" the way in-flight HTTP requests do, so{' '}
+          <code className="prose-code">app.close()</code> closes them first — every connection
+          receives a close frame with code <code className="prose-code">1001</code> ("Server
+          shutting down") before the HTTP listener drains and stops. Clients that implement
+          reconnection logic can treat 1001 as a signal to reconnect elsewhere, which is exactly
+          what you want in a load-balanced rolling deploy.
         </p>
-        <p className="text-slate-600 dark:text-slate-400 mb-4">
-          Define a TypeScript discriminated union for your client message types, then create a matching schema using <code className="prose-code">Type.Union()</code>. The schema validates that each incoming message matches one of the expected shapes and enforces constraints like minimum and maximum string lengths. The <code className="prose-code">message</code> handler receives the validated, typed message object, so you can use a type-narrowing switch statement to handle each message type with full type safety and autocompletion.
-        </p>
-        <p className="text-slate-600 dark:text-slate-400 mb-4">
-          This pattern catches protocol errors at the boundary rather than deep inside your business logic. If a client sends a message with a missing field or an invalid type, the validation layer rejects it before your handler executes. This reduces the surface area for bugs and makes your WebSocket handlers as predictable and testable as typed HTTP endpoint handlers.
-        </p>
-        <CodeBlock code={jsonMessagesCode} filename="src/ws/chat.ts" showLineNumbers />
-      </section>
-
-      <section>
-        <h2 id="connection-stats" className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
-          Connection Statistics and Monitoring
-        </h2>
-        <p className="text-slate-600 dark:text-slate-400 mb-4">
-          Monitoring WebSocket connections in production is critical for understanding resource usage, detecting anomalies, and planning capacity. The <code className="prose-code">wss.getStats()</code> method provides a snapshot of the server's current state, including the total number of connections established since startup, the number of currently active connections, cumulative message counts, the number of active topics, and server uptime.
-        </p>
-        <p className="text-slate-600 dark:text-slate-400 mb-4">
-          The most important metric to track is <code className="prose-code">activeConnections</code>, which directly correlates with memory and file descriptor consumption. Each active WebSocket connection holds a kernel file descriptor, a send buffer, a receive buffer, and any application-level state you attach to it. If active connections grow unexpectedly, it may indicate clients that are connecting but never disconnecting, or a connection leak in your client-side code.
-        </p>
-        <p className="text-slate-600 dark:text-slate-400 mb-4">
-          Exposing statistics through an HTTP endpoint (as shown below) allows monitoring systems to scrape metrics at regular intervals. You can also compute derived metrics like messages per second, average connections per minute, and topic churn rate. For per-client diagnostics, each <code className="prose-code">VexorWebSocket</code> instance exposes <code className="prose-code">ws.id</code> and <code className="prose-code">ws.remoteAddress</code>, and the <code className="prose-code">ws.ping()</code> method sends a WebSocket ping frame to measure round-trip latency.
-        </p>
-        <CodeBlock code={statsCode} filename="src/ws/monitoring.ts" showLineNumbers />
+        <CodeBlock code={shutdownCode} showLineNumbers />
       </section>
 
       <section>
@@ -444,16 +387,30 @@ export default function WebSocket() {
           Best Practices
         </h2>
         <p className="text-slate-600 dark:text-slate-400 mb-4">
-          Always set <code className="prose-code">maxPayloadLength</code> on every WebSocket route. Without a limit, a malicious client can send arbitrarily large messages that consume the server's memory. A sensible default for text-based JSON messaging is 64 KB. For routes that handle file uploads or binary data, increase the limit to match your application's requirements, but always set an explicit ceiling.
+          <strong>Authenticate at connection time.</strong> The upgrade request is your one chance
+          to see headers and cookies before the socket opens. Validate a token in the{' '}
+          <code className="prose-code">open</code> handler (from{' '}
+          <code className="prose-code">ctx.query</code> or <code className="prose-code">ctx.cookie()</code>)
+          and close unauthorized connections with code 1008 (policy violation) immediately.
         </p>
         <p className="text-slate-600 dark:text-slate-400 mb-4">
-          Use <code className="prose-code">messageSchema</code> validation for all production WebSocket routes. Unvalidated messages force you to write defensive parsing code in every handler, which is error-prone and leads to inconsistent error handling. Schema validation centralizes input validation and guarantees that your handler only receives well-formed data.
+          <strong>Validate every incoming message.</strong> The auto-JSON parsing gives you a
+          convenient value, not a trusted one. Narrow the payload's shape at the top of the{' '}
+          <code className="prose-code">message</code> handler before acting on it, and respond
+          with a structured error for anything unexpected.
         </p>
         <p className="text-slate-600 dark:text-slate-400 mb-4">
-          Implement heartbeat checking with <code className="prose-code">idleTimeout</code>. Mobile clients, laptop lid closures, and network transitions can leave TCP connections in a half-open state where the server believes the client is still connected but the client is actually gone. The idle timeout detects these zombie connections and closes them, freeing up resources. A timeout of 60 to 120 seconds is appropriate for most applications.
+          <strong>Design your message protocol as a discriminated union</strong> with a{' '}
+          <code className="prose-code">type</code> field. This pattern makes it trivial to add new
+          message types without breaking existing handlers, and it works naturally with
+          TypeScript type narrowing. Document the protocol so client developers know exactly
+          which message shapes are accepted and what responses to expect.
         </p>
         <p className="text-slate-600 dark:text-slate-400">
-          Design your message protocol as a discriminated union with a <code className="prose-code">type</code> field. This pattern makes it trivial to add new message types without breaking existing handlers, and it works naturally with both schema validation and TypeScript type narrowing. Document the message protocol so that client developers know exactly which message shapes are accepted and what responses to expect.
+          <strong>Shut down cleanly.</strong> Rely on <code className="prose-code">app.close()</code>{' '}
+          (or the <code className="prose-code">gracefulShutdown</code> config) so clients receive a
+          proper 1001 close frame instead of an abrupt TCP reset, and can reconnect to another
+          instance behind your load balancer.
         </p>
       </section>
 
@@ -463,108 +420,166 @@ export default function WebSocket() {
         </h2>
 
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-3">
-          WSRouteOptions
+          Event Handlers
         </h3>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
+          The second argument to <code className="prose-code">app.ws(path, handlers)</code>. All
+          handlers are optional and may return promises. <code className="prose-code">ctx</code> is
+          the <code className="prose-code">VexorContext</code> built from the upgrade request.
+        </p>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-200 dark:border-slate-700">
-                <th className="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Option</th>
-                <th className="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Type</th>
-                <th className="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Default</th>
+                <th className="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Handler</th>
+                <th className="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Signature</th>
                 <th className="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Description</th>
               </tr>
             </thead>
-            <tbody className="text-slate-600 dark:text-slate-400">
-              <tr className="border-b border-slate-200 dark:border-slate-700">
-                <td className="py-3 px-4"><code className="prose-code">messageSchema</code></td>
-                <td className="py-3 px-4"><code className="prose-code">TSchema</code></td>
-                <td className="py-3 px-4"><code className="prose-code">undefined</code></td>
-                <td className="py-3 px-4">A schema definition used to validate and parse incoming messages before they reach the <code className="prose-code">message</code> handler. When set, raw string messages are parsed as JSON and validated against the schema. Messages that fail validation are rejected with an error and the handler is not invoked. When not set, raw message strings are passed to the handler as-is.</td>
-              </tr>
-              <tr className="border-b border-slate-200 dark:border-slate-700">
-                <td className="py-3 px-4"><code className="prose-code">maxPayloadLength</code></td>
-                <td className="py-3 px-4"><code className="prose-code">number</code></td>
-                <td className="py-3 px-4"><code className="prose-code">65536</code></td>
-                <td className="py-3 px-4">The maximum size of a single incoming message in bytes. Messages exceeding this limit are rejected and the connection may be closed. This is a critical security setting that prevents clients from sending payloads large enough to exhaust server memory. Set this to the maximum message size your application legitimately needs to handle.</td>
-              </tr>
-              <tr className="border-b border-slate-200 dark:border-slate-700">
-                <td className="py-3 px-4"><code className="prose-code">idleTimeout</code></td>
-                <td className="py-3 px-4"><code className="prose-code">number</code></td>
-                <td className="py-3 px-4"><code className="prose-code">120</code></td>
-                <td className="py-3 px-4">The number of seconds a connection can remain idle (no messages sent or received) before it is automatically closed. This detects zombie connections from clients that disconnected without sending a close frame. The server sends ping frames and expects pong responses to determine liveness.</td>
-              </tr>
-              <tr className="border-b border-slate-200 dark:border-slate-700">
-                <td className="py-3 px-4"><code className="prose-code">compression</code></td>
-                <td className="py-3 px-4"><code className="prose-code">boolean</code></td>
-                <td className="py-3 px-4"><code className="prose-code">false</code></td>
-                <td className="py-3 px-4">Enables per-message deflate compression as defined in RFC 7692. When enabled, text and binary frames are compressed before transmission, reducing bandwidth usage for large or repetitive payloads. Compression adds CPU overhead on both sides. Enable it for routes that transfer large JSON payloads; leave it disabled for routes with small, frequent messages where the compression overhead exceeds the bandwidth savings.</td>
+            <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+              <tr>
+                <td className="py-3 px-4"><code className="prose-code">open</code></td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400">(ws, ctx) =&gt; void | Promise&lt;void&gt;</td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400">Fires when a connection is established. Subscribe to topics, send a welcome message, or authenticate here.</td>
               </tr>
               <tr>
-                <td className="py-3 px-4"><code className="prose-code">handlers</code></td>
-                <td className="py-3 px-4"><code className="prose-code">WSHandlers</code></td>
-                <td className="py-3 px-4">-</td>
-                <td className="py-3 px-4">An object containing callback functions for connection lifecycle events: <code className="prose-code">open</code> (connection established), <code className="prose-code">message</code> (data received), <code className="prose-code">close</code> (connection terminated with code and reason), and <code className="prose-code">error</code> (an error occurred on the connection). Only <code className="prose-code">message</code> is required; the others are optional.</td>
+                <td className="py-3 px-4"><code className="prose-code">message</code></td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400">(ws, data, ctx) =&gt; void | Promise&lt;void&gt;</td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400">Fires per incoming frame. Text frames are auto-parsed as JSON (falling back to the raw string); binary frames pass through untouched.</td>
+              </tr>
+              <tr>
+                <td className="py-3 px-4"><code className="prose-code">close</code></td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400">(ws, code, reason, ctx) =&gt; void | Promise&lt;void&gt;</td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400">Fires when the connection ends. The client is already removed from the hub and all topics.</td>
+              </tr>
+              <tr>
+                <td className="py-3 px-4"><code className="prose-code">error</code></td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400">(ws, error, ctx) =&gt; void | Promise&lt;void&gt;</td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400">Fires when an error occurs on the connection.</td>
+              </tr>
+              <tr>
+                <td className="py-3 px-4"><code className="prose-code">ping</code> / <code className="prose-code">pong</code></td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400">(ws, data: ArrayBuffer) =&gt; void</td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400">Fire when heartbeat frames are received. Useful for measuring latency or tracking liveness.</td>
               </tr>
             </tbody>
           </table>
         </div>
 
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white mt-8 mb-3">
-          VexorWebSocket Methods
+          VexorWebSocket
         </h3>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-200 dark:border-slate-700">
-                <th className="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Method</th>
+                <th className="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Member</th>
                 <th className="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Signature</th>
-                <th className="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Default</th>
                 <th className="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Description</th>
               </tr>
             </thead>
-            <tbody className="text-slate-600 dark:text-slate-400">
-              <tr className="border-b border-slate-200 dark:border-slate-700">
-                <td className="py-3 px-4"><code className="prose-code">send(data)</code></td>
-                <td className="py-3 px-4"><code className="prose-code">(data: string | Buffer) =&gt; void</code></td>
-                <td className="py-3 px-4">-</td>
-                <td className="py-3 px-4">Sends a raw text string or binary buffer to the connected client. Text data is sent as a text frame; binary data is sent as a binary frame. For structured data, prefer <code className="prose-code">json()</code> which handles serialization automatically.</td>
-              </tr>
-              <tr className="border-b border-slate-200 dark:border-slate-700">
-                <td className="py-3 px-4"><code className="prose-code">json(data)</code></td>
-                <td className="py-3 px-4"><code className="prose-code">(data: unknown) =&gt; void</code></td>
-                <td className="py-3 px-4">-</td>
-                <td className="py-3 px-4">Serializes the given JavaScript value as JSON and sends it as a text frame. This is the recommended method for sending structured data. The client must parse the received string with <code className="prose-code">JSON.parse()</code> to reconstruct the object.</td>
-              </tr>
-              <tr className="border-b border-slate-200 dark:border-slate-700">
-                <td className="py-3 px-4"><code className="prose-code">close(code?, reason?)</code></td>
-                <td className="py-3 px-4"><code className="prose-code">(code?: number, reason?: string) =&gt; void</code></td>
-                <td className="py-3 px-4">-</td>
-                <td className="py-3 px-4">Initiates a graceful close of the WebSocket connection by sending a close frame with an optional status code and reason string. The client receives the close frame and can perform its own cleanup. Common codes: 1000 (normal), 1001 (going away), 1008 (policy violation).</td>
-              </tr>
-              <tr className="border-b border-slate-200 dark:border-slate-700">
-                <td className="py-3 px-4"><code className="prose-code">subscribe(topic)</code></td>
-                <td className="py-3 px-4"><code className="prose-code">(topic: string) =&gt; void</code></td>
-                <td className="py-3 px-4">-</td>
-                <td className="py-3 px-4">Adds this connection to the subscriber set for the given topic. After subscribing, the connection will receive messages published to this topic by other connections. Subscriptions are automatically cleaned up when the connection closes.</td>
-              </tr>
-              <tr className="border-b border-slate-200 dark:border-slate-700">
-                <td className="py-3 px-4"><code className="prose-code">unsubscribe(topic)</code></td>
-                <td className="py-3 px-4"><code className="prose-code">(topic: string) =&gt; void</code></td>
-                <td className="py-3 px-4">-</td>
-                <td className="py-3 px-4">Removes this connection from the subscriber set for the given topic. After unsubscribing, the connection will no longer receive messages published to this topic. Has no effect if the connection was not subscribed.</td>
-              </tr>
-              <tr className="border-b border-slate-200 dark:border-slate-700">
-                <td className="py-3 px-4"><code className="prose-code">publish(topic, data)</code></td>
-                <td className="py-3 px-4"><code className="prose-code">(topic: string, data: string) =&gt; void</code></td>
-                <td className="py-3 px-4">-</td>
-                <td className="py-3 px-4">Sends a message to all subscribers of the given topic, excluding the calling connection (the sender). The data must be a pre-serialized string. Use <code className="prose-code">JSON.stringify()</code> to send structured data. This is the primary mechanism for peer-to-peer communication through the server.</td>
+            <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+              <tr>
+                <td className="py-3 px-4"><code className="prose-code">id</code></td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400">string</td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400">Unique connection ID, stable for the connection's lifetime.</td>
               </tr>
               <tr>
-                <td className="py-3 px-4"><code className="prose-code">ping()</code></td>
-                <td className="py-3 px-4"><code className="prose-code">() =&gt; void</code></td>
-                <td className="py-3 px-4">-</td>
-                <td className="py-3 px-4">Sends a WebSocket ping frame to the client. The client's WebSocket implementation automatically responds with a pong frame. Use this to measure round-trip latency or to verify that the connection is still alive. The server's idle timeout mechanism uses ping/pong internally.</td>
+                <td className="py-3 px-4"><code className="prose-code">remoteAddress</code></td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400">string</td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400">The client's remote address.</td>
+              </tr>
+              <tr>
+                <td className="py-3 px-4"><code className="prose-code">topics</code></td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400">Set&lt;string&gt;</td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400">Topics this connection is currently subscribed to.</td>
+              </tr>
+              <tr>
+                <td className="py-3 px-4"><code className="prose-code">send(message)</code></td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400">(message: string | ArrayBuffer | Uint8Array) =&gt; void</td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400">Sends a raw text or binary frame. No-op if the connection is not open.</td>
+              </tr>
+              <tr>
+                <td className="py-3 px-4"><code className="prose-code">json(data)</code></td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400">(data: unknown) =&gt; void</td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400">Serializes the value as JSON and sends it as a text frame. Preferred for structured data.</td>
+              </tr>
+              <tr>
+                <td className="py-3 px-4"><code className="prose-code">close(code?, reason?)</code></td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400">(code?: number, reason?: string) =&gt; void</td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400">Gracefully closes the connection. Defaults to code 1000. Common codes: 1000 (normal), 1001 (going away), 1008 (policy violation).</td>
+              </tr>
+              <tr>
+                <td className="py-3 px-4"><code className="prose-code">subscribe(topic)</code></td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400">(topic: string) =&gt; void</td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400">Adds the connection to the topic's subscriber set. Cleaned up automatically on disconnect.</td>
+              </tr>
+              <tr>
+                <td className="py-3 px-4"><code className="prose-code">unsubscribe(topic)</code></td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400">(topic: string) =&gt; void</td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400">Removes the connection from the topic's subscriber set.</td>
+              </tr>
+              <tr>
+                <td className="py-3 px-4"><code className="prose-code">isSubscribed(topic)</code></td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400">(topic: string) =&gt; boolean</td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400">Checks whether the connection is subscribed to a topic.</td>
+              </tr>
+              <tr>
+                <td className="py-3 px-4"><code className="prose-code">publish(topic, message)</code></td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400">(topic: string, message: string | ArrayBuffer | Uint8Array) =&gt; void</td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400">Sends a message to all subscribers of the topic, <strong>excluding this connection</strong> (the sender). Use <code className="prose-code">JSON.stringify()</code> for structured payloads.</td>
+              </tr>
+              <tr>
+                <td className="py-3 px-4"><code className="prose-code">ping(data?)</code></td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400">(data?: ArrayBuffer) =&gt; void</td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400">Pings the client to verify liveness or measure round-trip latency.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mt-8 mb-3">
+          app.websockets (Hub)
+        </h3>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-slate-200 dark:border-slate-700">
+                <th className="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Member</th>
+                <th className="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Signature</th>
+                <th className="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Description</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+              <tr>
+                <td className="py-3 px-4"><code className="prose-code">clients</code></td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400">Map&lt;string, VexorWebSocket&gt;</td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400">All connected clients, keyed by connection ID. Use for direct, targeted messaging.</td>
+              </tr>
+              <tr>
+                <td className="py-3 px-4"><code className="prose-code">broadcast(message)</code></td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400">(message: string | ArrayBuffer | Uint8Array) =&gt; void</td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400">Sends a message to every connected client, across all WebSocket routes.</td>
+              </tr>
+              <tr>
+                <td className="py-3 px-4"><code className="prose-code">publish(topic, message)</code></td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400">(topic: string, message: string | ArrayBuffer | Uint8Array) =&gt; void</td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400">Sends a message to all subscribers of a topic. Unlike <code className="prose-code">ws.publish()</code>, no client is excluded.</td>
+              </tr>
+              <tr>
+                <td className="py-3 px-4"><code className="prose-code">getSubscribers(topic)</code></td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400">(topic: string) =&gt; VexorWebSocket[]</td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400">Returns the connections currently subscribed to a topic.</td>
+              </tr>
+              <tr>
+                <td className="py-3 px-4"><code className="prose-code">closeAll(code?, reason?)</code></td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400">(code?: number, reason?: string) =&gt; void</td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400">Closes every connection. Called automatically by <code className="prose-code">app.close()</code> with code 1001.</td>
+              </tr>
+              <tr>
+                <td className="py-3 px-4"><code className="prose-code">getStats()</code></td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400">{'() => { clients, topics, subscriptions }'}</td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400">Snapshot of the hub: total client count, topic count, and a <code className="prose-code">Map</code> of per-topic subscriber counts.</td>
               </tr>
             </tbody>
           </table>

@@ -6,7 +6,7 @@
  */
 
 import type { VexorRequest } from './request.js';
-import { ResponseBuilder, VexorResponse } from './response.js';
+import { ResponseBuilder, VexorResponse, type TypedResponse } from './response.js';
 import type {
   RouteParams,
   ParsedQuery,
@@ -313,9 +313,9 @@ export class VexorContext<
   // ============ Response Shortcuts ============
 
   /**
-   * Send JSON response
+   * Send JSON response (the payload type flows to the RPC client)
    */
-  json<T>(data: T, status?: number): Response {
+  json<T>(data: T, status?: number): TypedResponse<T> {
     return this._responseBuilder.json(data, status);
   }
 

@@ -60,6 +60,54 @@ jobs:
       - name: Smoke test (Node)
         run: node scripts/smoke.mjs
 
+  integration-db:
+    name: ORM Integration (Postgres + MySQL)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: vexor
+          POSTGRES_PASSWORD: vexor
+          POSTGRES_DB: vexor_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U vexor"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_ROOT_PASSWORD: vexor
+          MYSQL_DATABASE: vexor_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping -h localhost -pvexor"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ORM tests against real databases
+        working-directory: packages/vexor-orm
+        env:
+          VEXOR_TEST_POSTGRES_URL: postgres://vexor:vexor@localhost:5432/vexor_test
+          VEXOR_TEST_MYSQL_URL: mysql://root:vexor@localhost:3306/vexor_test
+        run: npx vitest run src/__tests__/integration.real-db.test.ts --reporter=verbose
+
   smoke-bun:
     name: Smoke Test (Bun)
     runs-on: ubuntu-latest

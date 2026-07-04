@@ -91,6 +91,21 @@ export {
   type WhereCondition,
 } from './query/builder.js';
 
+// Schema diffing / auto-migrations
+export {
+  snapshotSchema,
+  diffSchemas,
+  generateMigrationFromDiff,
+  generateAutoMigration,
+  type SchemaSnapshot,
+  type SnapshotTable,
+  type SnapshotColumn,
+  type SchemaDiff,
+  type TableChange,
+  type ColumnChange,
+  type DiffMigration,
+} from './migrations/diff.js';
+
 // Connection pooling
 export {
   ConnectionPool,

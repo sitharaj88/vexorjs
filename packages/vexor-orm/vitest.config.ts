@@ -6,6 +6,9 @@ export default defineConfig({
     environment: 'node',
     include: ['src/**/*.test.ts'],
     exclude: ['node_modules', 'dist'],
+    // better-sqlite3 (native) can be slow to initialize when many worker
+    // processes start simultaneously; the default 5s is too tight under load
+    testTimeout: 20000,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],

@@ -67,6 +67,15 @@ export type {
   MatchedRoute,
 } from './core/index.js';
 
+// RPC client exports
+export { createClient, VexorClient } from './client/index.js';
+export type {
+  ClientOptions,
+  ClientResponse,
+  RequestOptions,
+  RoutesOf,
+} from './client/index.js';
+
 // Router exports
 export { RadixRouter, toMatchedRoute } from './router/index.js';
 

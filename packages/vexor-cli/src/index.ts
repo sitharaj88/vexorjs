@@ -118,6 +118,16 @@ cli
   .command('db:reset', 'Reset database (rollback all, migrate, seed)')
   .action(() => dbCommand('reset'));
 
+cli
+  .command('db:diff', 'Generate a migration from schema changes (auto-migration)')
+  .option('--schema <path>', 'Schema module exporting table() definitions', {
+    default: 'src/db/schema.ts',
+  })
+  .option('--out <dir>', 'Migrations directory', { default: 'src/db/migrations' })
+  .option('--dialect <dialect>', 'postgres | sqlite | mysql', { default: 'postgres' })
+  .option('--name <name>', 'Migration name suffix', { default: 'auto' })
+  .action((options) => dbCommand('diff', options));
+
 // ============================================
 // Configuration Commands
 // ============================================

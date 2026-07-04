@@ -39,6 +39,15 @@ function serializeCookie(name: string, value: string, options?: CookieOptions): 
 }
 
 /**
+ * A Response carrying the JSON payload type as a phantom.
+ * `ctx.json(data)` returns this so the RPC client can infer response types;
+ * `__data` is never set at runtime.
+ */
+export interface TypedResponse<T = unknown> extends Response {
+  readonly __data?: T;
+}
+
+/**
  * HTTP Status text mapping
  */
 const STATUS_TEXT: Record<number, string> = {
@@ -145,13 +154,13 @@ export class ResponseBuilder {
   /**
    * Send JSON response
    */
-  json<T>(data: T, status?: number): Response {
+  json<T>(data: T, status?: number): TypedResponse<T> {
     if (status !== undefined) {
       this._status = status;
     }
     this._headers.set('Content-Type', 'application/json; charset=utf-8');
     this._body = JSON.stringify(data);
-    return this.build();
+    return this.build() as TypedResponse<T>;
   }
 
   /**
@@ -250,7 +259,7 @@ export const VexorResponse = {
   /**
    * Send JSON response
    */
-  json<T>(data: T, status = 200, headers?: Record<string, string>): Response {
+  json<T>(data: T, status = 200, headers?: Record<string, string>): TypedResponse<T> {
     const builder = new ResponseBuilder().status(status);
     if (headers) {
       builder.headers(headers);

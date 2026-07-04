@@ -5,7 +5,10 @@ import InfoBlock from '../../components/InfoBlock';
 
 /* ── Code examples ─────────────────────────────────────────────── */
 
-const newCode = `# Interactive mode (prompts for all options)
+const newCode = `# The npm way — no global install needed (wraps \`vexor new\`)
+npm create vexor@latest my-app
+
+# Interactive mode (prompts for all options)
 vexor new my-app
 
 # Non-interactive with all options
@@ -113,6 +116,20 @@ vexor db:seed
 
 # Reset database: rollback all → re-migrate → re-seed
 vexor db:reset`;
+
+const dbDiffCode = `# Diff your schema against the saved snapshot and generate a migration
+vexor db:diff --schema src/db/schema.ts --dialect postgres
+
+# Output:
+#   ✅ Wrote 20260704120000_auto.ts (3 up statement(s))
+#   ✅ Updated schema.snapshot.json — commit both files
+
+# Name the migration and choose the output directory
+vexor db:diff --name add_posts --out src/db/migrations
+
+# SQLite and MySQL dialects
+vexor db:diff --dialect sqlite
+vexor db:diff --dialect mysql`;
 
 const devCode = `# Start with defaults (port 3000, localhost, src/index.ts)
 vexor dev
@@ -252,6 +269,7 @@ export default function CliCommands() {
                 ['vexor db:status', '—', 'Show migration status'],
                 ['vexor db:seed', '—', 'Run database seeders'],
                 ['vexor db:reset', '—', 'Rollback all, re-migrate, re-seed'],
+                ['vexor db:diff', '—', 'Generate a migration from schema changes (auto-migration)'],
                 ['vexor openapi', '—', 'Generate OpenAPI spec from routes'],
                 ['vexor config:*', '—', 'Manage project and global configuration'],
                 ['vexor env:*', '—', 'Manage environment variables'],
@@ -278,6 +296,16 @@ export default function CliCommands() {
         <h2 id="new" className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
           vexor new
         </h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
+          The quickest way to scaffold a project is{' '}
+          <code className="prose-code">npm create vexor@latest my-app</code> — the{' '}
+          <code className="prose-code">create-vexor</code> package is a thin wrapper that delegates
+          to <code className="prose-code">vexor new</code>, so no global CLI install is needed and
+          the templates (<code className="prose-code">api</code>, <code className="prose-code">minimal</code>,{' '}
+          <code className="prose-code">microservice</code>, <code className="prose-code">websocket</code>)
+          live in exactly one place. Everything after the project name is forwarded, e.g.{' '}
+          <code className="prose-code">npm create vexor@latest my-app -- --template minimal</code>.
+        </p>
         <p className="text-slate-600 dark:text-slate-400 mb-4">
           Creates a new Vexor project from a template. By default, the command runs in interactive mode — it prompts you to choose a project name, template, package manager, and whether to initialize git and install dependencies. All prompts can be bypassed with flags for scripted or CI usage.
         </p>
@@ -502,6 +530,58 @@ export default function CliCommands() {
         <CodeBlock code={dbSeedResetCode} language="bash" />
         <InfoBlock variant="danger" >
           <code className="prose-code">db:reset</code> destroys all data in your database. Only use it in development or test environments. In production, use <code className="prose-code">db:migrate</code> to apply incremental changes.
+        </InfoBlock>
+
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-3">db:diff</h3>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
+          Generates a migration <strong>automatically from schema changes</strong>. The command
+          loads your schema module (any exports created with <code className="prose-code">table()</code>),
+          diffs it against the saved snapshot at{' '}
+          <code className="prose-code">schema.snapshot.json</code> in the migrations directory, and
+          — when there are changes — writes a timestamped migration file with up/down SQL and
+          updates the snapshot. On the first run (no snapshot yet) every table is generated as a{' '}
+          <code className="prose-code">CREATE TABLE</code>. Commit the migration and the snapshot
+          together. See <Link to="/orm/migrations" className="text-primary-600 dark:text-primary-400 hover:underline">Auto-Migrations</Link>{' '}
+          for how the diffing works.
+        </p>
+        <CodeBlock code={dbDiffCode} language="bash" />
+
+        <h4 className="text-base font-semibold text-slate-900 dark:text-white mt-6 mb-3">Options</h4>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-slate-200 dark:border-slate-700">
+                <th className="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Flag</th>
+                <th className="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Default</th>
+                <th className="text-left py-3 px-4 font-semibold text-slate-900 dark:text-white">Description</th>
+              </tr>
+            </thead>
+            <tbody className="text-slate-600 dark:text-slate-400">
+              <tr className="border-b border-slate-200 dark:border-slate-700">
+                <td className="py-3 px-4"><code className="prose-code">--schema</code></td>
+                <td className="py-3 px-4"><code>src/db/schema.ts</code></td>
+                <td className="py-3 px-4">Schema module exporting <code className="prose-code">table()</code> definitions. Without the flag, the CLI tries <code>src/db/schema.ts</code>, <code>src/db/schema.js</code>, <code>src/schema.ts</code>, <code>src/schema.js</code> in order.</td>
+              </tr>
+              <tr className="border-b border-slate-200 dark:border-slate-700">
+                <td className="py-3 px-4"><code className="prose-code">--out</code></td>
+                <td className="py-3 px-4"><code>src/db/migrations</code></td>
+                <td className="py-3 px-4">Migrations directory. The generated migration file and <code className="prose-code">schema.snapshot.json</code> are written here.</td>
+              </tr>
+              <tr className="border-b border-slate-200 dark:border-slate-700">
+                <td className="py-3 px-4"><code className="prose-code">--dialect</code></td>
+                <td className="py-3 px-4"><code>postgres</code></td>
+                <td className="py-3 px-4">SQL dialect for the generated statements: <code>postgres</code>, <code>sqlite</code>, or <code>mysql</code>. SQLite column alterations cannot be generated and are emitted as warnings.</td>
+              </tr>
+              <tr>
+                <td className="py-3 px-4"><code className="prose-code">--name</code></td>
+                <td className="py-3 px-4"><code>auto</code></td>
+                <td className="py-3 px-4">Migration name suffix. The file is named <code className="prose-code">&lt;timestamp&gt;_&lt;name&gt;.ts</code>.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <InfoBlock variant="tip" >
+          <code className="prose-code">db:diff</code> requires <code className="prose-code">@vexorjs/orm</code> to be installed in your project — the CLI loads the diffing engine from your project's dependency tree, not its own.
         </InfoBlock>
       </section>
 

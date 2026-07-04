@@ -14,6 +14,7 @@ import Routing from './pages/Routing';
 import Middleware from './pages/Middleware';
 import Context from './pages/Context';
 import Validation from './pages/Validation';
+import RpcClient from './pages/RpcClient';
 
 // API Reference (eagerly loaded)
 import ApiReference from './pages/ApiReference';
@@ -126,6 +127,7 @@ function App() {
         <Route path="middleware" element={<Middleware />} />
         <Route path="context" element={<Context />} />
         <Route path="validation" element={<Validation />} />
+        <Route path="rpc-client" element={<RpcClient />} />
 
         {/* Middleware */}
         <Route path="middleware/rate-limiting" element={<LazyPage><RateLimiting /></LazyPage>} />

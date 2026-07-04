@@ -47,6 +47,7 @@ export const navigation: NavSection[] = [
       { name: 'Middleware', href: '/middleware' },
       { name: 'Context', href: '/context' },
       { name: 'Validation', href: '/validation' },
+      { name: 'RPC Client', href: '/rpc-client' },
     ],
   },
   {

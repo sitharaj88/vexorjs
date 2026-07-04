@@ -1,0 +1,55 @@
+{
+  "name": "create-vexor",
+  "version": "1.0.0",
+  "description": "Scaffold a new Vexor app: npm create vexor@latest my-app",
+  "type": "module",
+  "bin": {
+    "create-vexor": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "vexor",
+    "create",
+    "scaffold",
+    "starter",
+    "backend",
+    "typescript"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "author": "Sitharaj Seenivasan",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sitharaj88/vexorjs.git",
+    "directory": "packages/create-vexor"
+  },
+  "homepage": "https://github.com/sitharaj88/vexorjs",
+  "bugs": {
+    "url": "https://github.com/sitharaj88/vexorjs/issues"
+  },
+  "dependencies": {
+    "@vexorjs/cli": "^1.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsup": "^8.3.0",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

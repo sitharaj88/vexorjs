@@ -7,7 +7,8 @@ export default defineConfig({
     'src/router/index.ts',
     'src/schema/index.ts',
     'src/middleware/index.ts',
-    'src/adapters/index.ts'
+    'src/adapters/index.ts',
+    'src/client/index.ts'
   ],
   format: ['esm'],
   dts: true,

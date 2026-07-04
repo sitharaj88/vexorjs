@@ -64,3 +64,43 @@ export type InferBody<S> = S extends { body: infer B extends TSchema } ? Static<
  */
 export type ContextFor<Path extends string, S extends RouteSchema | undefined = undefined> =
   VexorContext<InferParams<Path, S> & RouteParams, InferQuery<S>, InferBody<S>>;
+
+// ============ Route registry (for the RPC client) ============
+
+/**
+ * The input/output types of one registered route
+ */
+export interface RouteTypes {
+  params: Record<string, string>;
+  query: unknown;
+  body: unknown;
+  response: unknown;
+}
+
+/**
+ * Map of `"METHOD /path"` keys to their route types.
+ * Vexor's verb methods accumulate this at the type level;
+ * it has no runtime representation.
+ */
+export type RouteMap = Record<string, RouteTypes>;
+
+/**
+ * Extract the JSON payload type from a handler's return type.
+ * `ctx.json(data)` returns TypedResponse<T> whose phantom `__data`
+ * carries T; plain Responses yield `unknown`.
+ */
+export type ResponseData<R> = Awaited<R> extends { __data?: infer T }
+  ? unknown extends NonNullable<T>
+    ? unknown
+    : NonNullable<T>
+  : unknown;
+
+/**
+ * The RouteTypes entry recorded for one route registration
+ */
+export type RouteEntry<Path extends string, S, R> = {
+  params: PathParams<Path>;
+  query: InferQuery<S>;
+  body: InferBody<S>;
+  response: ResponseData<R>;
+};

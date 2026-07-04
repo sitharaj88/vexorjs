@@ -14,8 +14,14 @@ import { type VexorContext, ContextPool } from './context.js';
 import { RadixRouter, toMatchedRoute } from '../router/radix.js';
 import { Pipeline } from '../middleware/pipeline.js';
 import { PluginRegistry, type PluginInput, type PluginOptions } from '../plugins/system.js';
-import type { ContextFor } from './infer.js';
+import type { ContextFor, RouteEntry, RouteMap } from './infer.js';
 import { NodeAdapter, isBun, BunAdapter } from '../adapters/index.js';
+import { WsRouteRegistry, attachNodeWebSockets } from '../realtime/ws-bridge.js';
+import {
+  WebSocketServer as VexorWebSocketServer,
+  type WSEventHandlers,
+  type WSRouteOptions,
+} from '../realtime/websocket.js';
 import {
   createValidationMiddleware,
   validationErrorResponse,
@@ -60,7 +66,10 @@ export type ServerInstance = ReturnType<typeof import('http').createServer> | un
 /**
  * Vexor - The main application class
  */
-export class Vexor {
+export class Vexor<TRoutes extends RouteMap = {}> {
+  /** Phantom: accumulated route types for the RPC client (never set at runtime) */
+  declare readonly __routes?: TRoutes;
+
   // Core components
   private router: RadixRouter;
   private pipeline: Pipeline;
@@ -72,6 +81,10 @@ export class Vexor {
 
   // Plugin registry (created lazily on first use)
   private _plugins?: PluginRegistry;
+
+  // WebSocket routes and connection hub (created lazily on first app.ws())
+  private _wsRegistry?: WsRouteRegistry;
+  private _wsServer?: VexorWebSocketServer;
 
   // Prefix for scoped routes
   private prefix = '';
@@ -88,18 +101,21 @@ export class Vexor {
   /**
    * Register a GET route
    */
-  get<Path extends string>(path: Path, handler: Handler<ContextFor<Path>>): this;
-  get<Path extends string, S extends RouteSchema>(
+  get<Path extends string, R extends Response | Promise<Response>>(
+    path: Path,
+    handler: (ctx: ContextFor<Path>) => R
+  ): Vexor<TRoutes & Record<`GET ${Path}`, RouteEntry<Path, undefined, R>>>;
+  get<Path extends string, S extends RouteSchema, R extends Response | Promise<Response>>(
     path: Path,
     schema: BareRouteSchema<S>,
-    handler: Handler<ContextFor<Path, S>>
-  ): this;
-  get<Path extends string, S extends RouteSchema>(
+    handler: (ctx: ContextFor<Path, S>) => R
+  ): Vexor<TRoutes & Record<`GET ${Path}`, RouteEntry<Path, S, R>>>;
+  get<Path extends string, S extends RouteSchema, R extends Response | Promise<Response>>(
     path: Path,
     options: RouteOptions<S>,
-    handler: Handler<ContextFor<Path, S>>
-  ): this;
-  get(path: string, optionsOrHandler: RouteOptions | RouteSchema | Handler<any>, handler?: Handler<any>): this {
+    handler: (ctx: ContextFor<Path, S>) => R
+  ): Vexor<TRoutes & Record<`GET ${Path}`, RouteEntry<Path, S, R>>>;
+  get(path: string, optionsOrHandler: RouteOptions | RouteSchema | Handler<any>, handler?: Handler<any>): any {
     return this.route(
       'GET',
       path,
@@ -111,18 +127,21 @@ export class Vexor {
   /**
    * Register a POST route
    */
-  post<Path extends string>(path: Path, handler: Handler<ContextFor<Path>>): this;
-  post<Path extends string, S extends RouteSchema>(
+  post<Path extends string, R extends Response | Promise<Response>>(
+    path: Path,
+    handler: (ctx: ContextFor<Path>) => R
+  ): Vexor<TRoutes & Record<`POST ${Path}`, RouteEntry<Path, undefined, R>>>;
+  post<Path extends string, S extends RouteSchema, R extends Response | Promise<Response>>(
     path: Path,
     schema: BareRouteSchema<S>,
-    handler: Handler<ContextFor<Path, S>>
-  ): this;
-  post<Path extends string, S extends RouteSchema>(
+    handler: (ctx: ContextFor<Path, S>) => R
+  ): Vexor<TRoutes & Record<`POST ${Path}`, RouteEntry<Path, S, R>>>;
+  post<Path extends string, S extends RouteSchema, R extends Response | Promise<Response>>(
     path: Path,
     options: RouteOptions<S>,
-    handler: Handler<ContextFor<Path, S>>
-  ): this;
-  post(path: string, optionsOrHandler: RouteOptions | RouteSchema | Handler<any>, handler?: Handler<any>): this {
+    handler: (ctx: ContextFor<Path, S>) => R
+  ): Vexor<TRoutes & Record<`POST ${Path}`, RouteEntry<Path, S, R>>>;
+  post(path: string, optionsOrHandler: RouteOptions | RouteSchema | Handler<any>, handler?: Handler<any>): any {
     return this.route(
       'POST',
       path,
@@ -134,18 +153,21 @@ export class Vexor {
   /**
    * Register a PUT route
    */
-  put<Path extends string>(path: Path, handler: Handler<ContextFor<Path>>): this;
-  put<Path extends string, S extends RouteSchema>(
+  put<Path extends string, R extends Response | Promise<Response>>(
+    path: Path,
+    handler: (ctx: ContextFor<Path>) => R
+  ): Vexor<TRoutes & Record<`PUT ${Path}`, RouteEntry<Path, undefined, R>>>;
+  put<Path extends string, S extends RouteSchema, R extends Response | Promise<Response>>(
     path: Path,
     schema: BareRouteSchema<S>,
-    handler: Handler<ContextFor<Path, S>>
-  ): this;
-  put<Path extends string, S extends RouteSchema>(
+    handler: (ctx: ContextFor<Path, S>) => R
+  ): Vexor<TRoutes & Record<`PUT ${Path}`, RouteEntry<Path, S, R>>>;
+  put<Path extends string, S extends RouteSchema, R extends Response | Promise<Response>>(
     path: Path,
     options: RouteOptions<S>,
-    handler: Handler<ContextFor<Path, S>>
-  ): this;
-  put(path: string, optionsOrHandler: RouteOptions | RouteSchema | Handler<any>, handler?: Handler<any>): this {
+    handler: (ctx: ContextFor<Path, S>) => R
+  ): Vexor<TRoutes & Record<`PUT ${Path}`, RouteEntry<Path, S, R>>>;
+  put(path: string, optionsOrHandler: RouteOptions | RouteSchema | Handler<any>, handler?: Handler<any>): any {
     return this.route(
       'PUT',
       path,
@@ -157,22 +179,25 @@ export class Vexor {
   /**
    * Register a DELETE route
    */
-  delete<Path extends string>(path: Path, handler: Handler<ContextFor<Path>>): this;
-  delete<Path extends string, S extends RouteSchema>(
+  delete<Path extends string, R extends Response | Promise<Response>>(
+    path: Path,
+    handler: (ctx: ContextFor<Path>) => R
+  ): Vexor<TRoutes & Record<`DELETE ${Path}`, RouteEntry<Path, undefined, R>>>;
+  delete<Path extends string, S extends RouteSchema, R extends Response | Promise<Response>>(
     path: Path,
     schema: BareRouteSchema<S>,
-    handler: Handler<ContextFor<Path, S>>
-  ): this;
-  delete<Path extends string, S extends RouteSchema>(
+    handler: (ctx: ContextFor<Path, S>) => R
+  ): Vexor<TRoutes & Record<`DELETE ${Path}`, RouteEntry<Path, S, R>>>;
+  delete<Path extends string, S extends RouteSchema, R extends Response | Promise<Response>>(
     path: Path,
     options: RouteOptions<S>,
-    handler: Handler<ContextFor<Path, S>>
-  ): this;
+    handler: (ctx: ContextFor<Path, S>) => R
+  ): Vexor<TRoutes & Record<`DELETE ${Path}`, RouteEntry<Path, S, R>>>;
   delete(
     path: string,
     optionsOrHandler: RouteOptions | RouteSchema | Handler<any>,
     handler?: Handler<any>
-  ): this {
+  ): any {
     return this.route(
       'DELETE',
       path,
@@ -184,18 +209,21 @@ export class Vexor {
   /**
    * Register a PATCH route
    */
-  patch<Path extends string>(path: Path, handler: Handler<ContextFor<Path>>): this;
-  patch<Path extends string, S extends RouteSchema>(
+  patch<Path extends string, R extends Response | Promise<Response>>(
+    path: Path,
+    handler: (ctx: ContextFor<Path>) => R
+  ): Vexor<TRoutes & Record<`PATCH ${Path}`, RouteEntry<Path, undefined, R>>>;
+  patch<Path extends string, S extends RouteSchema, R extends Response | Promise<Response>>(
     path: Path,
     schema: BareRouteSchema<S>,
-    handler: Handler<ContextFor<Path, S>>
-  ): this;
-  patch<Path extends string, S extends RouteSchema>(
+    handler: (ctx: ContextFor<Path, S>) => R
+  ): Vexor<TRoutes & Record<`PATCH ${Path}`, RouteEntry<Path, S, R>>>;
+  patch<Path extends string, S extends RouteSchema, R extends Response | Promise<Response>>(
     path: Path,
     options: RouteOptions<S>,
-    handler: Handler<ContextFor<Path, S>>
-  ): this;
-  patch(path: string, optionsOrHandler: RouteOptions | RouteSchema | Handler<any>, handler?: Handler<any>): this {
+    handler: (ctx: ContextFor<Path, S>) => R
+  ): Vexor<TRoutes & Record<`PATCH ${Path}`, RouteEntry<Path, S, R>>>;
+  patch(path: string, optionsOrHandler: RouteOptions | RouteSchema | Handler<any>, handler?: Handler<any>): any {
     return this.route(
       'PATCH',
       path,
@@ -207,18 +235,21 @@ export class Vexor {
   /**
    * Register a HEAD route
    */
-  head<Path extends string>(path: Path, handler: Handler<ContextFor<Path>>): this;
-  head<Path extends string, S extends RouteSchema>(
+  head<Path extends string, R extends Response | Promise<Response>>(
+    path: Path,
+    handler: (ctx: ContextFor<Path>) => R
+  ): Vexor<TRoutes & Record<`HEAD ${Path}`, RouteEntry<Path, undefined, R>>>;
+  head<Path extends string, S extends RouteSchema, R extends Response | Promise<Response>>(
     path: Path,
     schema: BareRouteSchema<S>,
-    handler: Handler<ContextFor<Path, S>>
-  ): this;
-  head<Path extends string, S extends RouteSchema>(
+    handler: (ctx: ContextFor<Path, S>) => R
+  ): Vexor<TRoutes & Record<`HEAD ${Path}`, RouteEntry<Path, S, R>>>;
+  head<Path extends string, S extends RouteSchema, R extends Response | Promise<Response>>(
     path: Path,
     options: RouteOptions<S>,
-    handler: Handler<ContextFor<Path, S>>
-  ): this;
-  head(path: string, optionsOrHandler: RouteOptions | RouteSchema | Handler<any>, handler?: Handler<any>): this {
+    handler: (ctx: ContextFor<Path, S>) => R
+  ): Vexor<TRoutes & Record<`HEAD ${Path}`, RouteEntry<Path, S, R>>>;
+  head(path: string, optionsOrHandler: RouteOptions | RouteSchema | Handler<any>, handler?: Handler<any>): any {
     return this.route(
       'HEAD',
       path,
@@ -230,22 +261,25 @@ export class Vexor {
   /**
    * Register an OPTIONS route
    */
-  options<Path extends string>(path: Path, handler: Handler<ContextFor<Path>>): this;
-  options<Path extends string, S extends RouteSchema>(
+  options<Path extends string, R extends Response | Promise<Response>>(
+    path: Path,
+    handler: (ctx: ContextFor<Path>) => R
+  ): Vexor<TRoutes & Record<`OPTIONS ${Path}`, RouteEntry<Path, undefined, R>>>;
+  options<Path extends string, S extends RouteSchema, R extends Response | Promise<Response>>(
     path: Path,
     schema: BareRouteSchema<S>,
-    handler: Handler<ContextFor<Path, S>>
-  ): this;
-  options<Path extends string, S extends RouteSchema>(
+    handler: (ctx: ContextFor<Path, S>) => R
+  ): Vexor<TRoutes & Record<`OPTIONS ${Path}`, RouteEntry<Path, S, R>>>;
+  options<Path extends string, S extends RouteSchema, R extends Response | Promise<Response>>(
     path: Path,
     options: RouteOptions<S>,
-    handler: Handler<ContextFor<Path, S>>
-  ): this;
+    handler: (ctx: ContextFor<Path, S>) => R
+  ): Vexor<TRoutes & Record<`OPTIONS ${Path}`, RouteEntry<Path, S, R>>>;
   options(
     path: string,
     optionsOrHandler: RouteOptions | RouteSchema | Handler<any>,
     handler?: Handler<any>
-  ): this {
+  ): any {
     return this.route(
       'OPTIONS',
       path,
@@ -310,6 +344,35 @@ export class Vexor {
     this.router.add(method, fullPath, routeHandler, schema, routeOptions?.hooks);
 
     return this;
+  }
+
+  // ============ WebSockets ============
+
+  /**
+   * Register a WebSocket route. Supports `:params` and trailing wildcards:
+   *
+   *   app.ws('/chat/:room', {
+   *     open(ws, ctx) { ws.subscribe(ctx.params.room); },
+   *     message(ws, data, ctx) { ws.publish(ctx.params.room, JSON.stringify(data)); },
+   *   });
+   *
+   * Served on Node.js via the optional `ws` package (npm install ws).
+   */
+  ws<T = unknown>(path: string, handlers: WSEventHandlers<T> | WSRouteOptions<T>): this {
+    const options: WSRouteOptions<T> =
+      'handlers' in handlers ? (handlers as WSRouteOptions<T>) : { handlers };
+    this._wsRegistry ??= new WsRouteRegistry();
+    this._wsRegistry.add(this.prefix + path, options as WSRouteOptions);
+    return this;
+  }
+
+  /**
+   * The WebSocket connection hub: publish to topics, broadcast,
+   * inspect connected clients.
+   */
+  get websockets(): VexorWebSocketServer {
+    this._wsServer ??= new VexorWebSocketServer();
+    return this._wsServer;
   }
 
   // ============ Middleware & Hooks ============
@@ -563,6 +626,12 @@ export class Vexor {
     // Choose adapter based on runtime
     let server: ServerInstance;
     if (isBun()) {
+      if (this._wsRegistry) {
+        throw new Error(
+          'app.ws() currently supports the Node.js runtime only. ' +
+            'On Bun, use Bun.serve({ websocket }) directly for now.'
+        );
+      }
       this.adapter = new BunAdapter(handler);
       server = await this.adapter.listen(resolvedPort, resolvedHost);
 
@@ -574,6 +643,15 @@ export class Vexor {
         maxBodySize: this._config.maxBodySize,
       });
       server = await this.adapter.listen(resolvedPort, resolvedHost);
+
+      // Wire registered WebSocket routes into the server's upgrade path
+      if (this._wsRegistry) {
+        await attachNodeWebSockets(
+          server as import('http').Server,
+          this._wsRegistry,
+          this.websockets
+        );
+      }
 
       if (this._config.logging !== false) {
         console.log(`🚀 Vexor server running on http://${resolvedHost}:${resolvedPort} (Node.js)`);
@@ -611,6 +689,9 @@ export class Vexor {
    * `timeout` (ms) bounds the drain before remaining connections are force-closed.
    */
   async close(options: { timeout?: number } = {}): Promise<void> {
+    // WebSocket connections don't finish like requests; close them first
+    this._wsServer?.closeAll(1001, 'Server shutting down');
+
     if (this.adapter) {
       if (this.adapter instanceof NodeAdapter) {
         await this.adapter.close(options);
