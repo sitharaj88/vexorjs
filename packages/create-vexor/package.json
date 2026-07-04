@@ -1,6 +1,6 @@
 {
   "name": "create-vexor",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Scaffold a new Vexor app: npm create vexor@latest my-app",
   "type": "module",
   "bin": {
@@ -41,7 +41,7 @@
     "url": "https://github.com/sitharaj88/vexorjs/issues"
   },
   "dependencies": {
-    "@vexorjs/cli": "^1.1.1"
+    "@vexorjs/cli": "^1.2.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
