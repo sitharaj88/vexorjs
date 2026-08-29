@@ -66,10 +66,10 @@
     "url": "https://github.com/sitharaj88/vexorjs/issues"
   },
   "devDependencies": {
-    "@types/node": "^20.0.0",
+    "@types/node": "^26.3.0",
     "tsup": "^8.0.0",
-    "typescript": "^5.3.0",
-    "vitest": "^2.0.0"
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.11"
   },
   "sideEffects": false,
   "engines": {
